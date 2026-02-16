@@ -1,0 +1,11 @@
+name=IskakINO
+version=1.0.0
+author=Iskak Fatoni
+maintainer=Iskak Fatoni
+sentence=Official collection of examples using IskakINO libraries ecosystem.
+paragraph=A curated collection of smart home projects and examples integrated with IskakINO_ArduFast, IskakINO_WifiPortal, IskakINO_FastNTP, and IskakINO_LiquidCrystal_I2C. Optimized for ESP32 and ESP8266.
+category=Examples
+url=https://github.com/iskakfatoni/IskakINO
+architectures=esp32,esp8266
+includes=IskakINO_ArduFast.h, IskakINO_WifiPortal.h, IskakINO_FastNTP.h, IskakINO_LiquidCrystal_I2C.h
+depends=IskakINO_ArduFast, IskakINO_WifiPortal, IskakINO_FastNTP, IskakINO_LiquidCrystal_I2C
