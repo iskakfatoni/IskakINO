@@ -90,6 +90,47 @@ void setup() {
   // 3. Network & LCD
   lcd.begin();
   lcd.backlight();
+
+  /* * ==============================================================================
+ * 01_SmartFitting.ino - API ENDPOINT DOCUMENTATION (REST-LIKE API)
+ * ==============================================================================
+ * Base URL: http://smartfitting.local/ atau http://192.168.4.1/
+ * * 1. KONTROL HARDWARE
+ * ------------------------------------------------------------------------------
+ * [GET]  /toggle     : Membalikkan status lampu (Jika ON jadi OFF, dan sebaliknya).
+ * Respon: "OK" (text/plain).
+ * [GET]  /on         : Menyalakan lampu secara paksa.
+ * Respon: "Lamp turned ON".
+ * [GET]  /off        : Mematikan lampu secara paksa.
+ * Respon: "Lamp turned OFF".
+ *
+ * 2. MONITORING & DATA (JSON)
+ * ------------------------------------------------------------------------------
+ * [GET]  /status     : Mengambil status sensor dan sistem saat ini.
+ * Format Respon (JSON):
+ * {
+ * "state": true,
+ * "uptime": "1d 04:20:15",
+ * "ntp": "sync_ok",
+ * "signal": "-65dBm"
+ * }
+ * [GET]  /config     : Menampilkan data yang tersimpan di IskakStorage.
+ * Respon: Nilai bootCount dan totalOnTime.
+ *
+ * 3. PEMELIHARAAN SISTEM
+ * ------------------------------------------------------------------------------
+ * [GET]  /scan       : Memulai pemindaian jaringan WiFi di sekitar.
+ * [GET]  /reboot     : Menjalankan ESP.restart() secara aman.
+ * [POST] /reset      : Menghapus konfigurasi WiFi & reset IskakStorage ke default.
+ * Catatan: Membutuhkan konfirmasi untuk mencegah ketidaksengajaan.
+ * [GET]  /update     : Akses ke halaman OTA (Over-The-Air) Update untuk upload firmware.
+ *
+ * 4. DASHBOARD UI
+ * ------------------------------------------------------------------------------
+ * [GET]  /           : Menampilkan Dashboard HTML utama (Responsive Mobile).
+ * [GET]  /setup      : Masuk ke Captive Portal untuk pengaturan WiFi & Parameter.
+ * ==============================================================================
+ */
   portal.begin("IskakINO-SmartFitting");
   ntp.begin(25200); // GMT+7
 }
