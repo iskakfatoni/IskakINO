@@ -17,8 +17,13 @@ jobs:
 
       - name: Install Platforms
         run: |
-          arduino-cli core update-index
+          # Tambahkan URL tambahan untuk ESP32 dan ESP8266
+          arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          
+          # Install ESP32
           arduino-cli core install esp32:esp32
+          
+          # Install ESP8266 (Sekarang index-nya sudah terdaftar)
           arduino-cli core install esp8266:esp8266
 
       - name: Install IskakINO Dependencies
