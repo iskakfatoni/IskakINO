@@ -13,8 +13,14 @@
 #include <IskakINO_ArduFast.h>
 #include <IskakINO_WifiPortal.h>
 #include <IskakINO_FastNTP.h>
-#include <IskakINO_LiquidCrystal_I2C.h> // Jika ingin menambah display status
-#include <Preferences.h>
+#include <IskakINO_LiquidCrystal_I2C.h>
+
+#ifdef ESP32
+  #include <Preferences.h>
+#else
+  // Opsional: Untuk ESP8266 gunakan LittleFS atau library Preferences pihak ketiga
+  // #include <LittleFS.h> 
+#endif
 #include <WebServer.h>
 
 // ================== IDENTITAS ==================
