@@ -1,54 +1,49 @@
 /************************************************************
  * PROJECT    : 01 - IskakINO Smart Fitting Lamp
- * BOARD      : ESP32-C3
- * AUTHOR     : Iskak Fatoni
- * VERSION    : v1.3.5 (Refactored with IskakINO Libraries)
- * * DEPENDENCIES:
- * 1. IskakINO_ArduFast
- * 2. IskakINO_LiquidCrystal_I2C (Optional for Debug)
- * 3. IskakINO_WifiPortal
- * 4. IskakINO_FastNTP (Finalized 2026-02-16)
+ * BOARD      : ESP32 & ESP8266 (Hybrid)
+ * LIBRARIES  : ArduFast, WifiPortal, FastNTP, LiquidCrystal_I2C
+ * AUTHOR     : iskakfatoni
+ * VERSION    : v1.3.5
+ * DATE       : 2026-02-16
  ************************************************************/
 
-#include <IskakINO_ArduFast.h>
-#include <IskakINO_WifiPortal.h>
-#include <IskakINO_FastNTP.h>
+#include <IskakINO_ArduFast.h>      // Membawa instance ArduFast
+#include <IskakINO_WifiPortal.h>    // Membawa IskakWebServer & WiFi
+#include <IskakINO_FastNTP.h>       // Membawa IskakINO_FastNTP
 #include <IskakINO_LiquidCrystal_I2C.h>
+#include <WiFiUdp.h>
 
+// --- HANDLE PREFERENCES (ESP32 Built-in, ESP8266 External) ---
 #ifdef ESP32
   #include <Preferences.h>
 #else
-  // Opsional: Untuk ESP8266 gunakan LittleFS atau library Preferences pihak ketiga
-  // #include <LittleFS.h> 
+  #include <vshymanskyy/Preferences.h> 
 #endif
-#include <WebServer.h>
-
-// ================== IDENTITAS ==================
-const char* PROJECT_ID = "01 - IskakINO";
-const char* FW_VERSION = "v1.3.5";
 
 // ================== PIN & KONFIGURASI ==========
 #define RELAY_PIN 5
 #define MAX_LOG 20
 
 // ================== OBJECTS ==================
-IskakINO_WifiPortal portal("SmartFitting-Setup", "12345678");
-IskakINO_FastNTP ntp;
-IskakINO_ArduFast timer;
-WebServer server(80);
+IskakINO_WifiPortal portal;
+WiFiUDP ntpUDP;
+IskakINO_FastNTP ntp(ntpUDP, "pool.ntp.org");
+LiquidCrystal_I2C lcd(16, 2);
 Preferences prefs;
 
 // ================== STATE ==================
 bool lampState = false;
-String currentDay = "";
 
 // ================== LOG SYSTEM ==================
 void logEvent(String level, String msg) {
     int idx = prefs.getInt("logi", 0);
-    // Menggunakan IskakINO_FastNTP untuk timestamp
     String entry = "[" + ntp.getFormattedTime() + "] [" + level + "] " + msg;
+    
     prefs.putString(("log" + String(idx)).c_str(), entry);
     prefs.putInt("logi", (idx + 1) % MAX_LOG);
+    
+    // Gunakan fungsi log dari ArduFast
+    ArduFast.log(F("Log Update"), idx);
     Serial.println(entry);
 }
 
@@ -58,64 +53,62 @@ void setLamp(bool state, String reason) {
     digitalWrite(RELAY_PIN, lampState ? HIGH : LOW);
     prefs.putBool("lamp", lampState);
     logEvent("INFO", reason);
-}
-
-// ================== WEB HANDLERS =================
-void handleRoot() {
-    // Memanggil dashboard HTML (Tetap gunakan konstanta DASHBOARD_HTML Anda sebelumnya)
-    // server.send_P(200, "text/html", DASHBOARD_HTML); 
-}
-
-void handleToggle() {
-    setLamp(!lampState, "Web Toggle");
-    server.send(200, "text/plain", "OK");
-}
-
-void handleSys() {
-    // Menggunakan IskakINO_ArduFast untuk uptime
-    String wifiStatus = WiFi.isConnected() ? String(WiFi.RSSI()) + " dBm" : "Offline";
-    String json = "{";
-    json += "\"wifi\":\"" + wifiStatus + "\",";
-    json += "\"uptime\":\"" + timer.getUptimeString() + "\",";
-    json += "\"mode\":\"" + String(WiFi.getMode() == WIFI_AP ? "AP" : "STA") + "\"";
-    json += "}";
-    server.send(200, "application/json", json);
+    
+    // Update LCD jika terkoneksi
+    if(lcd.isConnected()) {
+        lcd.setCursor(0, 1);
+        lcd.print("Lamp: ");
+        lcd.print(state ? "ON " : "OFF");
+    }
 }
 
 // ================== SETUP ========================
 void setup() {
-    Serial.begin(115200);
+    // ArduFast.begin sudah menghandle Serial.begin(115200)
+    ArduFast.begin(115200);
     pinMode(RELAY_PIN, OUTPUT);
 
-    // 1. Inisialisasi Preferences
+    // 1. Inisialisasi LCD
+    lcd.begin();
+    lcd.backlight();
+    lcd.printCenter("IskakINO v1.0", 0);
+
+    // 2. Storage
     prefs.begin("smartfit", false);
     lampState = prefs.getBool("lamp", false);
     digitalWrite(RELAY_PIN, lampState ? HIGH : LOW);
 
-    // 2. WiFi Portal (Otomatis Handle STA & AP)
-    portal.begin();
+    // 3. WiFi Portal (Handle STA/AP & Web Server Internal)
+    portal.setBrandName("IskakINO Smart Fitting");
+    portal.begin("SmartFitting-Setup", "12345678");
 
-    // 3. FastNTP (Finalized Version)
-    ntp.begin();
+    // 4. FastNTP (GMT+7)
+    ntp.begin(25200);
 
-    // 4. Web Server
-    server.on("/", handleRoot);
-    server.on("/toggle", handleToggle);
-    server.on("/sys", handleSys);
-    server.begin();
-
-    logEvent("INFO", "System 01-IskakINO Booted");
+    logEvent("INFO", "System Booted Successfully");
 }
 
 // ================== LOOP =========================
 void loop() {
-    server.handleClient();
-    ntp.update(); // Update waktu NTP secara background
+    // Handle WiFi Portal & Web Server internal
+    portal.handle();
     
-    // Gunakan ArduFast untuk cek koneksi tiap 1 menit
-    if (timer.isTimeUp(60000)) {
+    // Handle background NTP Sync
+    ntp.update();
+    
+    // Gunakan ArduFast 'every' untuk tugas periodik (Non-Blocking)
+    // ID 0: Update Jam di LCD setiap 1 detik
+    if (ArduFast.every(1000, 0)) {
+        if(lcd.isConnected()) {
+            lcd.setCursor(0, 0);
+            lcd.print(ntp.getFormattedTime());
+        }
+    }
+    
+    // ID 1: Cek Koneksi WiFi setiap 30 detik
+    if (ArduFast.every(30000, 1)) {
         if (WiFi.status() != WL_CONNECTED && WiFi.getMode() != WIFI_AP) {
-            logEvent("WARN", "WiFi Lost, Retrying...");
+            ArduFast.log(F("WiFi Connection Lost!"));
         }
     }
 }
