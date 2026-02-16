@@ -1,3 +1,49 @@
+/* * ==============================================================================
+ * 01_SmartFitting.ino - LOGIKA ALUR KERJA SISTEM (PRODUCTION LEVEL)
+ * ==============================================================================
+ * * 1. TAHAP SETUP (INISIALISASI)
+ * ------------------------------------------------------------------------------
+ * [A] BOOTING: 
+ * - Memulai Serial via ArduFast.begin(115200).
+ * - Konfigurasi Relay Pin sebagai OUTPUT.
+ * [B] STORAGE RECOVERY (IskakINO_Storage):
+ * - Mounting filesystem (NVS/LittleFS/EEPROM) berdasarkan arsitektur chip.
+ * - Load Struct 'ConfigData' dari alamat 0.
+ * - Validasi Integrity via CRC32: 
+ * - Jika VALID: Data digunakan.
+ * - Jika KORUP: Reset ke default (lampState: OFF, totalOn: 0).
+ * - Incremental bootCount++ dan autosave kembali ke storage.
+ * [C] HARDWARE RESTORE:
+ * - Mengembalikan status Relay ke lampState terakhir (Memory Persistence).
+ * - Inisialisasi LCD & tampilkan brand name IskakINO.
+ * [D] NETWORK & TIME:
+ * - portal.begin(): Cek WiFi. Jika gagal, otomatis aktifkan AP (Portal Mode).
+ * - ntp.begin(25200): Siapkan antrean sinkronisasi GMT+7.
+ *
+ * 2. TAHAP LOOP (NON-BLOCKING ENGINE)
+ * ------------------------------------------------------------------------------
+ * [A] BACKGROUND TASKS (Real-time):
+ * - portal.handle(): Mengelola Web Server & DNS Captive Portal.
+ * - ntp.update(): Mengelola state machine kirim-terima paket NTP (UDP).
+ * * [B] SCHEDULED TASKS (ArduFast.every):
+ * - ID 0 (1 detik):
+ * - Validasi LCD Connection.
+ * - Jika ntp.isTimeSet(): Update baris 0 LCD dengan ntp.getFormattedTime().
+ * - ID 1 (1 menit):
+ * - Jika lampState == ON: Tambahkan variabel totalOnTime (Statistik Produk).
+ * - Jalankan IskakStorage.save() (Autosave berkala untuk mencegah data loss).
+ * - ID 2 (1 jam):
+ * - Jalankan ntp.forceUpdate(): Sinkronisasi ulang untuk koreksi clock drift.
+ *
+ * 3. LOGIKA FAIL-SAFE (KEAMANAN PRODUK)
+ * ------------------------------------------------------------------------------
+ * - ANTI-HANG: Seluruh proses bersifat non-blocking (Tanpa delay()).
+ * - DATA PROTECTION: Setiap proses tulis menggunakan Wrapper (Magic Byte + CRC32).
+ * - HARDWARE AWARE: Cek lcd.isConnected() sebelum tulis I2C (Mencegah I2C Bus Hang).
+ * - SMART WIFI: Otomatis masuk mode konfigurasi jika koneksi router hilang.
+ * ==============================================================================
+ */
+
 #include <IskakINO_ArduFast.h>
 #include <IskakINO_WifiPortal.h>
 #include <IskakINO_FastNTP.h>
