@@ -26,12 +26,20 @@ jobs:
 
       - name: Compile All Examples
         run: |
-          # Mencari semua file .ino di dalam folder examples secara rekursif
+          # Buat folder library sementara di path standar Arduino
+          LIB_PATH="/home/runner/Arduino/libraries/IskakINO"
+          mkdir -p $LIB_PATH
+          
+          # Copy semua file dari repo ke folder library tersebut
+          cp -r . $LIB_PATH
+          
+          # Lakukan looping kompilasi
           for example in $(find examples -name "*.ino"); do
             echo "-------------------------------------------------------"
             echo "Compiling: $example"
             echo "-------------------------------------------------------"
-            arduino-cli compile --fqbn esp32:esp32:esp32c3 "$example" --library .
+            # Hapus flag --library . dan biarkan CLI mencari di folder libraries standar
+            arduino-cli compile --fqbn esp32:esp32:esp32c3 "$example"
           done
 
       - name: Notify Status
