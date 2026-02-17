@@ -22,7 +22,7 @@ ConfigData settings;
 
 // ================== PIN & GLOBALS ==================
 #define RELAY_PIN 5
-IskakINO_ArduFast ArduFast;
+//IskakINO_ArduFast ArduFast;   //TIDAK PERLU, KARENA SUDAH ADA DI LIBRARY
 IskakINO_WifiPortal portal;
 WiFiUDP ntpUDP;
 IskakINO_FastNTP ntp(ntpUDP, "pool.ntp.org");
