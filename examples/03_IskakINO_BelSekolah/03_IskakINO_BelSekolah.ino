@@ -28,14 +28,13 @@ struct AlarmConfig {
 AlarmConfig daftarJadwal[MAX_JADWAL];
 
 // --- INSTANCE OBJECT (PENTING: Perhatikan Nama Di Sini) ---
-IskakINO_ArduFast af;
-IskakINO_Storage  IskakStorage; // Membuat object IskakStorage agar dikenali
 LiquidCrystal_I2C lcd(20, 4);   // Menggunakan nama class dari library Anda
 IskakINO_SmartVoice voice;
 WiFiUDP udp;
 IskakINO_FastNTP ntp(udp);
 IskakINO_WifiPortal portal;
-
+IskakINO_ArduFast ArduFast;
+IskakINO_Storage  IskakStorage;
 int lastTriggerMinute = -1;
 
 // --- HTML DASHBOARD ---
