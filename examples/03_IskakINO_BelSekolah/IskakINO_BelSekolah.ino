@@ -1,86 +1,115 @@
+/*
+ * Project: IskakINO_BelSekolah_C3 (Example 03 - Professional Edition)
+ * Hardware: ESP32-C3 + DFPlayer Mini + LCD 20x4 I2C
+ */
+
 #include <WiFiUdp.h>
-#include <SoftwareSerial.h>
 #include <IskakINO_ArduFast.h>
 #include <IskakINO_FastNTP.h>
 #include <IskakINO_LiquidCrystal_I2C.h>
 #include <IskakINO_SmartVoice.h>
 #include <IskakINO_WifiPortal.h>
 
-// Buffer untuk Parameter (Disimpan otomatis oleh WifiPortal ke LittleFS/Prefs)
-char p_mode[2] = "0";      // Mode Bel 0-9
-char p_vol[3] = "25";      // Volume 0-30
-char p_jam_masuk[6] = "07:00";
+// --- KONFIGURASI PIN ESP32-C3 ---
+#define RX_PIN 20  // Hubungkan ke TX DFPlayer
+#define TX_PIN 21  // Hubungkan ke RX DFPlayer (Gunakan Resistor 1K)
+
+// --- PARAMETER DASHBOARD ---
+char p_total_jam[3] = "12";     
+char p_durasi[3]    = "45";     
+char p_jam_mulai[6] = "07:00";  
+char p_ist1_dur[3]  = "15"; 
+char p_ist1_pos[2]  = "4";  
+char p_ist2_dur[3]  = "15"; 
+char p_ist2_pos[2]  = "8";
+char p_vol[3]       = "25";
 
 IskakINO_ArduFast ArduFast;
 IskakINO_WifiPortal Portal;
 WiFiUDP udp;
 IskakINO_FastNTP ntp(udp);
 LiquidCrystal_I2C lcd(20, 4);
-SoftwareSerial voiceSerial(D7, D8);
+
+// Pada ESP32, kita gunakan HardwareSerial 1 (Serial1)
+HardwareSerial voiceSerial(1); 
 
 void setup() {
     ArduFast.begin(115200);
     lcd.begin();
     lcd.backlight();
     
-    // 1. Daftarkan Parameter Bel ke Dashboard
-    // Parameter ini akan muncul baik di mode AP maupun STA
-    Portal.addParameter("mode", "Preset Jadwal (0-9)", p_mode, 1);
-    Portal.addParameter("vol", "Volume Bel", p_vol, 2);
-    Portal.addParameter("j_in", "Jam Masuk Utama", p_jam_masuk, 5);
+    // Registrasi Parameter
+    Portal.addParameter("start", "Jam Mulai", p_jam_mulai, 5);
+    Portal.addParameter("tot", "Total Jam", p_total_jam, 2);
+    Portal.addParameter("dur", "Durasi (Min)", p_durasi, 2);
+    Portal.addParameter("i1p", "Istirahat1 (Jam Ke-)", p_ist1_pos, 1);
+    Portal.addParameter("i1d", "Durasi Istirahat1", p_ist1_dur, 2);
+    Portal.addParameter("i2p", "Istirahat2 (Jam Ke-)", p_ist2_pos, 1);
+    Portal.addParameter("i2d", "Durasi Istirahat2", p_ist2_dur, 2);
+    Portal.addParameter("vol", "Volume (0-30)", p_vol, 2);
 
-    // 2. Mulai Portal (Otomatis Scan WiFi jika di mode AP)
-    lcd.printCenter("Mencari WiFi...", 0);
-    if (!Portal.begin("BelSekolah-Iskak")) {
-        // Jika masuk sini, berarti sedang mode AP (Config)
-        lcd.clear();
-        lcd.printCenter("MODE CONFIG (AP)", 0);
-        lcd.printCenter("192.168.4.1", 1);
-        lcd.setCursor(0, 3);
-        lcd.print("Silahkan Setting Bel");
+    if (!Portal.begin("Iskak-BelC3")) {
+        lcd.printCenter("Connect to WiFi", 0);
+        while (WiFi.status() != WL_CONNECTED) { Portal.handle(); delay(10); }
     }
 
-    // 3. Inisialisasi Hardware Lain
-    ntp.begin();
-    voiceSerial.begin(9600);
+    // Inisialisasi Serial Hardware untuk ESP32-C3
+    voiceSerial.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
     IskakVoice.begin(voiceSerial);
     IskakVoice.setVolume(atoi(p_vol));
+    ntp.begin();
+
+    lcd.clear();
 }
 
 void loop() {
-    Portal.handle(); // Menangani Web Dashboard & Scan WiFi List
-    
-    // Hanya update NTP dan Cek Bel jika sudah terkoneksi WiFi (STA)
+    Portal.handle();
     if (WiFi.status() == WL_CONNECTED) {
         ntp.update();
-        checkSchoolBell();
+        if (ArduFast.every(1000, 1)) runScheduleLogic();
     }
-
-    if (ArduFast.every(1000, 0)) {
-        updateLCD();
-    }
+    if (ArduFast.every(1000, 0)) updateLCD();
 }
 
-void checkSchoolBell() {
-    // Logika perbandingan jam ntp dengan parameter p_jam_masuk
-    int h = (p_jam_masuk[0] - '0') * 10 + (p_jam_masuk[1] - '0');
-    int m = (p_jam_masuk[3] - '0') * 10 + (p_jam_masuk[4] - '0');
+void runScheduleLogic() {
+    int startH = (p_jam_mulai[0] - '0') * 10 + (p_jam_mulai[1] - '0');
+    int startM = (p_jam_mulai[3] - '0') * 10 + (p_jam_mulai[4] - '0');
+    int currentMins = startH * 60 + startM;
 
-    if (ntp.isAlarmActive(h, m, 0)) {
-        IskakVoice.playTrack(1); 
-        ArduFast.log(F("Bel Berbunyi!"));
+    // Cek Masuk Jam 1
+    if (ntp.isAlarmActive(startH, startM, 0)) { IskakVoice.playTrack(1); return; }
+
+    for (int i = 1; i <= atoi(p_total_jam); i++) {
+        currentMins += atoi(p_durasi);
+
+        // Logika Istirahat 1
+        if (i == atoi(p_ist1_pos)) {
+            if (ntp.isAlarmActive(currentMins/60, currentMins%60, 0)) { IskakVoice.playTrack(2); return; }
+            currentMins += atoi(p_ist1_dur);
+            if (ntp.isAlarmActive(currentMins/60, currentMins%60, 0)) { IskakVoice.playTrack(5); return; }
+        }
+        // Logika Istirahat 2
+        else if (i == atoi(p_ist2_pos)) {
+            if (ntp.isAlarmActive(currentMins/60, currentMins%60, 0)) { IskakVoice.playTrack(2); return; }
+            currentMins += atoi(p_ist2_dur);
+            if (ntp.isAlarmActive(currentMins/60, currentMins%60, 0)) { IskakVoice.playTrack(5); return; }
+        }
+        // Pergantian Jam & Pulang
+        else {
+            if (ntp.isAlarmActive(currentMins/60, currentMins%60, 0)) {
+                if (i == atoi(p_total_jam)) IskakVoice.playTrack(3);
+                else IskakVoice.playTrack(4);
+                return;
+            }
+        }
     }
 }
 
 void updateLCD() {
-    if (WiFi.status() == WL_CONNECTED) {
-        lcd.setCursor(0, 0);
-        lcd.print(ntp.getFormattedTime() + " " + ntp.getDayName(LANG_ID));
-        lcd.setCursor(0, 1);
-        lcd.print("IP: " + WiFi.localIP().toString());
-    } else {
-        // Tampilan saat mode AP
-        lcd.setCursor(0, 2);
-        lcd.print("WiFi Disconnected   ");
-    }
+    lcd.setCursor(0, 0);
+    lcd.print(ntp.getFormattedTime() + " ESP32-C3");
+    lcd.setCursor(0, 1);
+    lcd.print(ntp.getDayName(LANG_ID) + ", " + ntp.getFormattedDate());
+    lcd.setCursor(0, 3);
+    lcd.print("IP: " + WiFi.localIP().toString());
 }
