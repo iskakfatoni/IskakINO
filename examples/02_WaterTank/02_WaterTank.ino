@@ -1,167 +1,175 @@
-/*******************************************************************************
- * PROJECT 02: ISKAKINO WATER TANK CONTROL (IoT BASED)
- * VERSION    : v1.0.0 (Production Ready)
+/************************************************************
+ * PROJECT    : Water Tank Control IskakINO
+ * BOARD      : ESP32-C3
+ * VERSION    : v1.5.0 (Optimized Ecosystem)
  * AUTHOR     : iskakfatoni
- * DATE       : 2026-02-16
- * BOARD      : ESP32 / ESP8266 (Hybrid)
- * * [LOGIKA KERJA]
- * 1. SENSOR  : Membaca jarak via Ultrasonik, dikonversi ke % (0-100%).
- * 2. OTOMASI : Pompa ON jika air <= minLevel, OFF jika >= maxLevel.
- * 3. STORAGE : Menyimpan ambang batas & statistik pumpRuns aman dengan CRC32.
- * 4. DASHBOARD: Antarmuka Web untuk monitoring & kontrol manual dari HP.
- *******************************************************************************/
+ ************************************************************/
 
-#include <IskakINO_ArduFast.h>      // Task Scheduler
-#include <IskakINO_WifiPortal.h>    // Web Server & WiFi
-#include <IskakINO_FastNTP.h>       // Real Time Clock
-#include <IskakINO_Storage.h>       // Safety Data Storage
+#include <IskakINO_ArduFast.h>
+#include <IskakINO_WifiPortal.h>
+#include <IskakINO_FastNTP.h>
+#include <IskakINO_Storage.h>
 #include <IskakINO_LiquidCrystal_I2C.h>
 #include <WiFiUdp.h>
 
-// ================== STRUKTUR DATA (SAVED IN STORAGE) ==================
+// ================== STRUKTUR DATA (CRC32 Protected) ==================
 struct TankConfig {
-  int minLevel;       // Batas bawah pompa mulai nyala (%)
-  int maxLevel;       // Batas atas pompa mati (%)
-  bool autoMode;      // Mode Otomatis/Manual
-  uint32_t pumpRuns;  // Counter berapa kali pompa bekerja
+  int minLevel;      // Batas bawah (%) untuk ON
+  int maxLevel;      // Batas atas (%) untuk OFF
+  bool autoMode;     // Auto/Manual
+  uint32_t pumpRuns; // Statistik
 };
-
 TankConfig settings;
 
-// ================== KONFIGURASI PIN & HARDWARE ==================
-#define PUMP_RELAY 5     // Pin Relay Pompa
-#define TRIG_PIN   12    // Pin Trigger Ultrasonik
-#define ECHO_PIN   14    // Pin Echo Ultrasonik
-#define TANK_HEIGHT 200  // Tinggi tangki dalam CM (Sesuaikan!)
+// ================== PIN & GLOBALS ==================
+#define PUMP_RELAY 5
+#define TRIG_PIN   12
+#define ECHO_PIN   13
+#define TANK_HEIGHT 200 // Tinggi tangki (cm)
 
-// ================== OBJECTS ==================
+unsigned long lastTransitionMs = 0;
+const unsigned long MIN_INTERVAL = 5000; // Proteksi pompa (5 detik)
+int currentLevel = 0;
+
 IskakINO_WifiPortal portal;
 WiFiUDP ntpUDP;
 IskakINO_FastNTP ntp(ntpUDP, "pool.ntp.org");
 LiquidCrystal_I2C lcd(16, 2);
 
-int currentLevel = 0;    // Variabel level air global (%)
-bool pumpActive = false; // Status pompa saat ini
+// ================== CORE FUNCTION (SMOOTH TRANSITION) ==================
+void updatePump(bool state, bool force = false) {
+  // Proteksi agar pompa tidak ON-OFF terlalu cepat (Mencegah kerusakan motor)
+  if (!force && (millis() - lastTransitionMs < MIN_INTERVAL)) {
+    ArduFast.log("Safety", "Pump transition blocked: Too frequent!");
+    return;
+  }
 
-// ================== DASHBOARD HTML (UI) ==================
-const char DASHBOARD_HTML[] PROGMEM = R"=====(
+  digitalWrite(PUMP_RELAY, state ? HIGH : LOW);
+  lastTransitionMs = millis();
+  
+  if(lcd.isConnected()) {
+    lcd.setCursor(0, 1);
+    lcd.print(state ? "PUMP: RUNNING   " : "PUMP: STOPPED   ");
+  }
+  ArduFast.log("Pump", state ? "Activated" : "Deactivated");
+}
+
+// ================== SENSOR LOGIC (NON-BLOCKING) ==================
+int readUltrasonic() {
+  digitalWrite(TRIG_PIN, LOW); delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000); // Timeout 30ms
+  int distance = duration * 0.034 / 2;
+  
+  if (distance <= 0 || distance > TANK_HEIGHT) return 0;
+  int level = map(distance, TANK_HEIGHT, 10, 0, 100);
+  return constrain(level, 0, 100);
+}
+
+// ================== DASHBOARD UI ==================
+const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IskakINO WaterTank</title>
+<title>WaterTank C3</title>
 <style>
-  body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #eceff1; color: #37474f; }
-  .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: inline-block; width: 90%; max-width: 400px; margin-top: 20px; }
-  .tank { width: 120px; height: 180px; border: 4px solid #455a64; margin: 20px auto; position: relative; border-radius: 0 0 15px 15px; background: #fff; overflow: hidden; }
-  .water { background: #0288d1; position: absolute; bottom: 0; width: 100%; transition: height 1s ease-in-out; }
-  .btn { padding: 12px 25px; margin: 5px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-  .btn-on { background: #43a047; color: white; }
-  .btn-off { background: #e53935; color: white; }
+  body{font-family:sans-serif; background:#0d1b2a; color:#e0e1dd; text-align:center; padding:20px;}
+  .card{background:#1b263b; padding:20px; border-radius:15px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.5);}
+  .tank-visual{width:100px; height:150px; border:3px solid #778da9; margin:20px auto; position:relative; border-radius:0 0 10px 10px; overflow:hidden;}
+  .water{background:#415a77; position:absolute; bottom:0; width:100%; transition:height 1s;}
+  .btn{padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin:5px 0; background:#e0e1dd; color:#0d1b2a;}
 </style>
 </head><body>
+  <h2>🚰 IskakINO WaterTank</h2>
   <div class="card">
-    <h2>Water Tank System</h2>
-    <div class="tank"><div id="w" class="water" style="height: 0%;"></div></div>
-    <h1 id="l">0%</h1>
-    <p>Pump Status: <b id="s">OFF</b></p>
-    <hr>
-    <button class="btn btn-on" onclick="fetch('/p?s=1')">PUMP ON</button>
-    <button class="btn btn-off" onclick="fetch('/p?s=0')">PUMP OFF</button>
+    <div class="tank-visual"><div id="wb" class="water" style="height:0%;"></div></div>
+    <h1 id="lv">0%</h1>
+    <p id="ps">Status: --</p>
+    <button class="btn" onclick="fetch('/toggle')">MANUAL TOGGLE</button>
+  </div>
+  <div class="card" style="font-size:0.8em; text-align:left;">
+    WiFi: <span id="rssi">--</span> | Time: <span id="tm">--</span><br>
+    Pump Count: <span id="pc">--</span>
   </div>
   <script>
     setInterval(() => {
-      fetch('/status').then(r => r.json()).then(d => {
-        document.getElementById('w').style.height = d.lv + '%';
-        document.getElementById('l').innerText = d.lv + '%';
-        document.getElementById('s').innerText = d.p ? 'ON' : 'OFF';
-        document.getElementById('s').style.color = d.p ? '#43a047' : '#e53935';
+      fetch('/status').then(r=>r.json()).then(d=>{
+        document.getElementById('wb').style.height = d.l + '%';
+        document.getElementById('lv').innerText = d.l + '%';
+        document.getElementById('ps').innerText = d.p ? 'PUMP: ON' : 'PUMP: OFF';
+        document.getElementById('rssi').innerText = d.r + 'dBm';
+        document.getElementById('tm').innerText = d.t;
+        document.getElementById('pc').innerText = d.c;
       });
     }, 2000);
   </script>
 </body></html>
-)=====";
+)rawliteral";
 
-// ================== LOGIKA KONTROL POMPA ==================
-void controlPump(bool state) {
-  pumpActive = state;
-  digitalWrite(PUMP_RELAY, state ? HIGH : LOW);
-  ArduFast.log(F("Action"), state ? "Pump ON" : "Pump OFF");
-}
-
-// ================== PEMBACAAN SENSOR (NON-BLOCKING) ==================
-int getWaterLevel() {
-  digitalWrite(TRIG_PIN, LOW); delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  long duration = pulseIn(ECHO_PIN, HIGH, 25000); // Max 25ms
-  int dist = duration * 0.034 / 2;
-  if (dist <= 0 || dist > TANK_HEIGHT) return 0;
-  // Memetakan jarak ke persentase (Contoh: 180cm=0%, 10cm=100%)
-  int p = map(dist, TANK_HEIGHT - 20, 10, 0, 100);
-  return constrain(p, 0, 100);
-}
-
-// ================== SETUP ==================
 void setup() {
   ArduFast.begin(115200);
   pinMode(PUMP_RELAY, OUTPUT);
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
-  // 1. Storage Recovery
-  IskakStorage.begin("iskak_water", true);
+  // 1. STORAGE
+  IskakStorage.begin("watertank", true);
   if (!IskakStorage.load(0, settings)) {
-    settings = {20, 90, true, 0}; // Default: Min 20%, Max 90%
+    settings = {20, 90, true, 0}; // Default: ON <20%, OFF >90%
   }
 
-  // 2. LCD & Portal
-  lcd.begin();
-  lcd.printCenter("IskakINO Water", 0);
-  
-  // Define Web Routes
+  // 2. PORTAL & ROUTES
+  portal.setBrandName("IskakINO WaterTank");
   portal.on("/", []() { portal.send(200, "text/html", DASHBOARD_HTML); });
   portal.on("/status", []() {
-    String j = "{\"lv\":"+String(currentLevel)+",\"p\":"+String(pumpActive)+"}";
+    String j = "{\"l\":"+String(currentLevel)+",\"p\":"+String(digitalRead(PUMP_RELAY))+",\"r\":"+String(WiFi.RSSI())+",\"t\":\""+ntp.getFormattedTime()+"\",\"c\":"+String(settings.pumpRuns)+"}";
     portal.send(200, "application/json", j);
   });
-  portal.on("/p", []() { // Handle Manual Control dari Dashboard
-    if(portal.hasArg("s")) controlPump(portal.arg("s") == "1");
-    portal.send(200, "text/plain", "OK");
+  portal.on("/toggle", []() { 
+    bool currentState = digitalRead(PUMP_RELAY);
+    updatePump(!currentState); 
+    portal.send(200, "text/plain", "OK"); 
   });
 
-  portal.begin("Iskak-WaterTank");
-  ntp.begin(25200); // GMT+7
+  portal.begin("WaterTank-Setup");
+  ntp.begin(25200);
+  
+  lcd.begin();
+  lcd.printCenter("WaterTank C3", 0);
+  updatePump(false, true); // Safety start
 }
 
-// ================== MAIN LOOP ==================
 void loop() {
-  portal.handle(); // Web Server
-  ntp.update();    // Time Sync
+  portal.handle();
+  ntp.update();
 
-  // TUGAS 1: Pembacaan Sensor & Logic (Setiap 3 Detik)
-  if (ArduFast.every(3000, 0)) {
-    currentLevel = getWaterLevel();
+  // TUGAS 1: Pembacaan Sensor & Otomasi (Tiap 2 Detik)
+  if (ArduFast.every(2000, 0)) {
+    currentLevel = readUltrasonic();
     
-    // Logic Otomasi
     if (settings.autoMode) {
-      if (currentLevel <= settings.minLevel && !pumpActive) {
-        controlPump(true);
+      if (currentLevel <= settings.minLevel && digitalRead(PUMP_RELAY) == LOW) {
+        updatePump(true);
         settings.pumpRuns++;
-        IskakStorage.save(0, settings); // Simpan statistik
+        IskakStorage.save(0, settings);
       } 
-      else if (currentLevel >= settings.maxLevel && pumpActive) {
-        controlPump(false);
+      else if (currentLevel >= settings.maxLevel && digitalRead(PUMP_RELAY) == HIGH) {
+        updatePump(false);
       }
     }
   }
 
-  // TUGAS 2: Update LCD Display (Setiap 1 Detik)
+  // TUGAS 2: LCD Maintenance (Tiap 1 Detik)
   if (ArduFast.every(1000, 1)) {
     if (lcd.isConnected()) {
       lcd.setCursor(0, 0);
-      lcd.print("Level: "); lcd.print(currentLevel); lcd.print("%  ");
-      lcd.setCursor(0, 1);
-      lcd.print(pumpActive ? "[RUNNING]" : "[STANDBY]");
-      if(ntp.isTimeSet()) { lcd.setCursor(11, 1); lcd.print(ntp.getFormattedTime().substring(0,5)); }
+      lcd.print("Lvl:"); lcd.print(currentLevel); lcd.print("%  ");
+      lcd.setCursor(11, 0); lcd.print(ntp.getFormattedTime().substring(0,5));
+      
+      // Indikator Smooth Transition
+      lcd.setCursor(15, 1);
+      lcd.print((millis() - lastTransitionMs < MIN_INTERVAL) ? "!" : " ");
     }
   }
 }
