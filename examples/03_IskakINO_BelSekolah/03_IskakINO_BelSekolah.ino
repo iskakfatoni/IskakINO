@@ -26,6 +26,7 @@ WiFiUDP udp;
 IskakINO_FastNTP ntp(udp);
 LiquidCrystal_I2C lcd(20, 4);
 HardwareSerial voiceSerial(1); // Hardware Serial 1 ESP32
+IskakINO_Storage IskakStorage;      // Pastikan objek dideklarasikan manual
 
 const char* KEY_JADWAL = "cfg_bel";
 StaticJsonDocument<2048> activeDoc;
