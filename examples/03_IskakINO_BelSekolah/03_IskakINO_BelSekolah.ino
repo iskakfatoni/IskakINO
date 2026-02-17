@@ -61,13 +61,13 @@ void showBootScreen() {
 
 void handleGetJson() {
     char buf[2048];
-    IskakStorage.loadString(KEY_JADWAL, buf, sizeof(buf));
+    IskakStorage.load(KEY_JADWAL, buf);
     Portal.server()->send(200, "application/json", buf);
 }
 
 void handleSetJson() {
     if (Portal.server()->hasArg("plain")) {
-        IskakStorage.saveString(KEY_JADWAL, Portal.server()->arg("plain").c_str());
+        IskakStorage.save(KEY_JADWAL, Portal.server()->arg("plain"));
         refreshJadwal = true; 
         Portal.server()->send(200, "text/plain", "OK");
     }
@@ -104,7 +104,7 @@ void updateLCD_Main() {
 void runSchedule() {
     if (refreshJadwal) {
         char buf[2048];
-        IskakStorage.loadString(KEY_JADWAL, buf, sizeof(buf));
+        IskakStorage.load(KEY_JADWAL, buf);
         deserializeJson(activeDoc, buf);
         refreshJadwal = false;
         IskakVoice.setVolume(activeDoc["vol"] | 25);
