@@ -15,7 +15,6 @@
 #define PIN_SCL      9
 #define PIN_MP3_TX   21
 #define PIN_MP3_RX   20
-#define PIN_BUSY     3
 
 // --- STRUKTUR DATA ---
 struct AlarmConfig {
@@ -28,9 +27,10 @@ struct AlarmConfig {
 #define MAX_JADWAL 20
 AlarmConfig daftarJadwal[MAX_JADWAL];
 
-// --- INSTANCE ---
+// --- INSTANCE OBJECT (PENTING: Perhatikan Nama Di Sini) ---
 IskakINO_ArduFast af;
-LiquidCrystal_I2C lcd(20, 4); // Diubah dari IskakINO_LiquidCrystal_I2C
+IskakINO_Storage  IskakStorage; // Membuat object IskakStorage agar dikenali
+LiquidCrystal_I2C lcd(20, 4);   // Menggunakan nama class dari library Anda
 IskakINO_SmartVoice voice;
 WiFiUDP udp;
 IskakINO_FastNTP ntp(udp);
@@ -45,9 +45,10 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 <style>
   body { font-family: sans-serif; background: #f0f2f5; padding: 10px; }
   .card { background: white; padding: 15px; border-radius: 10px; max-width: 500px; margin: auto; }
-  table { width: 100%; font-size: 14px; }
+  table { width: 100%; font-size: 14px; border-collapse: collapse; }
+  th, td { padding: 5px; border-bottom: 1px solid #ddd; }
   input { width: 45px; }
-  .btn { padding: 8px 15px; border: none; border-radius: 4px; color: white; cursor: pointer; text-decoration: none; }
+  .btn { padding: 8px 15px; border: none; border-radius: 4px; color: white; cursor: pointer; text-decoration: none; display: inline-block; margin: 2px; }
   .save { background: #2ecc71; } .backup { background: #3498db; } .reset { background: #e74c3c; }
 </style></head>
 <body><div class='card'>
@@ -69,7 +70,44 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
   document.getElementById('tbl').innerHTML=h;
 </script></body></html>)rawliteral";
 
-void setupWebHandlers(); // Prototype
+// --- HANDLERS ---
+void setupWebHandlers() {
+  portal._server->on("/", HTTP_GET, []() { 
+    portal._server->send(200, "text/html", DASHBOARD_HTML); 
+  });
+
+  portal._server->on("/save", HTTP_POST, []() {
+    for (int i = 0; i < MAX_JADWAL; i++) {
+      if(portal._server->hasArg("h"+String(i))) {
+        daftarJadwal[i].jam = portal._server->arg("h"+String(i)).toInt();
+        daftarJadwal[i].menit = portal._server->arg("m"+String(i)).toInt();
+        daftarJadwal[i].track = portal._server->arg("t"+String(i)).toInt();
+        daftarJadwal[i].aktif = portal._server->hasArg("s"+String(i));
+      }
+    }
+    IskakStorage.save(0, daftarJadwal);
+    portal._server->send(200, "text/html", "Saved! <a href='/'>Back</a>");
+  });
+
+  portal._server->on("/export", HTTP_GET, []() {
+    portal._server->sendHeader("Content-Disposition", "attachment; filename=jadwal.bin");
+    portal._server->send(200, "application/octet-stream", (uint8_t*)&daftarJadwal, sizeof(daftarJadwal));
+  });
+
+  portal._server->on("/import", HTTP_POST, []() { 
+    portal._server->send(200, "text/html", "Done! Restarting..."); 
+    delay(1000); ESP.restart(); 
+  }, []() {
+    HTTPUpload& up = portal._server->upload();
+    if (up.status == UPLOAD_FILE_WRITE) IskakStorage.save(0, up.buf);
+  });
+
+  portal._server->on("/reset", HTTP_GET, []() { 
+    IskakStorage.clear(); 
+    portal._server->send(200, "text/html", "Reset! Restarting..."); 
+    delay(1000); ESP.restart(); 
+  });
+}
 
 void setup() {
   af.begin(115200);
@@ -83,7 +121,7 @@ void setup() {
   voice.begin(Serial1);
   voice.setVolume(25);
 
-  IskakStorage.begin(); // Pastikan IskakINO_Storage.cpp ada di project
+  IskakStorage.begin(); 
   if (!IskakStorage.load(0, daftarJadwal)) {
     for(int i=0; i<MAX_JADWAL; i++) daftarJadwal[i] = {0,0,0,false};
     IskakStorage.save(0, daftarJadwal);
@@ -103,69 +141,25 @@ void setup() {
 void loop() {
   portal.handle();
   ntp.update();
-
-  if (af.every(1000, 0)) updateLCD();
-  if (af.every(1000, 1)) checkAlarm();
-}
-
-void checkAlarm() {
-  if (!ntp.isTimeSet()) return;
-  int h = ntp.getHours();
-  int m = ntp.getMinutes();
-  if (m != lastTriggerMinute) {
-    for (int i = 0; i < MAX_JADWAL; i++) {
-      if (daftarJadwal[i].aktif && daftarJadwal[i].jam == h && daftarJadwal[i].menit == m) {
-        voice.announce(daftarJadwal[i].track);
-        lastTriggerMinute = m;
-        break;
+  if (af.every(1000, 0)) {
+    lcd.setCursor(6, 0); lcd.print(ntp.getFormattedTime());
+    lcd.printCenter(ntp.getDayName() + " " + ntp.getFormattedDate('/'), 1);
+    lcd.setCursor(0, 3); lcd.print(WiFi.localIP().toString());
+  }
+  
+  if (af.every(1000, 1)) {
+    if (ntp.isTimeSet()) {
+      int h = ntp.getHours();
+      int m = ntp.getMinutes();
+      if (m != lastTriggerMinute) {
+        for (int i = 0; i < MAX_JADWAL; i++) {
+          if (daftarJadwal[i].aktif && daftarJadwal[i].jam == h && daftarJadwal[i].menit == m) {
+            voice.announce(daftarJadwal[i].track);
+            lastTriggerMinute = m;
+            break;
+          }
+        }
       }
     }
   }
-}
-
-void updateLCD() {
-  lcd.setCursor(6, 0); lcd.print(ntp.getFormattedTime());
-  lcd.printCenter(ntp.getDayName() + " " + ntp.getFormattedDate('/'), 1);
-  lcd.setCursor(0, 3); lcd.print(WiFi.localIP().toString());
-}
-
-void setupWebHandlers() {
-  portal._server->on("/", HTTP_GET, []() { 
-    portal._server->send(200, "text/html", DASHBOARD_HTML); 
-  });
-
-  portal._server->on("/save", HTTP_POST, []() {
-    for (int i = 0; i < MAX_JADWAL; i++) {
-      if(portal._server->hasArg("h"+String(i))) {
-        daftarJadwal[i].jam = portal._server->arg("h"+String(i)).toInt();
-        daftarJadwal[i].menit = portal._server->arg("m"+String(i)).toInt();
-        daftarJadwal[i].track = portal._server->arg("t"+String(i)).toInt();
-        daftarJadwal[i].aktif = portal._server->hasArg("s"+String(i));
-      }
-    }
-    IskakStorage.save(0, daftarJadwal);
-    portal._server->send(200, "text/html", "Saved! <a href='/'>Back</a>");
-  });
-
-  // Perbaikan Export: Menggunakan chunk/content-stream yang benar
-  portal._server->on("/export", HTTP_GET, []() {
-    portal._server->sendHeader("Content-Disposition", "attachment; filename=jadwal.bin");
-    portal._server->setContentLength(sizeof(daftarJadwal));
-    portal._server->send(200, "application/octet-stream", "");
-    portal._server->sendContent((const char*)&daftarJadwal, sizeof(daftarJadwal));
-  });
-
-  portal._server->on("/import", HTTP_POST, []() { 
-    portal._server->send(200, "text/html", "Done! Restarting..."); 
-    delay(1000); ESP.restart(); 
-  }, []() {
-    HTTPUpload& up = portal._server->upload();
-    if (up.status == UPLOAD_FILE_WRITE) IskakStorage.save(0, up.buf);
-  });
-
-  portal._server->on("/reset", HTTP_GET, []() { 
-    IskakStorage.clear(); 
-    portal._server->send(200, "text/html", "Reset! Restarting..."); 
-    delay(1000); ESP.restart(); 
-  });
 }
