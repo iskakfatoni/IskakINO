@@ -18,27 +18,30 @@ jobs:
           arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
           arduino-cli core install esp32:esp32 --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
 
-      - name: Install Required Libraries
+      - name: Install All IskakINO Libraries from GitHub
         run: |
+          # Buat direktori library Arduino
+          mkdir -p /home/runner/Arduino/libraries
+          cd /home/runner/Arduino/libraries
+
+          # Clone semua modul library iskakfatoni
+          git clone https://github.com/iskakfatoni/IskakINO_LiquidCrystal_I2C.git
+          git clone https://github.com/iskakfatoni/IskakINO_ArduFast.git
+          git clone https://github.com/iskakfatoni/IskakINO_WifiPortal.git
+          git clone https://github.com/iskakfatoni/IskakINO_FastNTP.git
+          git clone https://github.com/iskakfatoni/IskakINO_Storage.git
+          git clone https://github.com/iskakfatoni/IskakINO_SmartVoice.git
+
+          # Instal library pihak ketiga yang dibutuhkan
           arduino-cli lib install "ArduinoJson"
-          arduino-cli lib install "LiquidCrystal I2C"
-          # Library IskakINO akan dideteksi otomatis jika file .h ada di folder root atau src
 
       - name: Compile All Examples
         run: |
-          # Buat folder library sementara di path standar Arduino
-          LIB_PATH="/home/runner/Arduino/libraries/IskakINO"
-          mkdir -p $LIB_PATH
-          
-          # Copy semua file dari repo ke folder library tersebut
-          cp -r . $LIB_PATH
-          
-          # Lakukan looping kompilasi
           for example in $(find examples -name "*.ino"); do
             echo "-------------------------------------------------------"
             echo "Compiling: $example"
             echo "-------------------------------------------------------"
-            # Hapus flag --library . dan biarkan CLI mencari di folder libraries standar
+            # Kompilasi untuk ESP32-C3
             arduino-cli compile --fqbn esp32:esp32:esp32c3 "$example"
           done
 
