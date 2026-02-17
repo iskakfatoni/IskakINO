@@ -37,12 +37,15 @@ jobs:
 
       - name: Compile All Examples
         run: |
+          # Definisikan path library secara eksplisit
+          LIB_PATH="/home/runner/Arduino/libraries"
+          
           for example in $(find examples -name "*.ino"); do
             echo "-------------------------------------------------------"
             echo "Compiling: $example"
             echo "-------------------------------------------------------"
-            # Kompilasi untuk ESP32-C3
-            arduino-cli compile --fqbn esp32:esp32:esp32c3 "$example"
+            # Tambahkan flag --library untuk memastikan semua folder di-scan
+            arduino-cli compile --fqbn esp32:esp32:esp32c3 --library $LIB_PATH "$example"
           done
 
       - name: Notify Status
