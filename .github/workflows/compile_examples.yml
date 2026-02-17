@@ -1,20 +1,10 @@
-name: IskakINO CI - Compile Examples
+name: IskakINO Examples Compile
 
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+on: [push, pull_request]
 
 jobs:
-  build:
+  compile-examples:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        board: [
-          "esp32:esp32:esp32c3", 
-          "esp8266:esp8266:nodemcuv2"
-        ]
 
     steps:
       - name: Checkout Repository
@@ -23,33 +13,27 @@ jobs:
       - name: Install Arduino CLI
         uses: arduino/setup-arduino-cli@v1
 
-      - name: Update Board Index
+      - name: Install ESP32 Platform
         run: |
-          arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json,https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-
-      - name: Install Platforms
-        run: |
+          arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
           arduino-cli core install esp32:esp32 --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-          arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
 
-      - name: Install IskakINO Ecosystem Dependencies
+      - name: Install Required Libraries
         run: |
-          mkdir -p $HOME/Arduino/libraries
-          cd $HOME/Arduino/libraries
-          # 1. Core Libraries
-          git clone https://github.com/iskakfatoni/IskakINO_ArduFast.git
-          git clone https://github.com/iskakfatoni/IskakINO_WifiPortal.git
-          git clone https://github.com/iskakfatoni/IskakINO_FastNTP.git
-          git clone https://github.com/iskakfatoni/IskakINO_LiquidCrystal_I2C.git
-          # 2. Storage Library (Hybrid Solution)
-          git clone https://github.com/iskakfatoni/IskakINO_Storage.git
-          # 3. Third-party Dependencies (Jika diperlukan oleh core)
-          # git clone https://github.com/vshymanskyy/Preferences.git # Jika Storage tidak pakai LittleFS di 8266
+          arduino-cli lib install "ArduinoJson"
+          arduino-cli lib install "LiquidCrystal I2C"
+          # Library IskakINO akan dideteksi otomatis jika file .h ada di folder root atau src
 
-      - name: Compile Project 01 - Smart Fitting
+      - name: Compile All Examples
         run: |
-          arduino-cli compile --fqbn ${{ matrix.board }} ./examples/01_SmartFitting/01_SmartFitting.ino
+          # Mencari semua file .ino di dalam folder examples secara rekursif
+          for example in $(find examples -name "*.ino"); do
+            echo "-------------------------------------------------------"
+            echo "Compiling: $example"
+            echo "-------------------------------------------------------"
+            arduino-cli compile --fqbn esp32:esp32:esp32c3 "$example" --library .
+          done
 
-      - name: Build Summary
+      - name: Notify Status
         if: success()
-        run: echo "Successfully compiled for ${{ matrix.board }}"
+        run: echo "Semua folder example berhasil di-compile untuk ESP32-C3!"
