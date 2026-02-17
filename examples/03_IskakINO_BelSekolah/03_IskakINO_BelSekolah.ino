@@ -90,9 +90,17 @@ void setupWebHandlers() {
   });
 
   portal._server->on("/export", HTTP_GET, []() {
+    // 1. Kirim Header untuk mendefinisikan download file
     portal._server->sendHeader("Content-Disposition", "attachment; filename=jadwal.bin");
-    portal._server->send(200, "application/octet-stream", (uint8_t*)&daftarJadwal, sizeof(daftarJadwal));
-  });
+    portal._server->sendHeader("Connection", "close");
+    
+    // 2. Beri tahu WebServer kita akan mengirim data biner secara manual
+    // Argumen: status, tipe konten, isi (kosong karena akan dikirim via sendContent)
+    portal._server->send(200, "application/octet-stream", "");
+    
+    // 3. Kirim data biner langsung dari memori
+    portal._server->sendContent((const char*)&daftarJadwal, sizeof(daftarJadwal));
+});
 
   portal._server->on("/import", HTTP_POST, []() { 
     portal._server->send(200, "text/html", "Done! Restarting..."); 
@@ -139,7 +147,7 @@ void setup() {
 }
 
 void loop() {
-  portal.handle();
+  portal.tick(); // Sangat penting: Menangani DNS dan Client Request
   ntp.update();
   if (af.every(1000, 0)) {
     lcd.setCursor(6, 0); lcd.print(ntp.getFormattedTime());
