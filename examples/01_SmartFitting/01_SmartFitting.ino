@@ -78,14 +78,35 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 </body></html>
 )rawliteral";
 
-// ================== CORE FUNCTIONS ==================
-void updateRelay(bool state) {
+// ================== TAMBAHAN VARIABEL SMOOTH TRANSITION ==================
+unsigned long lastTransitionMs = 0;
+const unsigned long MIN_INTERVAL = 2000; // Delay antar transisi 2 detik (Safety)
+
+// ================== FUNGSI UPDATE RELAY DENGAN SMOOTH TRANSITION ==================
+void updateRelay(bool state, bool force = false) {
+  // Cek apakah transisi terlalu cepat (kecuali dipaksa/force)
+  if (!force && (millis() - lastTransitionMs < MIN_INTERVAL)) {
+    ArduFast.log("Safety", "Transition blocked: Too fast!");
+    return;
+  }
+
+  // Eksekusi Transisi
   settings.lampState = state;
   digitalWrite(RELAY_PIN, state ? HIGH : LOW);
+  
+  // Update timestamp transisi terakhir
+  lastTransitionMs = millis();
+  
+  // Simpan ke Storage (CRC32 Protected)
   IskakStorage.save(0, settings);
+
+  // Update LCD dengan animasi transisi singkat
   if(lcd.isConnected()) {
-    lcd.setCursor(0,1); lcd.print(state ? "STATUS: ON " : "STATUS: OFF");
+    lcd.setCursor(0,1);
+    lcd.print(state ? ">>> LAMP: ON    " : ">>> LAMP: OFF   ");
   }
+  
+  ArduFast.log("Relay", state ? "Smooth ON" : "Smooth OFF");
 }
 
 void setup() {
@@ -134,37 +155,6 @@ void setup() {
   lcd.begin();
   lcd.printCenter("IskakINO C3", 0);
   updateRelay(settings.lampState); // Restore last state
-}
-
-// ================== TAMBAHAN VARIABEL SMOOTH TRANSITION ==================
-unsigned long lastTransitionMs = 0;
-const unsigned long MIN_INTERVAL = 2000; // Delay antar transisi 2 detik (Safety)
-
-// ================== FUNGSI UPDATE RELAY DENGAN SMOOTH TRANSITION ==================
-void updateRelay(bool state, bool force = false) {
-  // Cek apakah transisi terlalu cepat (kecuali dipaksa/force)
-  if (!force && (millis() - lastTransitionMs < MIN_INTERVAL)) {
-    ArduFast.log("Safety", "Transition blocked: Too fast!");
-    return;
-  }
-
-  // Eksekusi Transisi
-  settings.lampState = state;
-  digitalWrite(RELAY_PIN, state ? HIGH : LOW);
-  
-  // Update timestamp transisi terakhir
-  lastTransitionMs = millis();
-  
-  // Simpan ke Storage (CRC32 Protected)
-  IskakStorage.save(0, settings);
-
-  // Update LCD dengan animasi transisi singkat
-  if(lcd.isConnected()) {
-    lcd.setCursor(0,1);
-    lcd.print(state ? ">>> LAMP: ON    " : ">>> LAMP: OFF   ");
-  }
-  
-  ArduFast.log("Relay", state ? "Smooth ON" : "Smooth OFF");
 }
 
 // ================== MODIFIKASI LOGIKA PENJADWALAN DI LOOP ==================
