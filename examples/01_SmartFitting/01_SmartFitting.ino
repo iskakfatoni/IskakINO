@@ -136,33 +136,71 @@ void setup() {
   updateRelay(settings.lampState); // Restore last state
 }
 
+// ================== TAMBAHAN VARIABEL SMOOTH TRANSITION ==================
+unsigned long lastTransitionMs = 0;
+const unsigned long MIN_INTERVAL = 2000; // Delay antar transisi 2 detik (Safety)
+
+// ================== FUNGSI UPDATE RELAY DENGAN SMOOTH TRANSITION ==================
+void updateRelay(bool state, bool force = false) {
+  // Cek apakah transisi terlalu cepat (kecuali dipaksa/force)
+  if (!force && (millis() - lastTransitionMs < MIN_INTERVAL)) {
+    ArduFast.log("Safety", "Transition blocked: Too fast!");
+    return;
+  }
+
+  // Eksekusi Transisi
+  settings.lampState = state;
+  digitalWrite(RELAY_PIN, state ? HIGH : LOW);
+  
+  // Update timestamp transisi terakhir
+  lastTransitionMs = millis();
+  
+  // Simpan ke Storage (CRC32 Protected)
+  IskakStorage.save(0, settings);
+
+  // Update LCD dengan animasi transisi singkat
+  if(lcd.isConnected()) {
+    lcd.setCursor(0,1);
+    lcd.print(state ? ">>> LAMP: ON    " : ">>> LAMP: OFF   ");
+  }
+  
+  ArduFast.log("Relay", state ? "Smooth ON" : "Smooth OFF");
+}
+
+// ================== MODIFIKASI LOGIKA PENJADWALAN DI LOOP ==================
 void loop() {
   portal.handle();
   ntp.update();
 
-  // LOGIKA PENJADWALAN (Tiap 30 Detik)
+  // LOGIKA PENJADWALAN DENGAN SMOOTH CHECK (Tiap 30 Detik)
   if (ArduFast.every(30000, 0)) {
     if (ntp.isTimeSet()) {
       int h = ntp.getHours();
       int m = ntp.getMinutes();
 
-      // Cek Jadwal ON
-      if (h == settings.onHour && m == settings.onMin && !settings.lampState) {
-        updateRelay(true);
-        ArduFast.log("Schedule", "Auto ON triggered");
+      // Transisi otomatis hanya terjadi jika tidak ada aktivitas portal yang sibuk
+      // dan memenuhi syarat waktu.
+      if (h == settings.onHour && m == settings.onMin) {
+        if (!settings.lampState) updateRelay(true); 
       }
-      // Cek Jadwal OFF
-      if (h == settings.offHour && m == settings.offMin && settings.lampState) {
-        updateRelay(false);
-        ArduFast.log("Schedule", "Auto OFF triggered");
+      
+      if (h == settings.offHour && m == settings.offMin) {
+        if (settings.lampState) updateRelay(false);
       }
     }
   }
 
-  // UPDATE LCD (Tiap 1 Detik)
+  // TUGAS MAINTENANCE LCD (Tiap 1 Detik)
   if (ArduFast.every(1000, 1)) {
     if (lcd.isConnected() && ntp.isTimeSet()) {
-      lcd.setCursor(0, 0); lcd.print(ntp.getFormattedTime());
+      lcd.setCursor(0, 0); 
+      lcd.print(ntp.getFormattedTime());
+      // Jika dalam masa "cool-down" smooth transition, tampilkan indikator
+      if (millis() - lastTransitionMs < MIN_INTERVAL) {
+        lcd.setCursor(15,0); lcd.print("*"); // Tanda sistem proteksi aktif
+      } else {
+        lcd.setCursor(15,0); lcd.print(" ");
+      }
     }
   }
 }
