@@ -1,7 +1,7 @@
 /************************************************************
  * PROJECT    : Smart Fitting Lamp IskakINO
- * BOARD      : ESP32-C3
- * VERSION    : v1.5.0 (Optimized with IskakINO Ecosystem)
+ * BOARD      : ESP32-C3 / ESP8266
+ * VERSION    : v1.5.5 (Stable Build)
  * AUTHOR     : iskakfatoni
  ************************************************************/
 
@@ -9,201 +9,129 @@
 #include <IskakINO_WifiPortal.h>
 #include <IskakINO_FastNTP.h>
 #include <IskakINO_Storage.h>
-#include <IskakINO_LiquidCrystal_I2C.h>
 #include <WiFiUdp.h>
 
-// ================== STRUKTUR DATA (Preferences + CRC32) ==================
+// ================== STRUKTUR DATA ==================
 struct ConfigData {
+  int onHour, onMin;
+  int offHour, offMin;
   bool lampState;
-  int onHour, onMin;   // Jadwal ON
-  int offHour, offMin; // Jadwal OFF
-  uint16_t bootCount;
+  uint32_t bootCount;
 };
-
 ConfigData settings;
 
-// ================== PIN & OBJECTS ==================
+// ================== PIN & GLOBALS ==================
 #define RELAY_PIN 5
+IskakINO_ArduFast ArduFast;
 IskakINO_WifiPortal portal;
 WiFiUDP ntpUDP;
 IskakINO_FastNTP ntp(ntpUDP, "pool.ntp.org");
-LiquidCrystal_I2C lcd(16, 2); // Opsional jika fisik ada
 
-const char* FW_VERSION = "v1.5.0-IskakINO";
+unsigned long lastTransitionMs = 0;
+const unsigned long MIN_INTERVAL = 3000; 
 
-// ================== DASHBOARD UI (ACTIVE) ==================
+// ================== LOGIK RELAY ==================
+void updateRelay(bool state, bool force = false) {
+  unsigned long current = millis();
+  if (!force && (current - lastTransitionMs < MIN_INTERVAL)) {
+    // Gunakan F() dan pastikan argumen kedua adalah INT
+    ArduFast.log(F("Safety"), -1); 
+    return;
+  }
+  
+  digitalWrite(RELAY_PIN, state ? HIGH : LOW);
+  settings.lampState = state;
+  lastTransitionMs = current;
+  
+  ArduFast.log(F("Relay"), state ? 1 : 0);
+  IskakStorage.save(0, settings);
+}
+
+// ================== DASHBOARD HTML ==================
 const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Smart Fitting C3</title>
+<title>IskakINO SmartFitting</title>
 <style>
-  body{font-family:sans-serif; background:#121212; color:#eee; text-align:center; padding:20px;}
-  .card{background:#1e1e1e; padding:20px; border-radius:15px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.3);}
-  .btn{padding:15px 30px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin:5px 0;}
-  .btn-toggle{background:#4CAF50; color:white;}
-  .btn-reset{background:#f44336; color:white; font-size:12px;}
-  input{padding:8px; border-radius:5px; border:1px solid #444; background:#333; color:white; width:60px; text-align:center;}
+  body { font-family: sans-serif; background: #121212; color: white; text-align: center; }
+  .card { background: #1e1e1e; padding: 20px; border-radius: 15px; display: inline-block; margin-top: 50px; }
+  .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 10px; background: #03dac6; }
 </style>
 </head><body>
-  <h2>💡 Smart Fitting IskakINO</h2>
   <div class="card">
-    <h1 id="st">--</h1>
-    <button class="btn btn-toggle" onclick="fetch('/toggle')">TOGGLE POWER</button>
-  </div>
-  <div class="card">
-    <h3>Auto Schedule</h3>
+    <h2>💡 Lampu: <span id="st">...</span></h2>
+    <button class="btn" onclick="fetch('/toggle').then(()=>location.reload())">ON / OFF</button>
+    <hr>
     <form action="/setsched">
-      ON  : <input type="number" name="onH" id="onH">:<input type="number" name="onM" id="onM"><br><br>
-      OFF : <input type="number" name="offH" id="offH">:<input type="number" name="offM" id="offM"><br><br>
-      <button type="submit" class="btn" style="background:#2196F3; color:white;">SIMPAN JADWAL</button>
+      ON: <input type="number" name="onH" style="width:40px">:<input type="number" name="onM" style="width:40px"><br><br>
+      OFF: <input type="number" name="offH" style="width:40px">:<input type="number" name="offM" style="width:40px"><br><br>
+      <button type="submit">Simpan Jadwal</button>
     </form>
   </div>
-  <div class="card" style="font-size:0.8em; text-align:left;">
-    Uptime: <span id="up">--</span> | WiFi: <span id="rssi">--</span><br>
-    Time: <span id="tm">--</span> | Boot: <span id="bt">--</span>
-  </div>
-  <button class="btn btn-reset" onclick="if(confirm('Reset WiFi?')) location.href='/resetwifi'">RESET WIFI</button>
-  
   <script>
-    setInterval(() => {
-      fetch('/status').then(r=>r.json()).then(d=>{
-        document.getElementById('st').innerText = d.s ? '💡 ON' : '⚫ OFF';
-        document.getElementById('up').innerText = d.u;
-        document.getElementById('rssi').innerText = d.r + 'dBm';
-        document.getElementById('tm').innerText = d.t;
-        document.getElementById('bt').innerText = d.b;
-      });
-    }, 2000);
+    fetch('/status').then(r=>r.json()).then(d=>{ document.getElementById('st').innerText = d.s ? 'NYALA' : 'MATI'; });
   </script>
 </body></html>
 )rawliteral";
 
-// ================== TAMBAHAN VARIABEL SMOOTH TRANSITION ==================
-unsigned long lastTransitionMs = 0;
-const unsigned long MIN_INTERVAL = 2000; // Delay antar transisi 2 detik (Safety)
-
-// ================== FUNGSI UPDATE RELAY DENGAN SMOOTH TRANSITION ==================
-void updateRelay(bool state, bool force = false) {
-  // Cek apakah transisi terlalu cepat (kecuali dipaksa/force)
-  if (!force && (millis() - lastTransitionMs < MIN_INTERVAL)) {
-    ArduFast.log("Safety", "Transition blocked: Too fast!");
-    return;
-  }
-
-  // Eksekusi Transisi
-  settings.lampState = state;
-  digitalWrite(RELAY_PIN, state ? HIGH : LOW);
-  
-  // Update timestamp transisi terakhir
-  lastTransitionMs = millis();
-  
-  // Simpan ke Storage (CRC32 Protected)
-  IskakStorage.save(0, settings);
-
-  // Update LCD dengan animasi transisi singkat
-  if(lcd.isConnected()) {
-    lcd.setCursor(0,1);
-    lcd.print(state ? ">>> LAMP: ON    " : ">>> LAMP: OFF   ");
-  }
-  
-  ArduFast.log("Relay", state ? "Smooth ON" : "Smooth OFF");
-}
-
+// ================== SETUP & LOOP ==================
 void setup() {
   ArduFast.begin(115200);
   pinMode(RELAY_PIN, OUTPUT);
 
-  // 1. STORAGE (Hybrid Preferences)
+  // 1. Inisialisasi Storage & Load Data
   IskakStorage.begin("smartfit", true);
   if (!IskakStorage.load(0, settings)) {
-    settings = {false, 18, 0, 5, 0, 0}; // Default ON 18:00, OFF 05:00
+    settings = {18, 0, 5, 0, false, 0};
   }
   settings.bootCount++;
   IskakStorage.save(0, settings);
 
-  // 2. WIFI & PORTAL (Menggantikan WiFiManager + Captive Manual)
-  portal.setBrandName("IskakINO Smart Fitting");
-  
-  // Custom Handlers
-  portal.on("/", []() { portal.send(200, "text/html", DASHBOARD_HTML); });
-  
-  portal.on("/status", []() {
-    String j = "{\"s\":"+String(settings.lampState)+",\"u\":\""+String(millis()/1000)+"s\",\"r\":"+String(WiFi.RSSI())+",\"t\":\""+ntp.getFormattedTime()+"\",\"b\":"+String(settings.bootCount)+"}";
-    portal.send(200, "application/json", j);
+  // 2. WiFi Portal
+  portal.begin("IskakINO-SmartFit");
+
+  // 3. Custom Routes (Gunakan portal._server->)
+  portal._server->on("/", HTTP_GET, []() {
+    portal._server->send(200, "text/html", DASHBOARD_HTML);
   });
 
-  portal.on("/toggle", []() { updateRelay(!settings.lampState); portal.send(200, "text/plain", "OK"); });
+  portal._server->on("/status", HTTP_GET, []() {
+    String j = "{\"s\":" + String(settings.lampState) + "}";
+    portal._server->send(200, "application/json", j);
+  });
 
-  // Tambahkan rute kustom menggunakan portal._server->
-  portal._server->on("/setsched", []() {
-    // Menggunakan operator -> karena _server adalah pointer
-    settings.onHour = portal._server->arg("onH").toInt(); 
+  portal._server->on("/toggle", HTTP_GET, []() {
+    updateRelay(!settings.lampState);
+    portal._server->send(200, "text/plain", "OK");
+  });
+
+  portal._server->on("/setsched", HTTP_GET, []() {
+    settings.onHour = portal._server->arg("onH").toInt();
     settings.onMin = portal._server->arg("onM").toInt();
-    settings.offHour = portal._server->arg("offH").toInt(); 
+    settings.offHour = portal._server->arg("offH").toInt();
     settings.offMin = portal._server->arg("offM").toInt();
-    
     IskakStorage.save(0, settings);
-    portal._server->send(200, "text/html", "<script>alert('Jadwal disimpan'); location.href='/';</script>");
+    portal._server->send(200, "text/html", "<script>alert('Jadwal disimpan!');location.href='/';</script>");
   });
 
-  portal._server->on("/resetwifi", []() {
-    portal._server->send(200, "text/plain", "WiFi Reset... Restarting AP Mode");
-    delay(1000);
-    portal.resetSettings(); // Fungsi reset dari library Anda
-    ESP.restart();
-  });
-  
-  // Rute status untuk AJAX
-  portal._server->on("/status", []() {
-    String json = "{\"s\":" + String(settings.lampState) + ",\"t\":\"" + ntp.getFormattedTime() + "\"}";
-    portal._server->send(200, "application/json", json);
-  });
-
-  portal.begin("SmartFitting-Setup"); 
-
-  // 3. NTP
   ntp.begin(25200); // GMT+7
-
-  // 4. LCD & Self Test
-  lcd.begin();
-  lcd.printCenter("IskakINO C3", 0);
-  updateRelay(settings.lampState); // Restore last state
+  updateRelay(settings.lampState, true);
 }
 
-// ================== MODIFIKASI LOGIKA PENJADWALAN DI LOOP ==================
 void loop() {
   portal.handle();
   ntp.update();
 
-  // LOGIKA PENJADWALAN DENGAN SMOOTH CHECK (Tiap 30 Detik)
+  // Cek Jadwal setiap 30 detik (ID task: 0)
   if (ArduFast.every(30000, 0)) {
-    if (ntp.isTimeSet()) {
-      int h = ntp.getHours();
-      int m = ntp.getMinutes();
+    int h = ntp.getHours();
+    int m = ntp.getMinutes();
 
-      // Transisi otomatis hanya terjadi jika tidak ada aktivitas portal yang sibuk
-      // dan memenuhi syarat waktu.
-      if (h == settings.onHour && m == settings.onMin) {
-        if (!settings.lampState) updateRelay(true); 
-      }
-      
-      if (h == settings.offHour && m == settings.offMin) {
-        if (settings.lampState) updateRelay(false);
-      }
-    }
-  }
-
-  // TUGAS MAINTENANCE LCD (Tiap 1 Detik)
-  if (ArduFast.every(1000, 1)) {
-    if (lcd.isConnected() && ntp.isTimeSet()) {
-      lcd.setCursor(0, 0); 
-      lcd.print(ntp.getFormattedTime());
-      // Jika dalam masa "cool-down" smooth transition, tampilkan indikator
-      if (millis() - lastTransitionMs < MIN_INTERVAL) {
-        lcd.setCursor(15,0); lcd.print("*"); // Tanda sistem proteksi aktif
-      } else {
-        lcd.setCursor(15,0); lcd.print(" ");
-      }
+    if (h == settings.onHour && m == settings.onMin && !settings.lampState) {
+      updateRelay(true);
+    } 
+    else if (h == settings.offHour && m == settings.offMin && settings.lampState) {
+      updateRelay(false);
     }
   }
 }
