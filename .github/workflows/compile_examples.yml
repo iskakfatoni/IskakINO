@@ -20,11 +20,12 @@ jobs:
 
       - name: Install All IskakINO Libraries from GitHub
         run: |
-          # Buat direktori library Arduino
-          mkdir -p /home/runner/Arduino/libraries
-          cd /home/runner/Arduino/libraries
+          # 1. Tentukan folder library standar
+          LIB_PATH="/home/runner/Arduino/libraries"
+          mkdir -p $LIB_PATH
+          cd $LIB_PATH
 
-          # Clone semua modul library iskakfatoni
+          # 2. Clone semua modul
           git clone https://github.com/iskakfatoni/IskakINO_LiquidCrystal_I2C.git
           git clone https://github.com/iskakfatoni/IskakINO_ArduFast.git
           git clone https://github.com/iskakfatoni/IskakINO_WifiPortal.git
@@ -32,22 +33,23 @@ jobs:
           git clone https://github.com/iskakfatoni/IskakINO_Storage.git
           git clone https://github.com/iskakfatoni/IskakINO_SmartVoice.git
 
-          # Instal library pihak ketiga yang dibutuhkan
+          # 3. Beri tahu Arduino CLI lokasi folder library ini
+          arduino-cli config init
+          arduino-cli config set directories.user /home/runner/Arduino
+
+      - name: Install Dependencies
+        run: |
           arduino-cli lib install "ArduinoJson"
 
       - name: Compile All Examples
         run: |
-          # Definisikan path library secara eksplisit
-          LIB_PATH="/home/runner/Arduino/libraries"
-          
           for example in $(find examples -name "*.ino"); do
             echo "-------------------------------------------------------"
             echo "Compiling: $example"
             echo "-------------------------------------------------------"
-            # Tambahkan flag --library untuk memastikan semua folder di-scan
-            arduino-cli compile --fqbn esp32:esp32:esp32c3 --library $LIB_PATH "$example"
+            # Jalankan tanpa flag --library karena path sudah di-set di config
+            arduino-cli compile --fqbn esp32:esp32:esp32c3 "$example"
           done
-
       - name: Notify Status
         if: success()
         run: echo "Semua folder example berhasil di-compile untuk ESP32-C3!"
