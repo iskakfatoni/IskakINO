@@ -134,16 +134,29 @@ void setup() {
 
   portal.on("/toggle", []() { updateRelay(!settings.lampState); portal.send(200, "text/plain", "OK"); });
 
-  portal.on("/setsched", []() {
-    settings.onHour = portal.arg("onH").toInt(); settings.onMin = portal.arg("onM").toInt();
-    settings.offHour = portal.arg("offH").toInt(); settings.offMin = portal.arg("offM").toInt();
+  // Tambahkan rute kustom menggunakan portal._server->
+  portal._server->on("/setsched", []() {
+    // Menggunakan operator -> karena _server adalah pointer
+    settings.onHour = portal._server->arg("onH").toInt(); 
+    settings.onMin = portal._server->arg("onM").toInt();
+    settings.offHour = portal._server->arg("offH").toInt(); 
+    settings.offMin = portal._server->arg("offM").toInt();
+    
     IskakStorage.save(0, settings);
-    portal.send(200, "text/html", "<script>alert('Jadwal disimpan'); location.href='/';</script>");
+    portal._server->send(200, "text/html", "<script>alert('Jadwal disimpan'); location.href='/';</script>");
   });
 
-  portal.on("/resetwifi", []() {
-    portal.send(200, "text/plain", "WiFi Reset... Restarting AP Mode");
-    delay(1000); WiFi.disconnect(true, true); ESP.restart();
+  portal._server->on("/resetwifi", []() {
+    portal._server->send(200, "text/plain", "WiFi Reset... Restarting AP Mode");
+    delay(1000);
+    portal.resetSettings(); // Fungsi reset dari library Anda
+    ESP.restart();
+  });
+  
+  // Rute status untuk AJAX
+  portal._server->on("/status", []() {
+    String json = "{\"s\":" + String(settings.lampState) + ",\"t\":\"" + ntp.getFormattedTime() + "\"}";
+    portal._server->send(200, "application/json", json);
   });
 
   portal.begin("SmartFitting-Setup"); 
