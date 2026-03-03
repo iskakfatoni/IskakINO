@@ -34,7 +34,10 @@ WiFiUDP udp;
 IskakINO_FastNTP ntp(udp);
 IskakINO_WifiPortal portal;
 IskakINO_ArduFast ArduFast;
-IskakINO_Storage  IskakStorage;
+// --- Deklarasi Object Global ---
+IskakINO_ArduFast af; 
+IskakINO_Storage  IskakStorage; 
+// ------------------------------
 int lastTriggerMinute = -1;
 
 // --- HTML DASHBOARD ---
