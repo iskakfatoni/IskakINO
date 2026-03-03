@@ -1,8 +1,7 @@
 /************************************************************
-
  * PROJECT    : Smart Fitting Lamp IskakINO
+ * VERSION    : v1.6.0 (Hostname & Auto-Reconnect)
  * BOARD      : ESP32-C3 / ESP8266
- * VERSION    : v1.5.5 (Stable Build)
  * AUTHOR     : iskakfatoni
  ************************************************************/
 
@@ -11,6 +10,12 @@
 #include <IskakINO_FastNTP.h>
 #include <IskakINO_Storage.h>
 #include <WiFiUdp.h>
+
+#if defined(ESP32)
+  #include <WiFi.h>
+#elif defined(ESP8266)
+  #include <ESP8266WiFi.h>
+#endif
 
 // ================== STRUKTUR DATA ==================
 struct ConfigData {
@@ -23,6 +28,7 @@ ConfigData settings;
 
 // ================== PIN & GLOBALS ==================
 #define RELAY_PIN 5
+
 IskakINO_ArduFast ArduFast;
 IskakINO_Storage IskakStorage; //
 IskakINO_WifiPortal portal;
@@ -31,13 +37,14 @@ IskakINO_FastNTP ntp(ntpUDP, "pool.ntp.org");
 
 unsigned long lastTransitionMs = 0;
 const unsigned long MIN_INTERVAL = 3000; 
+const char* MY_HOSTNAME = "IskakINO-SmartLamp";
 
-// ================== LOGIK RELAY ==================
+// ================== LOGIK RELAY + DEBUG ==================
 void updateRelay(bool state, bool force = false) {
   unsigned long current = millis();
+  
   if (!force && (current - lastTransitionMs < MIN_INTERVAL)) {
-    // Gunakan F() dan pastikan argumen kedua adalah INT
-    ArduFast.log(F("Safety"), -1); 
+    Serial.println(F("[!]\tSafety Triggered: Debounce Relay aktif."));
     return;
   }
   
@@ -45,7 +52,9 @@ void updateRelay(bool state, bool force = false) {
   settings.lampState = state;
   lastTransitionMs = current;
   
-  ArduFast.log(F("Relay"), state ? 1 : 0);
+  Serial.print(F("[>]\tRelay State: "));
+  Serial.println(state ? F("NYALA") : F("MATI"));
+  
   IskakStorage.save(0, settings);
 }
 
@@ -53,35 +62,40 @@ void updateRelay(bool state, bool force = false) {
 const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IskakINO SmartFitting</title>
+<title>IskakINO SmartLamp</title>
 <style>
-  body { font-family: sans-serif; background: #121212; color: white; text-align: center; }
-  .card { background: #1e1e1e; padding: 20px; border-radius: 15px; display: inline-block; margin-top: 50px; }
-  .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 10px; background: #03dac6; }
+  body { font-family: sans-serif; background: #121212; color: #eee; text-align: center; padding: 20px; }
+  .card { background: #1e1e1e; padding: 25px; border-radius: 20px; max-width: 400px; margin: auto; box-shadow: 0 8px 16px rgba(0,0,0,0.5); }
+  .btn { padding: 15px; font-size: 18px; cursor: pointer; border: none; border-radius: 12px; background: #03dac6; width: 100%; font-weight: bold; }
+  input { background: #333; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 6px; width: 50px; text-align: center; }
+  .status-box { margin: 20px 0; padding: 10px; border: 1px solid #333; border-radius: 10px; font-size: 0.9em; color: #888; }
 </style>
 </head><body>
   <div class="card">
-    <h2>💡 Lampu: <span id="st">...</span></h2>
-    <button class="btn" onclick="fetch('/toggle').then(()=>location.reload())">ON / OFF</button>
-    <hr>
+    <h2>💡 <span id="st">...</span></h2>
+    <button class="btn" onclick="fetch('/toggle').then(()=>location.reload())">SWITCH</button>
+    <div class="status-box">Hostname: IskakINO-SmartLamp</div>
     <form action="/setsched">
-      ON: <input type="number" name="onH" style="width:40px">:<input type="number" name="onM" style="width:40px"><br><br>
-      OFF: <input type="number" name="offH" style="width:40px">:<input type="number" name="offM" style="width:40px"><br><br>
-      <button type="submit">Simpan Jadwal</button>
+      <p>Jadwal Otomatis</p>
+      ON: <input type="number" name="onH" placeholder="HH">:<input type="number" name="onM" placeholder="mm"><br><br>
+      OFF: <input type="number" name="offH" placeholder="HH">:<input type="number" name="offM" placeholder="mm"><br><br>
+      <button type="submit" style="background:#444; color:white; border:none; padding:10px; width:100%; border-radius:8px;">SIMPAN JADWAL</button>
     </form>
   </div>
   <script>
-    fetch('/status').then(r=>r.json()).then(d=>{ document.getElementById('st').innerText = d.s ? 'NYALA' : 'MATI'; });
+    fetch('/status').then(r=>r.json()).then(d=>{ document.getElementById('st').innerText = d.s ? 'LAMPU NYALA' : 'LAMPU MATI'; });
   </script>
-</body></html>
-)rawliteral";
+</body></html>)rawliteral";
 
-// ================== SETUP & LOOP ==================
+// ================== SETUP ==================
 void setup() {
-  ArduFast.begin(115200);
+  Serial.begin(115200);
+  delay(1500);
+  Serial.println(F("\n\n--- ISKAKINO SMART LAMP SYSTEM ---"));
+  
   pinMode(RELAY_PIN, OUTPUT);
 
-  // 1. Inisialisasi Storage & Load Data
+  // 1. Storage Setup
   IskakStorage.begin("smartfit", true);
   if (!IskakStorage.load(0, settings)) {
     settings = {18, 0, 5, 0, false, 0};
@@ -89,45 +103,73 @@ void setup() {
   settings.bootCount++;
   IskakStorage.save(0, settings);
 
-  // 2. WiFi Portal
+  // 2. Network Configuration (Hostname)
+  Serial.print(F("[+]\tSetting Hostname: "));
+  Serial.println(MY_HOSTNAME);
+  #if defined(ESP32)
+    WiFi.setHostname(MY_HOSTNAME);
+  #else
+    WiFi.hostname(MY_HOSTNAME);
+  #endif
+
+  // 3. Portal Setup
   portal.begin("IskakINO-SmartFit");
 
-  // 3. Custom Routes (Gunakan portal._server->)
-  portal._server->on("/", HTTP_GET, []() {
-    portal._server->send(200, "text/html", DASHBOARD_HTML);
+  Serial.println(F("------------------------------------"));
+  Serial.print(F("[*]\tIP Address : ")); Serial.println(WiFi.localIP());
+  Serial.print(F("[*]\tHostname   : ")); Serial.println(MY_HOSTNAME);
+  Serial.println(F("------------------------------------"));
+
+  // 4. Web Routes
+  portal.server()->on("/", HTTP_GET, [&]() {
+    portal.server()->send(200, "text/html", DASHBOARD_HTML);
   });
 
-  portal._server->on("/status", HTTP_GET, []() {
-    String j = "{\"s\":" + String(settings.lampState) + "}";
-    portal._server->send(200, "application/json", j);
+  portal.server()->on("/status", HTTP_GET, [&]() {
+    portal.server()->send(200, "application/json", "{\"s\":" + String(settings.lampState) + "}");
   });
 
-  portal._server->on("/toggle", HTTP_GET, []() {
+  portal.server()->on("/toggle", HTTP_GET, [&]() {
     updateRelay(!settings.lampState);
-    portal._server->send(200, "text/plain", "OK");
+    portal.server()->send(200, "text/plain", "OK");
   });
 
-  portal._server->on("/setsched", HTTP_GET, [&]() {
-    settings.onHour = portal._server->arg("onH").toInt();
-    settings.onMin = portal._server->arg("onM").toInt();
-    settings.offHour = portal._server->arg("offH").toInt();
-    settings.offMin = portal._server->arg("offM").toInt();
+  portal.server()->on("/setsched", HTTP_GET, [&]() {
+    if(portal.server()->hasArg("onH")) settings.onHour = portal.server()->arg("onH").toInt();
+    if(portal.server()->hasArg("onM")) settings.onMin = portal.server()->arg("onM").toInt();
+    if(portal.server()->hasArg("offH")) settings.offHour = portal.server()->arg("offH").toInt();
+    if(portal.server()->hasArg("offM")) settings.offMin = portal.server()->arg("offM").toInt();
     IskakStorage.save(0, settings);
-    portal._server->send(200, "text/html", "<script>alert('Jadwal disimpan!');location.href='/';</script>");
+    portal.server()->send(200, "text/html", "<script>alert('Jadwal Disimpan!');location.href='/';</script>");
   });
 
   ntp.begin(25200); // GMT+7
   updateRelay(settings.lampState, true);
+  Serial.println(F("[+]\tSystem Ready."));
 }
 
+// ================== LOOP ==================
 void loop() {
   portal.handle();
   ntp.update();
 
-  // Cek Jadwal setiap 30 detik (ID task: 0)
+  // Task: Monitoring Internet & Reconnect
+  if (ArduFast.every(10000, 1)) {
+    if (WiFi.status() != WL_CONNECTED) {
+       Serial.println(F("[!]\tWiFi Terputus! Mencoba menyambung kembali..."));
+       WiFi.reconnect();
+    }
+  }
+
+  // Task: Scheduler & Debug Log
   if (ArduFast.every(30000, 0)) {
     int h = ntp.getHours();
     int m = ntp.getMinutes();
+
+    Serial.print(F("[LOG]\tTime: "));
+    if(h < 10) Serial.print('0'); Serial.print(h); Serial.print(':');
+    if(m < 10) Serial.print('0'); Serial.print(m);
+    Serial.print(F(" | Relay: ")); Serial.println(settings.lampState ? F("ON") : F("OFF"));
 
     if (h == settings.onHour && m == settings.onMin && !settings.lampState) {
       updateRelay(true);
