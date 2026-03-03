@@ -23,7 +23,8 @@ ConfigData settings;
 
 // ================== PIN & GLOBALS ==================
 #define RELAY_PIN 5
-//IskakINO_ArduFast ArduFast;   //TIDAK PERLU, KARENA SUDAH ADA DI LIBRARY
+IskakINO_ArduFast ArduFast;
+IskakINO_Storage IskakStorage; //
 IskakINO_WifiPortal portal;
 WiFiUDP ntpUDP;
 IskakINO_FastNTP ntp(ntpUDP, "pool.ntp.org");
@@ -106,7 +107,7 @@ void setup() {
     portal._server->send(200, "text/plain", "OK");
   });
 
-  portal._server->on("/setsched", HTTP_GET, []() {
+  portal._server->on("/setsched", HTTP_GET, [&]() {
     settings.onHour = portal._server->arg("onH").toInt();
     settings.onMin = portal._server->arg("onM").toInt();
     settings.offHour = portal._server->arg("offH").toInt();
