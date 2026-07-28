@@ -29,7 +29,7 @@
  *   - Dukungan platform RP2040 (LittleFS, mengikuti jalur ESP8266)
  *   - static_assert menolak tipe non trivially-copyable di save()/load()
  *
- * v1.0.1 - Bug fixes (lihat CHANGELOG.md)
+ * v1.0.1 - Bug fixes traits problems(lihat CHANGELOG.md)
  * v1.0.0 - Rilis awal
  */
 
