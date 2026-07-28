@@ -1,0 +1,218 @@
+#######################################
+# Syntax Coloring Map For IskakINO (gabungan)
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+# --- core ---
+IskakINO_Result	KEYWORD1
+IskakStorageResult	KEYWORD1
+IskakINO_Logger	KEYWORD1
+IskakINO_Scheduler	KEYWORD1
+IskakINO_Module	KEYWORD1
+IskakINO_Kernel	KEYWORD1
+IskakINO_ArduFastModule	KEYWORD1
+IskakINO_StorageModule	KEYWORD1
+IskakINO_LCDModule	KEYWORD1
+IskakINO_SmartVoiceModule	KEYWORD1
+IskakINO_WifiPortalModule	KEYWORD1
+IskakINO_FastNTPModule	KEYWORD1
+
+# --- ardufast ---
+IskakINO_ArduFast	KEYWORD1
+FastPin	KEYWORD1
+
+# --- storage ---
+IskakINO_Storage	KEYWORD1
+IskakStorage	KEYWORD1
+
+# --- lcd ---
+LiquidCrystal_I2C	KEYWORD1
+
+# --- voice ---
+IskakINO_SmartVoice	KEYWORD1
+
+# --- wifi (ESP32/ESP8266 saja) ---
+IskakINO_WifiPortal	KEYWORD1
+IskakParam	KEYWORD1
+IskakWifiCred	KEYWORD1
+IskakPortalState	KEYWORD1
+
+# --- ntp (ESP32/ESP8266 saja) ---
+IskakINO_FastNTP	KEYWORD1
+NTP_Language	KEYWORD1
+NTP_State	KEYWORD1
+NTPSyncCallback	KEYWORD1
+NTPFailCallback	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+# --- core (dipakai lewat komposisi, mis. fast.every(), lcd.update()) ---
+setDebug	KEYWORD2
+lastError	KEYWORD2
+isDebug	KEYWORD2
+every	KEYWORD2
+once	KEYWORD2
+registerModule	KEYWORD2
+moduleCount	KEYWORD2
+moduleName	KEYWORD2
+
+# --- ardufast ---
+begin	KEYWORD2
+reset	KEYWORD2
+cancel	KEYWORD2
+log	KEYWORD2
+readNorm	KEYWORD2
+readStable	KEYWORD2
+readEMA	KEYWORD2
+mapAnalog	KEYWORD2
+mode	KEYWORD2
+high	KEYWORD2
+low	KEYWORD2
+toggle	KEYWORD2
+read	KEYWORD2
+pinMode	KEYWORD2
+digitalWrite	KEYWORD2
+digitalRead	KEYWORD2
+logFloat	KEYWORD2
+logf	KEYWORD2
+
+# --- storage ---
+beginEncrypted	KEYWORD2
+save	KEYWORD2
+load	KEYWORD2
+clear	KEYWORD2
+reserve	KEYWORD2
+exists	KEYWORD2
+remove	KEYWORD2
+onCorrupt	KEYWORD2
+onVersionMismatch	KEYWORD2
+saveString	KEYWORD2
+loadString	KEYWORD2
+beginLog	KEYWORD2
+addLog	KEYWORD2
+readLog	KEYWORD2
+logCount	KEYWORD2
+clearLog	KEYWORD2
+
+# --- lcd ---
+home	KEYWORD2
+setCursor	KEYWORD2
+display	KEYWORD2
+noDisplay	KEYWORD2
+cursor	KEYWORD2
+noCursor	KEYWORD2
+blink	KEYWORD2
+noBlink	KEYWORD2
+backlight	KEYWORD2
+noBacklight	KEYWORD2
+setBacklightTimeout	KEYWORD2
+scrollDisplayLeft	KEYWORD2
+scrollDisplayRight	KEYWORD2
+leftToRight	KEYWORD2
+rightToLeft	KEYWORD2
+autoscroll	KEYWORD2
+noAutoscroll	KEYWORD2
+setAddress	KEYWORD2
+getAddress	KEYWORD2
+createChar	KEYWORD2
+write	KEYWORD2
+printCenter	KEYWORD2
+typewriter	KEYWORD2
+typewriterStart	KEYWORD2
+typewriterStop	KEYWORD2
+isTypewriterActive	KEYWORD2
+scrollTextStart	KEYWORD2
+scrollTextStop	KEYWORD2
+isScrollActive	KEYWORD2
+update	KEYWORD2
+drawProgressBar	KEYWORD2
+printFormatted	KEYWORD2
+isConnected	KEYWORD2
+useExternalWireBegin	KEYWORD2
+
+# --- voice ---
+setVolume	KEYWORD2
+playTrack	KEYWORD2
+playFromFolder	KEYWORD2
+pause	KEYWORD2
+resume	KEYWORD2
+stop	KEYWORD2
+announce	KEYWORD2
+isSDCardReady	KEYWORD2
+isPlaying	KEYWORD2
+
+# --- wifi ---
+beginAsync	KEYWORD2
+tick	KEYWORD2
+addParameter	KEYWORD2
+addWifi	KEYWORD2
+resetSettings	KEYWORD2
+setBrandName	KEYWORD2
+enableOTA	KEYWORD2
+setPortalTimeout	KEYWORD2
+setupPortal	KEYWORD2
+setAdminPin	KEYWORD2
+state	KEYWORD2
+
+# --- ntp ---
+forceUpdate	KEYWORD2
+isTimeSet	KEYWORD2
+isTimeReliable	KEYWORD2
+getEpoch	KEYWORD2
+getUtcEpoch	KEYWORD2
+getUptimeSeconds	KEYWORD2
+getMillisSinceLastSync	KEYWORD2
+getSeconds	KEYWORD2
+getMinutes	KEYWORD2
+getHours	KEYWORD2
+getDay	KEYWORD2
+getMonth	KEYWORD2
+getYear	KEYWORD2
+getDayName	KEYWORD2
+getMonthName	KEYWORD2
+getFormattedTime	KEYWORD2
+getFormattedDate	KEYWORD2
+isAlarmActive	KEYWORD2
+setEpoch	KEYWORD2
+setSyncInterval	KEYWORD2
+getCurrentServer	KEYWORD2
+getServerCount	KEYWORD2
+setFailThreshold	KEYWORD2
+setRequestTimeout	KEYWORD2
+getSyncSuccessCount	KEYWORD2
+getSyncFailCount	KEYWORD2
+getConsecutiveFails	KEYWORD2
+onSync	KEYWORD2
+onSyncFail	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+ISKAKINO_VERSION	LITERAL1
+ISKAKINO_PLATFORM_AVR	LITERAL1
+ISKAKINO_PLATFORM_ESP32	LITERAL1
+ISKAKINO_PLATFORM_ESP8266	LITERAL1
+ISKAKINO_PLATFORM_RP2040	LITERAL1
+ISKAKINO_HAS_WIFI	LITERAL1
+ISKAKINO_HAS_PREFS	LITERAL1
+ISKAKINO_HAS_LITTLEFS	LITERAL1
+ISKAKINO_HAS_EEPROM	LITERAL1
+ARDUFAST_VERSION	LITERAL1
+ISKAK_STORAGE_MAGIC	LITERAL1
+ISKAK_STORAGE_VERSION	LITERAL1
+LCD_ENABLE_SERIAL_DEBUG	LITERAL1
+LCD_BACKLIGHT	LITERAL1
+LCD_NOBACKLIGHT	LITERAL1
+LCD_PRINTF_BUFFER_SIZE	LITERAL1
+LCD_PROGRESSBAR_CHAR_LOC	LITERAL1
+LANG_EN	LITERAL1
+LANG_ID	LITERAL1
+ISKAKINO_FASTNTP_MAX_SERVERS	LITERAL1
+ISKAKINO_FASTNTP_MAX_SYNC_INTERVAL_MS	LITERAL1
+ISKAKINO_MAX_WIFI	LITERAL1
