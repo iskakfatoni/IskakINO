@@ -32,6 +32,7 @@ internal dan penambahan opsional.
 - `enum class IskakStorageResult` lokal dihapus, kini alias dari `core/IskakINO_Result.h` (nilai numerik identik).
 - Logging (`_printDebug`) kini lewat `IskakINO_Logger`.
 - **Baru:** `setDebug(bool)` — ubah mode debug tanpa `begin()` ulang.
+- **Bug fix (ditemukan lewat CI sungguhan `arduino:avr:uno`, bukan mock):** `#include <type_traits>` gagal compile di avr-gcc lama milik core `arduino:avr` (`fatal error: type_traits: No such file or directory`). Diganti builtin compiler GCC (`__has_trivial_copy`/`__has_trivial_destructor`) yang tidak butuh header apa pun, tersedia di semua toolchain berbasis GCC tanpa kecuali — `static_assert` trivially-copyable di `save()`/`load()` tetap berfungsi sama persis.
 
 ### wifi/ (dari IskakINO_WifiPortal v1.1.0)
 - Macro platform (`#if defined(ESP32)`, dll.) terpusat lewat `core/IskakINO_Platform.h`.

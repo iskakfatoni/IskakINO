@@ -37,7 +37,17 @@
 #define ISKAKINO_STORAGE_H
 
 #include <Arduino.h>
-#include <type_traits>
+
+// PENTING: <type_traits> TIDAK tersedia di avr-gcc lama yang dipakai core
+// arduino:avr (terkonfirmasi gagal compile di CI sungguhan, lihat
+// CHANGELOG.md). Diganti dengan builtin compiler GCC (__has_trivial_copy /
+// __has_trivial_destructor) yang TIDAK butuh header apa pun -- tersedia di
+// semua toolchain berbasis GCC (avr-gcc, xtensa-esp32-elf-gcc, dst.) tanpa
+// kecuali. Hasilnya semantically setara dengan std::is_trivially_copyable
+// untuk kebutuhan static_assert di bawah (menolak tipe dengan
+// constructor/destructor non-trivial, mis. yang mengandung String/pointer
+// dgn ownership).
+#define ISKAKINO_IS_TRIVIALLY_COPYABLE(T) (__has_trivial_copy(T) && __has_trivial_destructor(T))
 
 #include "core/IskakINO_Platform.h"
 #include "core/IskakINO_Result.h"
@@ -362,7 +372,7 @@ class IskakINO_Storage {
 
     template <typename T>
     bool save(int address, const T& value) {
-      static_assert(std::is_trivially_copyable<T>::value,
+      static_assert(ISKAKINO_IS_TRIVIALLY_COPYABLE(T),
         "IskakINO_Storage::save() hanya mendukung tipe trivially-copyable "
         "(struct/array/primitif tanpa pointer/String). Gunakan saveString() untuk teks.");
       return _writeSlot(address, (const uint8_t*)&value, sizeof(T));
@@ -370,7 +380,7 @@ class IskakINO_Storage {
 
     template <typename T>
     bool load(int address, T& value) {
-      static_assert(std::is_trivially_copyable<T>::value,
+      static_assert(ISKAKINO_IS_TRIVIALLY_COPYABLE(T),
         "IskakINO_Storage::load() hanya mendukung tipe trivially-copyable "
         "(struct/array/primitif tanpa pointer/String). Gunakan loadString() untuk teks.");
       return _readSlot(address, (uint8_t*)&value, sizeof(T));
@@ -426,7 +436,7 @@ class IskakINO_Storage {
 
     template <typename T>
     bool addLog(const T& entry) {
-      static_assert(std::is_trivially_copyable<T>::value,
+      static_assert(ISKAKINO_IS_TRIVIALLY_COPYABLE(T),
         "IskakINO_Storage::addLog() hanya mendukung tipe trivially-copyable.");
       if (_logMetaAddr < 0 || _logMaxEntries == 0) return false;
 
@@ -446,7 +456,7 @@ class IskakINO_Storage {
     // indexFromOldest: 0 = entri paling lama yang masih tersimpan, count()-1 = entri terbaru.
     template <typename T>
     bool readLog(uint16_t indexFromOldest, T& entry) {
-      static_assert(std::is_trivially_copyable<T>::value,
+      static_assert(ISKAKINO_IS_TRIVIALLY_COPYABLE(T),
         "IskakINO_Storage::readLog() hanya mendukung tipe trivially-copyable.");
       if (_logMetaAddr < 0 || _logMaxEntries == 0) return false;
 
