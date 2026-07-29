@@ -80,12 +80,20 @@ public:
     float readEMA(uint8_t pin, float &state, float alpha = 0.1f);
 
     // --- Logging (delegasi ke IskakINO_Logger) ---
+    //void log(const __FlashStringHelper* msg);
+    //void log(const __FlashStringHelper* msg, long val);
+    // 1. Log pesan biasa (non-formatting)  ---FIX!!
+    void log(const char* msg);
     void log(const __FlashStringHelper* msg);
-    void log(const __FlashStringHelper* msg, long val);
-    void logFloat(const __FlashStringHelper* msg, float val, uint8_t decimals = 2);
+    
+
+    /*void logFloat(const __FlashStringHelper* msg, float val, uint8_t decimals = 2);
     // CATATAN AVR: specifier %f TIDAK didukung oleh vsnprintf bawaan AVR
     // tanpa flag linker tambahan (-lprintf_flt) — untuk nilai float/desimal
     // pakai logFloat().
+    void logf(const __FlashStringHelper* fmt, ...);*/
+    // 2. Log formatted (printf-style) ---FIX!!
+    void logf(const char* fmt, ...);
     void logf(const __FlashStringHelper* fmt, ...);
 
     // BARU (pilot refactor): dulu log()/logFloat()/logf() milik ArduFast
