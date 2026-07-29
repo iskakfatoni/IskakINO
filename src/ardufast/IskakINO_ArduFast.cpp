@@ -1,21 +1,15 @@
-//include
 #include "IskakINO_ArduFast.h"
 
-// Constructor — _scheduler(maxTasks) menggantikan alokasi manual
-// new unsigned long[]/new bool[]/new bool[] yang dulu ada langsung di sini.
-// _logger di-set debug=true supaya perilaku log()/logFloat()/logf() persis
-// sama seperti v1.1.0 lama (selalu mencetak ke Serial secara default).
 IskakINO_ArduFast::IskakINO_ArduFast(uint8_t maxTasks)
     : _scheduler(maxTasks) {
     _logger.setDebug(true);
 }
 
-// Serial Begin
 void IskakINO_ArduFast::begin(unsigned long baud) {
     Serial.begin(baud);
 }
 
-// --- Task Manager: delegasi murni ke IskakINO_Scheduler ---
+// --- Task Manager ---
 bool IskakINO_ArduFast::every(unsigned long interval, uint8_t id) {
     return _scheduler.every(interval, id);
 }
@@ -32,7 +26,7 @@ void IskakINO_ArduFast::cancel(uint8_t id) {
     _scheduler.cancel(id);
 }
 
-// --- Analog: logika tidak berubah, hanya makro platform kini dari core/ ---
+// --- Analog ---
 int IskakINO_ArduFast::readNorm(uint8_t pin) {
     int val = analogRead(pin);
 #if defined(ISKAKINO_PLATFORM_ESP32)
@@ -55,32 +49,54 @@ int IskakINO_ArduFast::mapAnalog(uint8_t pin, int outMin, int outMax) {
     return map(normalized, 0, 1023, outMin, outMax);
 }
 
-// 'state' disimpan di sisi pemanggil, library hanya melakukan perhitungannya.
 float IskakINO_ArduFast::readEMA(uint8_t pin, float &state, float alpha) {
     int raw = readNorm(pin);
     state = (alpha * (float)raw) + ((1.0f - alpha) * state);
     return state;
 }
 
-// --- Logging: delegasi murni ke IskakINO_Logger ---
+// --- Logging ---
+
+// 1. Log pesan biasa
+void IskakINO_ArduFast::log(const char* msg) {
+    _logger.log(msg);
+}
+
 void IskakINO_ArduFast::log(const __FlashStringHelper* msg) {
     _logger.log(msg);
+}
+
+// 2. Log pesan + long
+void IskakINO_ArduFast::log(const char* msg, long val) {
+    _logger.log(msg, val);
 }
 
 void IskakINO_ArduFast::log(const __FlashStringHelper* msg, long val) {
     _logger.log(msg, val);
 }
 
+// 3. Log float
+void IskakINO_ArduFast::logFloat(const char* msg, float val, uint8_t decimals) {
+    _logger.logFloat(msg, val, decimals);
+}
+
 void IskakINO_ArduFast::logFloat(const __FlashStringHelper* msg, float val, uint8_t decimals) {
     _logger.logFloat(msg, val, decimals);
 }
 
+// 4. Formatted Printf-style (logf)
+void IskakINO_ArduFast::logf(const char* fmt, ...) {
+    if (!_logger.isDebug()) return;
+    char buf[ISKAKINO_LOGF_BUFFER_SIZE];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+    Serial.print(F("[LOG] "));
+    Serial.println(buf);
+}
+
 void IskakINO_ArduFast::logf(const __FlashStringHelper* fmt, ...) {
-    // IskakINO_Logger::logf() sendiri variadic dan tidak bisa dipanggil
-    // langsung dengan meneruskan va_list dari sini (logf() memakai
-    // va_start(args, fmt) yang butuh nama parameter formal terakhir persis
-    // di titik pemanggilan). Jadi logika printf-style tetap di sini,
-    // hanya output-nya lewat _logger untuk menghormati flag debug.
     if (!_logger.isDebug()) return;
     char buf[ISKAKINO_LOGF_BUFFER_SIZE];
     va_list args;
@@ -95,13 +111,15 @@ void IskakINO_ArduFast::logf(const __FlashStringHelper* fmt, ...) {
     Serial.println(buf);
 }
 
-// --- Wrapper IO standar (untuk pin dinamis / non-template) ---
+// --- Wrapper IO Standar ---
 void IskakINO_ArduFast::pinMode(uint8_t pin, uint8_t mode) {
     ::pinMode(pin, mode);
 }
+
 void IskakINO_ArduFast::digitalWrite(uint8_t pin, uint8_t val) {
     ::digitalWrite(pin, val);
 }
+
 int IskakINO_ArduFast::digitalRead(uint8_t pin) {
     return ::digitalRead(pin);
 }
