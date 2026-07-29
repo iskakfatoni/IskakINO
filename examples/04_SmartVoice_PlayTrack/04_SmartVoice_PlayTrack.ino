@@ -1,22 +1,35 @@
 /*
  * 04_SmartVoice_PlayTrack.ino
  * Modul: IskakINO_SmartVoice (universal -- perlu satu Stream/Serial
- * tambahan untuk modul DFPlayer Mini, mis. Serial1/Serial2 di ESP32,
- * atau SoftwareSerial di AVR)
+ * tambahan untuk modul DFPlayer Mini)
  *
  * Menunjukkan pemutaran track dari SD card, cek status SD, dan membaca
  * lastError() (IskakINO_Result) untuk tahu kenapa sebuah perintah
  * diabaikan (mis. track tidak valid, belum begin(), dst.).
  *
- * Rangkaian: DFPlayer Mini RX/TX ke Serial2 (ganti sesuai board Anda),
- * pin BUSY opsional untuk deteksi sedang memutar atau tidak.
+ * Rangkaian: DFPlayer Mini RX/TX ke pin serial tambahan (lihat VOICE_SERIAL
+ * di bawah -- otomatis dipilih sesuai board), pin BUSY opsional untuk
+ * deteksi sedang memutar atau tidak.
+ *
+ * CATATAN PORTABILITAS: Arduino Uno/Nano (ATmega328P) cuma punya SATU UART
+ * hardware (Serial, dipakai buat Serial Monitor) -- TIDAK ada Serial1/
+ * Serial2 seperti di ESP32/Mega. Jadi contoh ini otomatis pakai
+ * SoftwareSerial di board seperti itu, dan Serial2 asli di ESP32 yang
+ * punya UART hardware ekstra (lebih stabil/cepat daripada SoftwareSerial).
  */
 
 #include <IskakINO.h>
 
+#if defined(ARDUINO_ARCH_ESP32)
+    #define VOICE_SERIAL Serial2 // ESP32 punya UART hardware ekstra, lebih baik dipakai
+#else
+    #include <SoftwareSerial.h>
+    SoftwareSerial voiceSoftSerial(10, 11); // RX=10, TX=11 -- sesuaikan pin Anda
+    #define VOICE_SERIAL voiceSoftSerial
+#endif
+
 IskakINO_SmartVoice voice;
 
-#define VOICE_SERIAL Serial2   // ganti ke SoftwareSerial kalau board tidak punya UART kedua
 #define BUSY_PIN     4
 #define BUTTON_PIN   5         // tombol aktif LOW, ke GND saat ditekan
 
