@@ -41,7 +41,7 @@
  * IskakINO.begin() dan satu IskakINO.update(). Lihat
  * examples/08_Framework_Kernel dan src/core/IskakINO_Kernel.h. Pola
  * manual TETAP didukung penuh -- kernel ini murni kenyamanan opsional,
- * bukan keharusan. Trigger
+ * bukan keharusan.
  */
 
 #ifndef ISKAKINO_H
