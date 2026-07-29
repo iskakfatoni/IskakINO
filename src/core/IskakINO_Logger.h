@@ -26,17 +26,22 @@
 #include "IskakINO_Result.h"
 
 // AVR gotcha: avr-libc <math.h> (ke-include transitif lewat Arduino.h)
-// mendefinisikan `log` sebagai MACRO -> `logf`, karena di AVR double==float
-// (4 byte), jadi avr-libc tidak punya implementasi log(double) terpisah dari
-// logf(float). Tanpa #undef ini, method log() di class ini akan diam-diam
-// "dibajak" jadi logf() saat preprocessing, bentrok-ambigu dengan method
-// logf() (variadic) di bawah -- TERKONFIRMASI lewat CI sungguhan
-// arduino:avr:uno (awalnya muncul di IskakINO_ArduFast.h yang punya pola
-// sama, ternyata sumber aslinya di sini karena SEMUA modul lain juga
-// compose IskakINO_Logger). Di platform lain (ESP32/ESP8266, double asli)
-// macro ini biasanya tidak ada, jadi #ifdef di bawah aman jadi no-op.
+// mendefinisikan `log`/`logf` sebagai MACRO saling terhubung, karena di AVR
+// double==float (4 byte) jadi avr-libc cuma punya SATU implementasi nyata
+// dan yang satunya lagi macro alias. TERKONFIRMASI lewat CI sungguhan
+// arduino:avr:uno bahwa arahnya `#define logf log` (bukan sebaliknya
+// seperti dugaan awal) -- makanya method logf() (variadic) di bawah diam-
+// diam "dibajak" jadi log(), bentrok-ambigu dengan method log() yang sudah
+// ada. Supaya aman terlepas dari arah macro-nya (bisa beda antar versi
+// avr-libc), KEDUA nama di-#undef di sini -- fix terpusat di sini otomatis
+// berlaku ke semua modul yang compose Logger (Storage, LCD, SmartVoice),
+// bukan cuma ArduFast. Di platform lain (ESP32/ESP8266, double asli) macro
+// ini biasanya tidak ada, jadi #ifdef di bawah aman jadi no-op.
 #ifdef log
 #undef log
+#endif
+#ifdef logf
+#undef logf
 #endif
 
 // Ukuran buffer stack untuk logf() (printf-style). Bisa dikecilkan untuk

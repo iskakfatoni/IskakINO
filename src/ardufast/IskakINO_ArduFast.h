@@ -45,20 +45,24 @@
 
 // --- Class Framework ---
 // AVR gotcha: avr-libc <math.h> (ke-include transitif lewat Arduino.h)
-// mendefinisikan `log` sebagai MACRO -> `logf`, karena di AVR double==float
-// (4 byte), jadi avr-libc tidak punya implementasi log(double) terpisah dari
-// logf(float). Akibatnya method log() di bawah diam-diam "dibajak" jadi
-// logf() saat preprocessing, bentrok-ambigu dengan method logf() (variadic)
-// yang memang sudah ada -- TERKONFIRMASI lewat CI sungguhan arduino:avr:uno.
-// #undef supaya nama method log()/logFloat() di class ini TIDAK dibajak.
-// Di platform lain (ESP32/ESP8266, yang punya double asli) macro ini
-// biasanya tidak ada sama sekali, jadi #ifdef di bawah aman jadi no-op.
-// EFEK SAMPING yang perlu diketahui: kalau sketch Anda butuh log() asli
-// (fungsi matematika natural logarithm) DI FILE YANG SAMA setelah #include
-// ini, pakai logf(x) langsung (fungsi float aslinya, tetap tersedia dan
-// tidak terpengaruh #undef ini).
+// mendefinisikan `log`/`logf` sebagai MACRO saling terhubung, karena di AVR
+// double==float (4 byte) jadi avr-libc cuma punya SATU implementasi nyata
+// dan yang satunya lagi macro alias. TERKONFIRMASI lewat CI sungguhan
+// arduino:avr:uno bahwa arahnya `#define logf log` (bukan sebaliknya
+// seperti dugaan awal) -- makanya method logf() (variadic) di bawah diam-
+// diam "dibajak" jadi log(), bentrok-ambigu dengan method log() yang sudah
+// ada. Supaya aman terlepas dari arah macro-nya (bisa beda antar versi
+// avr-libc), KEDUA nama di-#undef di sini. Di platform lain (ESP32/ESP8266,
+// double asli) macro ini biasanya tidak ada sama sekali, jadi #ifdef di
+// bawah aman jadi no-op.
+// EFEK SAMPING yang perlu diketahui: kalau sketch Anda butuh log()/logf()
+// asli (fungsi matematika logaritma) DI FILE YANG SAMA setelah #include
+// ini, panggil lewat qualifier eksplisit atau cast, mis. `::logf(x)`.
 #ifdef log
 #undef log
+#endif
+#ifdef logf
+#undef logf
 #endif
 
 class IskakINO_ArduFast {
