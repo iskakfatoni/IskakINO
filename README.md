@@ -5,18 +5,13 @@
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/iskakfatoni/IskakINO?color=blue&logo=github)](https://github.com/iskakfatoni/IskakINO/releases)
 [![CI](https://github.com/iskakfatoni/IskakINO/actions/workflows/ci.yml/badge.svg)](https://github.com/iskakfatoni/IskakINO/actions)
-
-
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-11%20%2F%2017-00599C.svg?logo=cplusplus&logoColor=white)](https://en.cppreference.com/)
 [![Code Size](https://img.shields.io/github/languages/code-size/iskakfatoni/IskakINO?color=blueviolet)](https://github.com/iskakfatoni/IskakINO)
 [![Last Commit](https://img.shields.io/github/last-commit/iskakfatoni/IskakINO?color=brightgreen)](https://github.com/iskakfatoni/IskakINO/commits/main)
 [![Issues](https://img.shields.io/github/issues/iskakfatoni/IskakINO?color=yellow)](https://github.com/iskakfatoni/IskakINO/issues)
-[![C++ Standard](https://img.shields.io/badge/C%2B%2B-11%20%2F%2017-00599C.svg?logo=cplusplus&logoColor=white)](https://en.cppreference.com/)
-
 [![Architecture](https://img.shields.io/badge/Architecture-Modular%20Kernel-orange.svg)](#)
 [![Task Scheduler](https://img.shields.io/badge/Scheduler-Non--Blocking-informational.svg)](#)
 [![Testing](https://img.shields.io/badge/Unit%20Tests-Mock%20Native-success.svg)](#)
-
 [![GitHub Stars](https://img.shields.io/github/stars/iskakfatoni/IskakINO?style=social)](https://github.com/iskakfatoni/IskakINO/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/iskakfatoni/IskakINO?style=social)](https://github.com/iskakfatoni/IskakINO/network/members)
 
