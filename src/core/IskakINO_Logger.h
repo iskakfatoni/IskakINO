@@ -11,11 +11,8 @@
  *     supaya modul yang punya mode "silent" tetap bisa pasang Logger tanpa
  *     otomatis ngeprint ke Serial kalau user tidak mengaktifkan debug.
  *   - Ditambah logResult() untuk mencetak IskakINO_Result secara konsisten.
- *
- * Setiap modul disarankan punya instance IskakINO_Logger sendiri (bukan
- * satu global tunggal) supaya debug bisa diaktifkan per-modul, mis.:
- *   IskakINO_Logger _log;
- *   _log.setDebug(true);   // hanya modul ini yang jadi cerewet di Serial
+ *   - Fitur Zero-Cost Release: Jika ISKAKINO_DISABLE_LOGGING didefinisikan,
+ *     seluruh method logger di-inline sebagai no-op (0 byte Flash/RAM).
  */
 
 #ifndef ISKAKINO_LOGGER_H
@@ -26,17 +23,7 @@
 #include "IskakINO_Result.h"
 
 // AVR gotcha: avr-libc <math.h> (ke-include transitif lewat Arduino.h)
-// mendefinisikan `log`/`logf` sebagai MACRO saling terhubung, karena di AVR
-// double==float (4 byte) jadi avr-libc cuma punya SATU implementasi nyata
-// dan yang satunya lagi macro alias. TERKONFIRMASI lewat CI sungguhan
-// arduino:avr:uno bahwa arahnya `#define logf log` (bukan sebaliknya
-// seperti dugaan awal) -- makanya method logf() (variadic) di bawah diam-
-// diam "dibajak" jadi log(), bentrok-ambigu dengan method log() yang sudah
-// ada. Supaya aman terlepas dari arah macro-nya (bisa beda antar versi
-// avr-libc), KEDUA nama di-#undef di sini -- fix terpusat di sini otomatis
-// berlaku ke semua modul yang compose Logger (Storage, LCD, SmartVoice),
-// bukan cuma ArduFast. Di platform lain (ESP32/ESP8266, double asli) macro
-// ini biasanya tidak ada, jadi #ifdef di bawah aman jadi no-op.
+// mendefinisikan `log`/`logf` sebagai MACRO saling terhubung
 #ifdef log
 #undef log
 #endif
@@ -44,14 +31,26 @@
 #undef logf
 #endif
 
-// Ukuran buffer stack untuk logf() (printf-style). Bisa dikecilkan untuk
-// board AVR yang RAM-nya sangat terbatas dengan mendefinisikan makro ini
-// SEBELUM #include <IskakINO_Logger.h>, mis.:
-//   #define ISKAKINO_LOGF_BUFFER_SIZE 32
-//   #include <IskakINO_Logger.h>
+// Ukuran buffer stack untuk logf() (printf-style).
 #ifndef ISKAKINO_LOGF_BUFFER_SIZE
 #define ISKAKINO_LOGF_BUFFER_SIZE 64
 #endif
+
+#ifdef ISKAKINO_DISABLE_LOGGING
+
+class IskakINO_Logger {
+  public:
+    IskakINO_Logger() {}
+    inline void setDebug(bool) {}
+    inline bool isDebug() const { return false; }
+    inline void log(const __FlashStringHelper*) {}
+    inline void log(const __FlashStringHelper*, long) {}
+    inline void logFloat(const __FlashStringHelper*, float, uint8_t = 2) {}
+    inline void logf(const __FlashStringHelper*, ...) {}
+    inline void logResult(const __FlashStringHelper*, IskakINO_Result) {}
+};
+
+#else
 
 class IskakINO_Logger {
   private:
@@ -60,18 +59,17 @@ class IskakINO_Logger {
   public:
     IskakINO_Logger() {}
 
-    // Aktif/nonaktifkan output ke Serial. Default nonaktif (silent) supaya
-    // modul yang compose Logger ini tidak otomatis cerewet tanpa diminta.
-    void setDebug(bool debugMode) { _debug = debugMode; }
-    bool isDebug() const { return _debug; }
+    // Aktif/nonaktifkan output ke Serial. Default nonaktif (silent).
+    inline void setDebug(bool debugMode) { _debug = debugMode; }
+    inline bool isDebug() const { return _debug; }
 
-    void log(const __FlashStringHelper* msg) {
+    inline void log(const __FlashStringHelper* msg) {
         if (!_debug) return;
         Serial.print(F("[LOG] "));
         Serial.println(msg);
     }
 
-    void log(const __FlashStringHelper* msg, long val) {
+    inline void log(const __FlashStringHelper* msg, long val) {
         if (!_debug) return;
         Serial.print(F("[LOG] "));
         Serial.print(msg);
@@ -79,10 +77,7 @@ class IskakINO_Logger {
         Serial.println(val);
     }
 
-    // Pakai dtostrf() (tersedia di avr-libc & disediakan ulang oleh core
-    // ESP8266/ESP32) supaya tidak bergantung pada dukungan %f di vsnprintf,
-    // yang tidak tersedia secara default di AVR.
-    void logFloat(const __FlashStringHelper* msg, float val, uint8_t decimals = 2) {
+    inline void logFloat(const __FlashStringHelper* msg, float val, uint8_t decimals = 2) {
         if (!_debug) return;
         char buf[16];
         dtostrf(val, 0, decimals, buf);
@@ -92,11 +87,7 @@ class IskakINO_Logger {
         Serial.println(buf);
     }
 
-    // Printf-style logging. Format string HARUS __FlashStringHelper (F()).
-    // CATATAN AVR: specifier %f TIDAK didukung oleh vsnprintf bawaan AVR
-    // tanpa flag linker tambahan (-lprintf_flt) — untuk nilai desimal
-    // pakai logFloat().
-    void logf(const __FlashStringHelper* fmt, ...) {
+    inline void logf(const __FlashStringHelper* fmt, ...) {
         if (!_debug) return;
         char buf[ISKAKINO_LOGF_BUFFER_SIZE];
         va_list args;
@@ -111,10 +102,7 @@ class IskakINO_Logger {
         Serial.println(buf);
     }
 
-    // Cetak IskakINO_Result secara konsisten, mis.:
-    //   _log.logResult(F("Storage.save"), IskakINO_Result::WRITE_FAILED);
-    //   -> "[LOG] Storage.save: WRITE_FAILED"
-    void logResult(const __FlashStringHelper* msg, IskakINO_Result result) {
+    inline void logResult(const __FlashStringHelper* msg, IskakINO_Result result) {
         if (!_debug) return;
         Serial.print(F("[LOG] "));
         Serial.print(msg);
@@ -122,5 +110,7 @@ class IskakINO_Logger {
         Serial.println(IskakINO_ResultToString(result));
     }
 };
+
+#endif
 
 #endif

@@ -51,6 +51,14 @@ int main() {
     sched.reset(2);
     assert(sched.every(0, 2) == true);     // re-activated after reset
 
+    // --- Static Zero-Heap Scheduler ---
+    IskakINO_SchedulerStatic<5> staticSched;
+    assert(staticSched.maxTasks() == 5);
+    _mock_millis_value = 500;
+    staticSched.reset(0);
+    _mock_millis_value = 600;
+    assert(staticSched.every(100, 0) == true);
+
     // out-of-range id harus aman (tidak crash), cuma return false
     assert(sched.every(0, 99) == false);
     assert(sched.once(0, 99) == false);

@@ -81,7 +81,7 @@ class IskakINO_Kernel {
 
     // Panggil update() SEMUA modul terdaftar, urut sesuai urutan pendaftaran.
     // Idealnya dipanggil sekali per loop().
-    void update() {
+    inline void update() {
         for (uint8_t i = 0; i < _count; i++) {
             _modules[i]->update();
         }
