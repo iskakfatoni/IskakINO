@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdlib>
 #include <cstdint>
+#include <algorithm>
+#include <cctype>
 
 // --- Mock minimal kelas String milik Arduino, cukup untuk syntax-check ---
 class String {
@@ -17,6 +19,8 @@ public:
     String(unsigned long v) : s(std::to_string(v)) {}
 
     unsigned int length() const { return (unsigned int)s.length(); }
+    bool isEmpty() const { return s.empty(); }
+    void clear() { s.clear(); }
     const char* c_str() const { return s.c_str(); }
     void reserve(unsigned int n) { s.reserve(n); }
     void trim() {
@@ -29,6 +33,46 @@ public:
     String substring(int from) const { return String(s.substr(from).c_str()); }
     String substring(int from, int to) const { return String(s.substr(from, to - from).c_str()); }
     char operator[](unsigned int i) const { return s[i]; }
+
+    long toInt() const { return s.empty() ? 0 : std::strtol(s.c_str(), nullptr, 10); }
+    float toFloat() const { return s.empty() ? 0.0f : std::strtof(s.c_str(), nullptr); }
+    double toDouble() const { return s.empty() ? 0.0 : std::strtod(s.c_str(), nullptr); }
+
+    bool startsWith(const String& prefix) const {
+        return s.rfind(prefix.s, 0) == 0;
+    }
+    bool startsWith(const char* prefix) const {
+        return prefix && s.rfind(prefix, 0) == 0;
+    }
+    bool endsWith(const String& suffix) const {
+        if (suffix.s.length() > s.length()) return false;
+        return s.compare(s.length() - suffix.s.length(), suffix.s.length(), suffix.s) == 0;
+    }
+    bool endsWith(const char* suffix) const {
+        if (!suffix) return false;
+        std::string sf(suffix);
+        if (sf.length() > s.length()) return false;
+        return s.compare(s.length() - sf.length(), sf.length(), sf) == 0;
+    }
+
+    bool equalsIgnoreCase(const String& other) const {
+        if (s.length() != other.s.length()) return false;
+        for (size_t i = 0; i < s.length(); i++) {
+            if (std::tolower((unsigned char)s[i]) != std::tolower((unsigned char)other.s[i])) return false;
+        }
+        return true;
+    }
+
+    void toLowerCase() {
+        for (char &c : s) c = (char)std::tolower((unsigned char)c);
+    }
+    void toUpperCase() {
+        for (char &c : s) c = (char)std::toupper((unsigned char)c);
+    }
+
+    bool concat(const String& str) { s += str.s; return true; }
+    bool concat(const char* cstr) { if (cstr) s += cstr; return true; }
+    bool concat(char c) { s += c; return true; }
 
     String& operator+=(const String& o) { s += o.s; return *this; }
     String& operator+=(char c) { s += c; return *this; }
