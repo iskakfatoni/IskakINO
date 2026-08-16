@@ -1,0 +1,27 @@
+{
+  "configurations": [
+    {
+      "name": "ESP32 (Arduino)",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/src/**",
+        "${workspaceFolder}/test/**",
+        "${workspaceFolder}/test/mock_esp32/**",
+        "C:/Users/iskak/AppData/Local/Arduino15/packages/esp32/hardware/esp32/**/cores/esp32",
+        "C:/Users/iskak/AppData/Local/Arduino15/packages/esp32/hardware/esp32/**/variants/**",
+        "C:/Users/iskak/AppData/Local/Arduino15/packages/esp32/tools/esp-x32/**/xtensa-esp32-elf/include/c++/**",
+        "C:/Users/iskak/AppData/Local/Arduino15/packages/esp32/tools/esp-rv32/**/riscv32-esp-elf/include/c++/**"
+      ],
+      "defines": [
+        "ESP32",
+        "ARDUINO=10819",
+        "ARDUINO_ARCH_ESP32"
+      ],
+      "compilerPath": "C:/Users/iskak/AppData/Local/Arduino15/packages/esp32/tools/esp-x32/2601/bin/xtensa-esp32-elf-g++.exe",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "gcc-x64"
+    }
+  ],
+  "version": 4
+}

@@ -1,0 +1,19 @@
+{
+  "files.associations": {
+    "*.h": "cpp",
+    "*.hpp": "cpp",
+    "*.ino": "cpp",
+    "*.cpp": "cpp",
+    "*.tcc": "cpp",
+    "algorithm": "cpp",
+    "string": "cpp",
+    "cctype": "cpp",
+    "cstdint": "cpp",
+    "cstdio": "cpp",
+    "cstdlib": "cpp",
+    "cstring": "cpp"
+  },
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.cStandard": "c11",
+  "C_Cpp.intelliSenseEngine": "default"
+}
