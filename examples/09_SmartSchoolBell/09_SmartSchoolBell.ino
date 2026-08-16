@@ -15,13 +15,11 @@
 #include <WiFiUdp.h>
 #include "BellWebPage.h"
 
-#if defined(ARDUINO_ARCH_ESP32)
-  #define VOICE_SERIAL Serial2
-#else
-  #include <SoftwareSerial.h>
-  SoftwareSerial voiceSoftSerial(14, 12);
-  #define VOICE_SERIAL voiceSoftSerial
+#if !defined(ARDUINO_ARCH_ESP32) && !defined(ESP32)
+  #error "Sketch ini dirancang khusus untuk board ESP32 (menggunakan hardware UART Serial2, WifiPortal & FastNTP)."
 #endif
+
+#define VOICE_SERIAL Serial2
 
 // --- Pinout Hardware ---
 #define PIN_RELAY_AMPLI   18

@@ -1,3 +1,4 @@
+#define ARDUINO_ARCH_ESP32 1
 #include "ArduinoExtra.h"
 #include "Wire.h"
 #include "Stream.h"
