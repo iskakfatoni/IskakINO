@@ -1,8 +1,15 @@
+#ifndef ARDUINO_ARCH_ESP32
 #define ARDUINO_ARCH_ESP32 1
-#include "ArduinoExtra.h"
-#include "Wire.h"
-#include "Stream.h"
+#endif
+#ifndef ISKAKINO_PLATFORM_ESP32
+#define ISKAKINO_PLATFORM_ESP32 1
+#endif
+
+#include "../mock_esp32/ArduinoExtra.h"
+#include "../mock_lcd/Wire.h"
+#include "../mock_voice/Stream.h"
 #include "../../examples/09_SmartSchoolBell/09_SmartSchoolBell.ino"
+
 extern unsigned long _mock_millis_value;
 int main() {
     Wire._ackAddress[0x27] = true;

@@ -15,7 +15,7 @@
 #include <WiFiUdp.h>
 #include "BellWebPage.h"
 
-#if !defined(ARDUINO_ARCH_ESP32) && !defined(ESP32)
+#if !defined(ARDUINO_ARCH_ESP32) && !defined(ESP32) && !defined(ISKAKINO_PLATFORM_ESP32)
   #error "Sketch ini dirancang khusus untuk board ESP32 (menggunakan hardware UART Serial2, WifiPortal & FastNTP)."
 #endif
 
