@@ -189,10 +189,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Arduino CLI
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
-          sudo mv bin/arduino-cli /usr/local/bin/
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
 
       - name: Install core (${{ matrix.core }})
         run: |
