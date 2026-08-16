@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IskakINO Smart School Bell — Multi-Profile Dashboard Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --card-bg: rgba(30, 41, 59, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-primary: #3b82f6;
+            --accent-primary-hover: #2563eb;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: var(--text-main);
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .header-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 41, 59, 0.8));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .title-group h1 {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-live::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* Profile Selector Tabs */
+        .profile-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .profile-tab {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .profile-tab:hover {
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+        }
+
+        .profile-tab.active {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border-color: #60a5fa;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Status Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .status-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-val {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: #38bdf8;
+        }
+
+        .state-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .state-indicator.idle { color: #34d399; }
+        .state-indicator.ringing {
+            color: #ef4444;
+            animation: blink 0.8s infinite alternate;
+        }
+
+        @keyframes blink {
+            from { opacity: 1; text-shadow: 0 0 12px rgba(239, 68, 68, 0.8); }
+            to { opacity: 0.5; }
+        }
+
+        /* LCD Live Preview */
+        .lcd-preview-card {
+            background: #092e20;
+            border: 2px solid #00ff66;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+            border-radius: 12px;
+            padding: 18px 24px;
+            color: #00ff66;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .lcd-line {
+            font-size: 19px;
+            letter-spacing: 3px;
+            white-space: pre;
+            text-shadow: 0 0 8px rgba(0, 255, 102, 0.7);
+        }
+
+        /* Action Buttons */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-excel {
+            background: linear-gradient(135deg, #059669, #047857);
+            border: 1px solid #10b981;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        /* Excel Upload Box */
+        .excel-box {
+            border: 2px dashed rgba(16, 185, 129, 0.4);
+            border-radius: 12px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.05);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .excel-box:hover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        /* Schedule Table */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-muted);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        td {
+            padding: 14px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .time-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .prof-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+        .prof-reguler { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+        .prof-jumat { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .prof-ujian { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .prof-ramadhan { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.4); }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 100;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="card header-card">
+        <div class="title-group">
+            <h1>🔔 IskakINO Smart School Bell</h1>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">
+                Web Portal Dashboard & Live Hardware Simulator (ESP32 Multi-Profile)
+            </p>
+        </div>
+        <span class="badge-live">ONLINE &bull; NTP SYNCED</span>
+    </div>
+
+    <!-- Multi-Profile Mode Selector -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+                <h3 style="font-size: 16px; font-weight: 600; color: #60a5fa;">📁 Mode & Profil Jadwal Aktif</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                    Pilih profil bel yang sedang diterapkan di sekolah.
+                </p>
+            </div>
+            <span style="font-size: 13px; font-weight: 600; color: #34d399;" id="active-profile-badge">
+                Profil Aktif: 📘 Reguler
+            </span>
+        </div>
+
+        <div class="profile-tabs">
+            <button class="profile-tab active" onclick="setProfile('auto')">🔄 Otomatis (Ikuti Hari)</button>
+            <button class="profile-tab" onclick="setProfile('reguler')">📘 Reguler (Senin-Kamis/Sabtu)</button>
+            <button class="profile-tab" onclick="setProfile('jumat')">🕌 Khusus Jumat (Pulang Cepat)</button>
+            <button class="profile-tab" onclick="setProfile('ujian')">📝 Ujian / Asesmen (UTS/UAS)</button>
+            <button class="profile-tab" onclick="setProfile('ramadhan')">🌙 Ramadhan / Puasa</button>
+            <button class="profile-tab" onclick="setProfile('libur')">🏖️ Libur (Bel Non-Aktif)</button>
+        </div>
+    </div>
+
+    <!-- Status Grid -->
+    <div class="status-grid">
+        <div class="status-box">
+            <span class="status-label">Waktu Sistem (NTP)</span>
+            <span class="status-val" id="clock-display">07:00:00 WIB</span>
+            <span style="font-size: 12px; color: #a5b4fc;" id="date-display">Senin, 16 Agustus 2026</span>
+        </div>
+        <div class="status-box">
+            <span class="status-label">Status Bel & Relay</span>
+            <div class="state-indicator idle" id="system-status">
+                <span>●</span> <span id="status-text">Siaga (Standby)</span>
+            </div>
+            <span style="font-size: 12px; color: var(--text-muted);" id="relay-status">Relay Ampli: OFF</span>
+        </div>
+        <div class="status-box">
+            <span class="status-label">Jadwal Terdekat</span>
+            <span class="status-val" style="color: #facc15; font-size: 17px;" id="next-bell-text">07:00 Masuk Reguler</span>
+            <span style="font-size: 12px; color: var(--text-muted);" id="countdown-text">Akan berbunyi...</span>
+        </div>
+    </div>
+
+    <!-- LCD 16x2 Realtime Emulator -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #94a3b8;">📟 LCD 16x2 I2C Display (Emulasi Hardware)</h3>
+            <span style="font-size: 12px; color: #64748b; font-family: monospace;">Address: 0x27</span>
+        </div>
+        <div class="lcd-preview-card">
+            <div class="lcd-line" id="lcd-line-1">REG 07:00:00 WIB</div>
+            <div class="lcd-line" id="lcd-line-2">> 09:45 Istirahat</div>
+        </div>
+    </div>
+
+    <!-- Panel Import / Export Excel -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="font-size: 16px; font-weight: 600; color: #34d399;">📊 Integrasi Microsoft Excel (.xlsx)</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                    Upload jadwal pelajaran langsung dari file Excel lengkap dengan kolom profil.
+                </p>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-excel btn-sm" onclick="downloadExcelTemplate()">
+                    📥 Download Template Excel (.xlsx)
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="exportToExcel()">
+                    📤 Export Jadwal ke Excel
+                </button>
+            </div>
+        </div>
+
+        <div class="excel-box">
+            <span style="font-size: 32px;">📑</span>
+            <div>
+                <b style="font-size: 15px; color: #f8fafc;">Pilih atau Tarik File Excel (.xlsx / .xls) ke sini</b>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                    File akan diproses secara otomatis di browser dan disimpan ke memori Flash ESP32.
+                </p>
+            </div>
+            <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)">
+            <button class="btn btn-success" onclick="document.getElementById('excel-file-input').click()">
+                📂 Browse File Excel dari HP / Laptop
+            </button>
+        </div>
+    </div>
+
+    <!-- Kontrol Manual Cepat -->
+    <div class="card">
+        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 14px;">⚡ Kontrol Cepat</h3>
+        <div class="btn-group">
+            <button class="btn btn-danger" onclick="triggerManualBell(1, 'Bel Darurat Manual')">
+                🚨 Bunyikan Bel Sekarang (Manual)
+            </button>
+            <button class="btn btn-primary" onclick="testChimeSound(1)">
+                🔊 Test Speaker / Chime Audio
+            </button>
+            <button class="btn btn-secondary" onclick="document.getElementById('add-form-card').scrollIntoView({behavior: 'smooth'})">
+                ➕ Tambah Jadwal Manual
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabel Jadwal -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+                <h3 style="font-size: 16px; font-weight: 600;" id="table-title">📋 Tabel Jadwal Bel (Profil: Reguler)</h3>
+                <span style="font-size: 13px; color: var(--text-muted);" id="total-bell-count">Menampilkan 4 dari 8 jadwal</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 13px; color: var(--text-muted);">Filter Tampilan:</label>
+                <select id="filter-profile" class="form-control" style="padding: 6px 10px; font-size: 13px;" onchange="renderTable()">
+                    <option value="active">Ikuti Profil Aktif</option>
+                    <option value="all">Tampilkan Semua Profil</option>
+                    <option value="reguler">Hanya Reguler</option>
+                    <option value="jumat">Hanya Jumat</option>
+                    <option value="ujian">Hanya Ujian</option>
+                    <option value="ramadhan">Hanya Ramadhan</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Waktu</th>
+                        <th>Kegiatan</th>
+                        <th>Profil</th>
+                        <th>Track MP3</th>
+                        <th>Hari Aktif</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="schedule-tbody">
+                    <!-- Dynamic Items -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Form Tambah Jadwal -->
+    <div class="card" id="add-form-card">
+        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">➕ Tambah Jadwal Bel Baru</h3>
+        <form onsubmit="addNewSchedule(event)">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Waktu (Jam : Menit)</label>
+                    <input type="time" id="inp-time" class="form-control" required value="08:30">
+                </div>
+                <div class="form-group">
+                    <label>Nama Kegiatan</label>
+                    <input type="text" id="inp-label" class="form-control" required placeholder="Ganti Jam Pelajaran">
+                </div>
+                <div class="form-group">
+                    <label>Target Profil</label>
+                    <select id="inp-profile" class="form-control">
+                        <option value="reguler">Reguler (Senin-Kamis, Sabtu)</option>
+                        <option value="jumat">Khusus Jumat</option>
+                        <option value="ujian">Mode Ujian (UTS/UAS)</option>
+                        <option value="ramadhan">Mode Ramadhan / Puasa</option>
+                        <option value="all">Semua Profil</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pilihan Track MP3</label>
+                    <select id="inp-track" class="form-control">
+                        <option value="1">Track 01 (Nada Bel Masuk)</option>
+                        <option value="2">Track 02 (Waktu Istirahat)</option>
+                        <option value="3">Track 03 (Masuk Kelas)</option>
+                        <option value="4">Track 04 (Waktu Pulang)</option>
+                        <option value="5">Track 05 (Lagu Kebangsaan)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hari Aktif</label>
+                    <select id="inp-days" class="form-control">
+                        <option value="weekday">Senin s/d Jumat</option>
+                        <option value="sat">Senin s/d Sabtu</option>
+                        <option value="fri">Hanya Hari Jumat</option>
+                        <option value="all">Setiap Hari</option>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-top: 16px;">
+                <button type="submit" class="btn btn-primary">💾 Simpan Jadwal ke IskakStorage</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast-msg">Jadwal berhasil diperbarui!</div>
+
+<script>
+    // --- State Jadwal Multi-Profile ---
+    let activeProfileMode = 'auto'; // 'auto', 'reguler', 'jumat', 'ujian', 'ramadhan', 'libur'
+
+    let schedules = [
+        // --- PROFIL REGULER ---
+        { id: 1, hour: 7, minute: 0, label: "Masuk Reguler", profile: "reguler", track: 1, days: "Senin-Jumat", enabled: true },
+        { id: 2, hour: 9, minute: 45, label: "Istirahat 1", profile: "reguler", track: 2, days: "Senin-Jumat", enabled: true },
+        { id: 3, hour: 10, minute: 15, label: "Masuk Kelas", profile: "reguler", track: 3, days: "Senin-Jumat", enabled: true },
+        { id: 4, hour: 14, minute: 0, label: "Pulang Reguler", profile: "reguler", track: 4, days: "Senin-Jumat", enabled: true },
+
+        // --- PROFIL JUMAT ---
+        { id: 5, hour: 7, minute: 0, label: "Masuk Jumat", profile: "jumat", track: 1, days: "Jumat", enabled: true },
+        { id: 6, hour: 11, minute: 0, label: "Pulang Sholat Jumat", profile: "jumat", track: 4, days: "Jumat", enabled: true },
+
+        // --- PROFIL UJIAN ---
+        { id: 7, hour: 7, minute: 30, label: "Ujian Sesi 1", profile: "ujian", track: 1, days: "Senin-Jumat", enabled: true },
+        { id: 8, hour: 11, minute: 30, label: "Ujian Selesai", profile: "ujian", track: 4, days: "Senin-Jumat", enabled: true }
+    ];
+
+    let isRinging = false;
+    let audioCtx = null;
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast-msg');
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function getEffectiveProfile() {
+        if (activeProfileMode !== 'auto') return activeProfileMode;
+        const now = new Date();
+        const day = now.getDay(); // 0=Sun, 5=Fri
+        if (day === 0) return 'libur';
+        if (day === 5) return 'jumat';
+        return 'reguler';
+    }
+
+    function setProfile(prof) {
+        activeProfileMode = prof;
+        document.querySelectorAll('.profile-tab').forEach((el, idx) => {
+            el.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        const eff = getEffectiveProfile();
+        const names = {
+            'reguler': '📘 Reguler',
+            'jumat': '🕌 Khusus Jumat',
+            'ujian': '📝 Ujian / UTS',
+            'ramadhan': '🌙 Ramadhan',
+            'libur': '🏖️ Libur (Non-Aktif)'
+        };
+
+        document.getElementById('active-profile-badge').innerText = `Profil Aktif: ${names[eff] || eff}`;
+        renderTable();
+        showToast(`Mode jadwal diganti ke: ${names[eff] || eff}`);
+    }
+
+    // --- Web Audio API Chime Synth ---
+    function playChimeNote(freq, startTime, duration) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.4, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+    }
+
+    function testChimeSound(track = 1) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let now = audioCtx.currentTime;
+        playChimeNote(659.25, now, 0.7);        // E5
+        playChimeNote(523.25, now + 0.6, 0.7);  // C5
+        playChimeNote(587.33, now + 1.2, 0.7);  // D5
+        playChimeNote(392.00, now + 1.8, 1.4);  // G4
+    }
+
+    function triggerManualBell(track, label) {
+        if (isRinging) return;
+        isRinging = true;
+        testChimeSound(track);
+
+        const statusEl = document.getElementById('system-status');
+        const statusTxt = document.getElementById('status-text');
+        const relayTxt = document.getElementById('relay-status');
+        const lcd1 = document.getElementById('lcd-line-1');
+        const lcd2 = document.getElementById('lcd-line-2');
+
+        statusEl.className = 'state-indicator ringing';
+        statusTxt.innerText = `Sedang Berbunyi: ${label}`;
+        relayTxt.innerText = 'Relay Ampli: ON (Active)';
+        relayTxt.style.color = '#ef4444';
+
+        lcd1.innerText = 'BEL BERBUNYI!   ';
+        lcd2.innerText = (label + '                ').substring(0, 16);
+
+        setTimeout(() => {
+            isRinging = false;
+            statusEl.className = 'state-indicator idle';
+            statusTxt.innerText = 'Siaga (Standby)';
+            relayTxt.innerText = 'Relay Ampli: OFF';
+            relayTxt.style.color = 'var(--text-muted)';
+        }, 4000);
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('schedule-tbody');
+        tbody.innerHTML = '';
+        const eff = getEffectiveProfile();
+        const filterVal = document.getElementById('filter-profile').value;
+
+        let filtered = schedules.filter(s => {
+            if (filterVal === 'all') return true;
+            if (filterVal === 'active') {
+                return s.profile === eff || s.profile === 'all';
+            }
+            return s.profile === filterVal || s.profile === 'all';
+        });
+
+        filtered.sort((a,b) => (a.hour*60+a.minute) - (b.hour*60+b.minute));
+
+        filtered.forEach((s, idx) => {
+            const timeStr = `${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}`;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${idx + 1}</td>
+                <td><span class="time-badge">${timeStr}</span></td>
+                <td><b>${s.label}</b></td>
+                <td><span class="prof-tag prof-${s.profile}">${s.profile}</span></td>
+                <td>Track 0${s.track}</td>
+                <td><span style="color: #94a3b8; font-size: 13px;">${s.days}</span></td>
+                <td>
+                    <label class="switch">
+                        <input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="toggleSchedule(${s.id})">
+                        <span class="slider"></span>
+                    </label>
+                </td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="triggerManualBell(${s.track}, '${s.label}')">▶ Test</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteSchedule(${s.id})">🗑 Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('total-bell-count').innerText = `Menampilkan ${filtered.length} dari ${schedules.length} jadwal tersimpan`;
+        document.getElementById('table-title').innerText = `📋 Tabel Jadwal Bel (${filterVal === 'all' ? 'Semua Profil' : 'Profil: ' + eff.toUpperCase()})`;
+        updateNextBell();
+    }
+
+    function toggleSchedule(id) {
+        const item = schedules.find(s => s.id === id);
+        if (item) item.enabled = !item.enabled;
+        updateNextBell();
+    }
+
+    function deleteSchedule(id) {
+        schedules = schedules.filter(s => s.id !== id);
+        renderTable();
+    }
+
+    function addNewSchedule(e) {
+        e.preventDefault();
+        const timeVal = document.getElementById('inp-time').value;
+        const labelVal = document.getElementById('inp-label').value;
+        const profVal = document.getElementById('inp-profile').value;
+        const trackVal = parseInt(document.getElementById('inp-track').value);
+        const daysVal = document.getElementById('inp-days').value;
+
+        const [h, m] = timeVal.split(':').map(Number);
+        schedules.push({
+            id: Date.now(),
+            hour: h,
+            minute: m,
+            label: labelVal,
+            profile: profVal,
+            track: trackVal,
+            days: daysVal === 'weekday' ? 'Senin-Jumat' : (daysVal === 'sat' ? 'Senin-Sabtu' : (daysVal === 'fri' ? 'Jumat' : 'Setiap Hari')),
+            enabled: true
+        });
+
+        document.getElementById('inp-label').value = '';
+        renderTable();
+        showToast("✅ Jadwal berhasil ditambahkan!");
+    }
+
+    // --- FITUR EXCEL: DOWNLOAD TEMPLATE MULTI-PROFILE ---
+    function downloadExcelTemplate() {
+        const templateData = [
+            { "Jam": "07:00", "Kegiatan": "Masuk Reguler", "Profil": "reguler", "Track_MP3": 1, "Hari": "Senin-Jumat" },
+            { "Jam": "09:45", "Kegiatan": "Istirahat 1", "Profil": "reguler", "Track_MP3": 2, "Hari": "Senin-Jumat" },
+            { "Jam": "10:15", "Kegiatan": "Masuk Kelas", "Profil": "reguler", "Track_MP3": 3, "Hari": "Senin-Jumat" },
+            { "Jam": "14:00", "Kegiatan": "Pulang Reguler", "Profil": "reguler", "Track_MP3": 4, "Hari": "Senin-Jumat" },
+            { "Jam": "07:00", "Kegiatan": "Masuk Jumat", "Profil": "jumat", "Track_MP3": 1, "Hari": "Jumat" },
+            { "Jam": "11:00", "Kegiatan": "Pulang Sholat Jumat", "Profil": "jumat", "Track_MP3": 4, "Hari": "Jumat" },
+            { "Jam": "07:30", "Kegiatan": "Ujian Sesi 1", "Profil": "ujian", "Track_MP3": 1, "Hari": "Senin-Jumat" },
+            { "Jam": "11:30", "Kegiatan": "Ujian Selesai", "Profil": "ujian", "Track_MP3": 4, "Hari": "Senin-Jumat" }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(templateData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Jadwal_Bel");
+        XLSX.writeFile(wb, "Template_Jadwal_Bel_MultiProfile.xlsx");
+        showToast("📥 Template Multi-Profile Excel berhasil didownload!");
+    }
+
+    // --- FITUR EXCEL: EXPORT JADWAL AKTIF ---
+    function exportToExcel() {
+        const exportData = schedules.map(s => ({
+            "Jam": `${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}`,
+            "Kegiatan": s.label,
+            "Profil": s.profile,
+            "Track_MP3": s.track,
+            "Hari": s.days,
+            "Status": s.enabled ? "Aktif" : "Nonaktif"
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Jadwal_MultiProfile");
+        XLSX.writeFile(wb, "Backup_Jadwal_Bel_MultiProfile.xlsx");
+        showToast("📤 Jadwal Multi-Profile berhasil diexport ke Excel!");
+    }
+
+    // --- FITUR EXCEL: IMPORT FILE .XLSX / .CSV ---
+    function handleExcelImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                if (jsonData.length === 0) {
+                    alert("File Excel kosong!");
+                    return;
+                }
+
+                let newSchedules = [];
+                jsonData.forEach((row, idx) => {
+                    let timeStr = row["Jam"] || row["jam"] || row["Waktu"] || "07:00";
+                    let labelStr = row["Kegiatan"] || row["kegiatan"] || row["Label"] || `Jadwal ${idx+1}`;
+                    let profStr = (row["Profil"] || row["profil"] || "reguler").toLowerCase();
+                    let trackNum = parseInt(row["Track_MP3"] || row["track"] || row["Track"] || 1);
+                    let daysStr = row["Hari"] || row["hari"] || "Senin-Jumat";
+
+                    let parts = String(timeStr).split(':');
+                    let h = parseInt(parts[0]) || 0;
+                    let m = parseInt(parts[1]) || 0;
+
+                    newSchedules.push({
+                        id: Date.now() + idx,
+                        hour: h,
+                        minute: m,
+                        label: labelStr,
+                        profile: profStr,
+                        track: trackNum,
+                        days: daysStr,
+                        enabled: true
+                    });
+                });
+
+                schedules = newSchedules;
+                renderTable();
+                showToast(`✅ Berhasil mengimport ${jsonData.length} jadwal dari Excel!`);
+            } catch (err) {
+                alert("Gagal membaca file Excel: " + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        event.target.value = '';
+    }
+
+    function updateNextBell() {
+        const now = new Date();
+        const curMins = now.getHours() * 60 + now.getMinutes();
+        const eff = getEffectiveProfile();
+
+        if (eff === 'libur') {
+            document.getElementById('next-bell-text').innerText = 'Mode Libur / Off';
+            document.getElementById('countdown-text').innerText = 'Bel tidak akan berbunyi';
+            if (!isRinging) {
+                document.getElementById('lcd-line-2').innerText = 'Mode Libur / Off';
+            }
+            return;
+        }
+
+        let next = null;
+        let minDiff = 99999;
+
+        schedules.forEach(s => {
+            if (s.enabled && (s.profile === eff || s.profile === 'all')) {
+                let sMins = s.hour * 60 + s.minute;
+                let diff = sMins - curMins;
+                if (diff > 0 && diff < minDiff) {
+                    minDiff = diff;
+                    next = s;
+                }
+            }
+        });
+
+        const nextEl = document.getElementById('next-bell-text');
+        const countdownEl = document.getElementById('countdown-text');
+
+        if (next) {
+            const timeStr = `${String(next.hour).padStart(2,'0')}:${String(next.minute).padStart(2,'0')}`;
+            nextEl.innerText = `${timeStr} ${next.label}`;
+            countdownEl.innerText = `Kurang ${minDiff} menit lagi`;
+            if (!isRinging) {
+                document.getElementById('lcd-line-2').innerText = `> ${timeStr} ${next.label}`.padEnd(16, ' ').substring(0, 16);
+            }
+        } else {
+            nextEl.innerText = 'Selesai untuk hari ini';
+            countdownEl.innerText = 'Tidak ada jadwal tersisa di profil ini';
+            if (!isRinging) {
+                document.getElementById('lcd-line-2').innerText = 'Jadwal Selesai  ';
+            }
+        }
+    }
+
+    function updateClock() {
+        const now = new Date();
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        const dayName = days[now.getDay()];
+        const shortDay = dayName.substring(0, 3).toUpperCase();
+        const dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+        const eff = getEffectiveProfile().toUpperCase().substring(0, 3);
+
+        document.getElementById('clock-display').innerText = `${timeStr} WIB`;
+        document.getElementById('date-display').innerText = `${dayName}, ${dateStr}`;
+
+        if (!isRinging) {
+            document.getElementById('lcd-line-1').innerText = `${eff} ${timeStr} WIB`;
+        }
+    }
+
+    setInterval(updateClock, 1000);
+    setInterval(updateNextBell, 30000);
+    renderTable();
+    updateClock();
+</script>
+
+</body>
+</html>

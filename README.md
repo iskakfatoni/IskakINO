@@ -152,7 +152,7 @@ IskakINO/
 │   ├── ardufast/  storage/  lcd/  voice/  wifi/  ntp/
 │   │   ├── IskakINO_<Modul>.h/.cpp        # implementasi modul
 │   │   └── IskakINO_<Modul>Module.h       # adapter utk IskakINO_Kernel
-├── examples/      # 8 contoh, per-subfolder (konvensi Arduino Library Manager)
+├── examples/      # 9 contoh, per-subfolder (konvensi Arduino Library Manager)
 ├── test/          # native unit test (g++ langsung, tanpa toolchain Arduino)
 │   ├── native_check/   # mock Arduino.h dasar
 │   ├── mock_esp32/     # mock WiFi/WebServer/DNSServer/Preferences/LittleFS

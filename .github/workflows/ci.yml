@@ -130,7 +130,7 @@ jobs:
               -I test/mock_esp32 -I test/mock_storage -I test/mock_lcd -I test/mock_voice -I test/mock_ntp -I test/native_check -I src \
               -x c++ examples/$ex/$ex.ino
           done
-          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel; do
+          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel 09_SmartSchoolBell; do
             echo "--- $ex (ESP32) ---"
             g++ -std=c++11 -fsyntax-only -Wall -DISKAKINO_PLATFORM_ESP32=1 \
               -include test/mock_esp32/ArduinoExtra.h -include test/mock_voice/Stream.h \
@@ -219,7 +219,7 @@ jobs:
       - name: Compile examples khusus WiFi (skip di AVR)
         if: matrix.board != 'arduino:avr:uno'
         run: |
-          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel; do
+          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel 09_SmartSchoolBell; do
             echo "--- $ex @ ${{ matrix.board }} ---"
             arduino-cli compile --fqbn ${{ matrix.board }} examples/$ex --libraries $HOME/Arduino/libraries
           done
