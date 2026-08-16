@@ -216,10 +216,16 @@ jobs:
             arduino-cli compile --fqbn ${{ matrix.board }} examples/$ex --libraries $HOME/Arduino/libraries
           done
 
-      - name: Compile examples khusus WiFi (skip di AVR)
+      - name: Compile examples khusus WiFi (ESP8266 & ESP32)
         if: matrix.board != 'arduino:avr:uno'
         run: |
-          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel 09_SmartSchoolBell; do
+          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel; do
             echo "--- $ex @ ${{ matrix.board }} ---"
             arduino-cli compile --fqbn ${{ matrix.board }} examples/$ex --libraries $HOME/Arduino/libraries
           done
+
+      - name: Compile example 09_SmartSchoolBell (khusus ESP32)
+        if: matrix.board == 'esp32:esp32:esp32'
+        run: |
+          echo "--- 09_SmartSchoolBell @ ${{ matrix.board }} ---"
+          arduino-cli compile --fqbn ${{ matrix.board }} examples/09_SmartSchoolBell --libraries $HOME/Arduino/libraries
