@@ -5,8 +5,7 @@
       "includePath": [
         "${workspaceFolder}/**",
         "${workspaceFolder}/src/**",
-        "${workspaceFolder}/test/**",
-        "${workspaceFolder}/test/mock_esp32/**",
+        "${workspaceFolder}/examples/**",
         "C:/Users/iskak/AppData/Local/Arduino15/packages/esp32/hardware/esp32/**/cores/esp32",
         "C:/Users/iskak/AppData/Local/Arduino15/packages/esp32/hardware/esp32/**/variants/**",
         "C:/Users/iskak/AppData/Local/Arduino15/packages/esp32/tools/esp-x32/**/xtensa-esp32-elf/include/c++/**",

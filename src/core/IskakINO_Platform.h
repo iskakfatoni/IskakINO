@@ -20,6 +20,7 @@
 
 // ============================================================================
 // Deteksi Platform — satu sumber kebenaran untuk seluruh library IskakINO.
+// Hanya mendukung platform target: AVR, ESP32, dan ESP8266.
 // ============================================================================
 #if defined(__AVR__)
   #define ISKAKINO_PLATFORM_AVR 1
@@ -27,22 +28,17 @@
   #define ISKAKINO_PLATFORM_ESP32 1
 #elif defined(ESP8266)
   #define ISKAKINO_PLATFORM_ESP8266 1
-#elif defined(ARDUINO_ARCH_RP2040)
-  #define ISKAKINO_PLATFORM_RP2040 1
 #else
   #define ISKAKINO_PLATFORM_OTHER 1
 #endif
 
 // Kapabilitas turunan, dipakai modul seperti Storage/WifiPortal untuk
-// memilih backend penyimpanan/WiFi yang tersedia tanpa menulis ulang
-// rantai #if defined() masing-masing.
+// memilih backend penyimpanan/WiFi yang tersedia.
 #if defined(ISKAKINO_PLATFORM_ESP32)
   #define ISKAKINO_HAS_WIFI       1
   #define ISKAKINO_HAS_PREFS      1
 #elif defined(ISKAKINO_PLATFORM_ESP8266)
   #define ISKAKINO_HAS_WIFI       1
-  #define ISKAKINO_HAS_LITTLEFS   1
-#elif defined(ISKAKINO_PLATFORM_RP2040)
   #define ISKAKINO_HAS_LITTLEFS   1
 #else
   #define ISKAKINO_HAS_EEPROM     1
@@ -59,30 +55,17 @@
 // ----------------------------------------------------------------------------
 // AVR (Uno/Nano/Mega dll.)   : high()/low()/toggle()/read() bekerja langsung
 //                               di register PORTx/PINx via bit-manipulation.
-//                               toggle() memakai "AVR PINx write-toggle trick"
-//                               (menulis 1 ke register PINx membalik output
-//                               dalam 1 siklus clock, tanpa read-modify-write).
+//                               toggle() memakai "AVR PINx write-toggle trick".
 // ESP32                      : high()/low()/read()/toggle() memakai register
-//                               write-1-to-set/clear (GPIO.out_w1ts/out_w1tc,
-//                               GPIO.in, GPIO.out) untuk pin 0-31, dan bank
-//                               register kedua (out1_w1ts/out1_w1tc/in1/out1)
-//                               untuk pin >=32 (GPIO32-39 dst.) — layout
-//                               standar soc/gpio_struct.h milik ESP-IDF.
-//                               toggle() sengaja membaca register OUTPUT
-//                               (bukan INPUT) agar tetap andal untuk pin
-//                               yang murni dipakai sebagai output.
+//                               write-1-to-set/clear (.out_w1ts.val / .out_w1tc.val,
+//                               .in.val / .out.val). Untuk pin >= 32 pada chip
+//                               yang memiliki >32 pin (ESP32 classic/S2/S3),
+//                               memakai bank register kedua (.out1_* / .in1).
 // ESP8266                    : high()/low() memakai register GPOS/GPOC
 //                               (GPIO Output Set/Clear), dengan penanganan
 //                               khusus untuk GPIO16 (register RTC terpisah).
-// Platform lain               : fallback aman ke pinMode()/digitalWrite()/
-//                               digitalRead() standar agar tetap kompatibel
-//                               dan tetap benar secara fungsional.
-//
-// CATATAN: mode() tetap memakai pinMode() standar di semua platform. Ini
-// karena konfigurasi arah pin biasanya hanya dipanggil sekali di setup()
-// (bukan hot path), sedangkan high()/low()/toggle()/read() adalah operasi
-// yang dipanggil berulang-ulang di loop() sehingga paling diuntungkan dari
-// akses register langsung.
+// Platform lain / Fallback   : fallback aman ke pinMode()/digitalWrite()/
+//                               digitalRead() standar.
 // ============================================================================
 template <uint8_t P>
 class FastPin {
@@ -111,11 +94,15 @@ public:
 #if defined(ISKAKINO_PLATFORM_AVR)
         *(volatile uint8_t*)portOutputRegister(digitalPinToPort(P)) |= digitalPinToBitMask(P);
 #elif defined(ISKAKINO_PLATFORM_ESP32)
+  #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
+        GPIO.out_w1ts = (1UL << P);
+  #else
         if (P < 32) {
             GPIO.out_w1ts = (1UL << P);
         } else {
             GPIO.out1_w1ts.val = (1UL << (P - 32));
         }
+  #endif
 #elif defined(ISKAKINO_PLATFORM_ESP8266)
         if (P < 16) {
             GPOS = (1UL << P);
@@ -133,11 +120,15 @@ public:
 #if defined(ISKAKINO_PLATFORM_AVR)
         *(volatile uint8_t*)portOutputRegister(digitalPinToPort(P)) &= ~digitalPinToBitMask(P);
 #elif defined(ISKAKINO_PLATFORM_ESP32)
+  #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
+        GPIO.out_w1tc = (1UL << P);
+  #else
         if (P < 32) {
             GPIO.out_w1tc = (1UL << P);
         } else {
             GPIO.out1_w1tc.val = (1UL << (P - 32));
         }
+  #endif
 #elif defined(ISKAKINO_PLATFORM_ESP8266)
         if (P < 16) {
             GPOC = (1UL << P);
@@ -153,15 +144,15 @@ public:
 
     inline void toggle() __attribute__((always_inline)) {
 #if defined(ISKAKINO_PLATFORM_AVR)
-        // Trik hardware AVR: menulis 1 ke register PINx (bukan PORTx)
-        // membalik bit output yang bersangkutan dalam 1 siklus clock,
-        // tanpa perlu read-modify-write seperti pendekatan biasa.
         *(volatile uint8_t*)portInputRegister(digitalPinToPort(P)) = digitalPinToBitMask(P);
 #elif defined(ISKAKINO_PLATFORM_ESP32)
-        // Baca status dari register OUTPUT (GPIO.out), bukan register INPUT
-        // (GPIO.in) seperti fallback generik — supaya tetap benar walau
-        // input buffer pin dinonaktifkan/tidak stabil untuk pin yang murni
-        // dipakai sebagai output.
+  #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
+        if (GPIO.out & (1UL << P)) {
+            GPIO.out_w1tc = (1UL << P);
+        } else {
+            GPIO.out_w1ts = (1UL << P);
+        }
+  #else
         if (P < 32) {
             if (GPIO.out & (1UL << P)) {
                 GPIO.out_w1tc = (1UL << P);
@@ -175,6 +166,7 @@ public:
                 GPIO.out1_w1ts.val = (1UL << (P - 32));
             }
         }
+  #endif
 #else
         if (read()) low(); else high();
 #endif
@@ -184,11 +176,15 @@ public:
 #if defined(ISKAKINO_PLATFORM_AVR)
         return (*(volatile uint8_t*)portInputRegister(digitalPinToPort(P)) & digitalPinToBitMask(P)) != 0;
 #elif defined(ISKAKINO_PLATFORM_ESP32)
+  #if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
+        return (GPIO.in & (1UL << P)) != 0;
+  #else
         if (P < 32) {
             return (GPIO.in & (1UL << P)) != 0;
         } else {
             return (GPIO.in1.val & (1UL << (P - 32))) != 0;
         }
+  #endif
 #elif defined(ISKAKINO_PLATFORM_ESP8266)
         if (P < 16) {
             return (GPI & (1UL << P)) != 0;

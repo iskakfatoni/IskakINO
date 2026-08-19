@@ -48,7 +48,7 @@ class IskakINO_Scheduler {
 
     // Hot-path inlining untuk perbandingan millis() tanpa overhead panggilan fungsi
     inline bool every(unsigned long interval, uint8_t id) {
-        if (id >= _maxTasks || _tasks[id].cancelled) return false;
+        if (!_tasks || id >= _maxTasks || _tasks[id].cancelled) return false;
         unsigned long current = millis();
         if (current - _tasks[id].prevMillis >= interval) {
             _tasks[id].prevMillis = current;
@@ -58,7 +58,7 @@ class IskakINO_Scheduler {
     }
 
     inline bool once(unsigned long delay_ms, uint8_t id) {
-        if (id >= _maxTasks || _tasks[id].cancelled || _tasks[id].onceFired) return false;
+        if (!_tasks || id >= _maxTasks || _tasks[id].cancelled || _tasks[id].onceFired) return false;
         unsigned long current = millis();
         if (current - _tasks[id].prevMillis >= delay_ms) {
             _tasks[id].onceFired = true;

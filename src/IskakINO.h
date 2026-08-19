@@ -9,7 +9,7 @@
  * masing-masing, supaya kode lama tetap kompatibel):
  *   - IskakINO_ArduFast        : FastPin<P> (register I/O langsung), task
  *                                 manager, logging, EMA filter, dll.
- *                                 (semua platform: AVR/ESP32/ESP8266/RP2040)
+ *                                 (semua platform: AVR/ESP32/ESP8266)
  *   - IskakINO_Storage         : storage hybrid EEPROM/Preferences/LittleFS
  *                                 (semua platform)
  *   - LiquidCrystal_I2C        : LCD karakter I2C, non-blocking typewriter/
@@ -56,7 +56,7 @@
 #include "core/IskakINO_Module.h"
 #include "core/IskakINO_Kernel.h"
 
-// --- Modul universal (semua platform: AVR/ESP32/ESP8266/RP2040) ---
+// --- Modul universal (semua platform: AVR/ESP32/ESP8266) ---
 #include "ardufast/IskakINO_ArduFast.h"
 #include "ardufast/IskakINO_ArduFastModule.h"
 #include "storage/IskakINO_Storage.h"

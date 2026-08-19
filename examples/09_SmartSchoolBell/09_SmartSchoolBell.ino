@@ -19,7 +19,11 @@
   #error "Sketch ini dirancang khusus untuk board ESP32 (menggunakan hardware UART Serial2, WifiPortal & FastNTP)."
 #endif
 
-#define VOICE_SERIAL Serial2
+#if defined(SOC_UART_NUM) && (SOC_UART_NUM < 3)
+  #define VOICE_SERIAL Serial1
+#else
+  #define VOICE_SERIAL Serial2
+#endif
 
 // --- Pinout Hardware ---
 #define PIN_RELAY_AMPLI   18
@@ -268,7 +272,7 @@ void loop() {
             int currentHour   = ntp.getHours();
             int currentMinute = ntp.getMinutes();
             int currentSecond = ntp.getSeconds();
-            int currentDay    = ntp.getDay();
+            int currentDay    = ntp.getDayOfWeek();
 
             uint8_t effProfile = getEffectiveProfile(currentDay);
 
@@ -300,7 +304,7 @@ void loop() {
 
     // 3. Refresh LCD Tampilan Jam & Info Jadwal Terdekat
     if (bellState == BELL_IDLE && fast.every(1000, TASK_REFRESH_LCD)) {
-        int curDay = ntp.getDay();
+        int curDay = ntp.getDayOfWeek();
         uint8_t effProfile = getEffectiveProfile(curDay);
 
         lcd.setCursor(0, 0);

@@ -33,6 +33,19 @@ IskakINO_WifiPortal::IskakINO_WifiPortal() {
     _logger.setDebug(true);
 }
 
+IskakINO_WifiPortal::~IskakINO_WifiPortal() {
+    if (_server) {
+        delete _server;
+        _server = nullptr;
+    }
+    for (uint8_t i = 0; i < _paramCount; i++) {
+        if (_params[i]) {
+            delete _params[i];
+            _params[i] = nullptr;
+        }
+    }
+}
+
 // ============================================================
 // KONEKSI (blocking / non-blocking) & STATE MACHINE
 // ============================================================
@@ -729,6 +742,7 @@ void IskakINO_WifiPortal::resetSettings() {
         Preferences prefsP; prefsP.begin(ISKAKINO_PARAM_NS, false); prefsP.clear(); prefsP.end();
         Preferences prefsW; prefsW.begin(ISKAKINO_WIFI_NS, false); prefsW.clear(); prefsW.end();
     #elif defined(ISKAKINO_PLATFORM_ESP8266)
+        LittleFS.begin();
         LittleFS.remove(ISKAKINO_LEGACY_FILE);
         LittleFS.remove(ISKAKINO_PARAM_FILE);
         LittleFS.remove(ISKAKINO_WIFI_FILE);

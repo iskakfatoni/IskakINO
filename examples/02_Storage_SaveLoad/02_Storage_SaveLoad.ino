@@ -1,7 +1,7 @@
 /*
  * 02_Storage_SaveLoad.ino
  * Modul: IskakINO_Storage (universal — EEPROM di AVR, Preferences di ESP32,
- * LittleFS di ESP8266/RP2040, otomatis dipilih lewat core/IskakINO_Platform.h)
+ * LittleFS di ESP8266, otomatis dipilih lewat core/IskakINO_Platform.h)
  *
  * Menunjukkan save()/load() struct sederhana, plus cara membaca lastError()
  * (IskakINO_Result) untuk tahu PERSIS kenapa sebuah operasi gagal --

@@ -1,6 +1,6 @@
 /*
  * 01_ArduFast_TaskManager.ino
- * Modul: IskakINO_ArduFast (universal — AVR/ESP32/ESP8266/RP2040)
+ * Modul: IskakINO_ArduFast (universal — AVR/ESP32/ESP8266)
  *
  * Menunjukkan pola dasar task manager non-blocking every()/once(), plus
  * pembacaan analog ternormalisasi & EMA filter. Tidak perlu koneksi WiFi/

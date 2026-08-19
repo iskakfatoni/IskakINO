@@ -219,23 +219,30 @@ int IskakINO_FastNTP::getHours()      { return (_currentEpoch % 86400L) / 3600; 
 int IskakINO_FastNTP::getDay() {
     time_t t = (time_t)_currentEpoch;
     tm *ptm = gmtime(&t);
-    return ptm->tm_mday;
+    return ptm ? ptm->tm_mday : 1;
+}
+
+int IskakINO_FastNTP::getDayOfWeek() {
+    time_t t = (time_t)_currentEpoch;
+    tm *ptm = gmtime(&t);
+    return ptm ? ptm->tm_wday : (int)(((_currentEpoch / 86400L) + 4) % 7);
 }
 
 int IskakINO_FastNTP::getMonth() {
     time_t t = (time_t)_currentEpoch;
     tm *ptm = gmtime(&t);
-    return ptm->tm_mon + 1;
+    return ptm ? (ptm->tm_mon + 1) : 1;
 }
 
 int IskakINO_FastNTP::getYear() {
     time_t t = (time_t)_currentEpoch;
     tm *ptm = gmtime(&t);
-    return ptm->tm_year + 1900;
+    return ptm ? (ptm->tm_year + 1900) : 1970;
 }
 
 String IskakINO_FastNTP::getDayName(NTP_Language lang) {
-    int day = ((_currentEpoch / 86400L) + 4) % 7;
+    int day = getDayOfWeek();
+    if (day < 0 || day > 6) day = 0;
     if (lang == LANG_ID) {
         const char* daysID[] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"};
         return daysID[day];
@@ -246,6 +253,7 @@ String IskakINO_FastNTP::getDayName(NTP_Language lang) {
 
 String IskakINO_FastNTP::getMonthName(NTP_Language lang) {
     int mon = getMonth() - 1;
+    if (mon < 0 || mon > 11) return "";
     if (lang == LANG_ID) {
         const char* monID[] = {"Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"};
         return monID[mon];

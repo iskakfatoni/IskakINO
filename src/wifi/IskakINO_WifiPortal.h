@@ -84,6 +84,7 @@ enum class IskakPortalState : uint8_t {
 class IskakINO_WifiPortal {
   public:
     IskakINO_WifiPortal();
+    virtual ~IskakINO_WifiPortal();
     IskakWebServer* _server;
     IskakWebServer* server() { return _server; }
 

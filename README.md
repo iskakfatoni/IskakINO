@@ -57,8 +57,8 @@ arduino-cli lib install --git-url https://github.com/iskakfatoni/IskakINO.git
 
 | Modul | Class utama | Platform | Fungsi |
 |---|---|---|---|
-| ArduFast | `IskakINO_ArduFast`, `FastPin<P>` | Universal (AVR/ESP32/ESP8266/RP2040) | Akses register GPIO langsung, task manager non-blocking, EMA filter |
-| Storage | `IskakINO_Storage` (instance global `IskakStorage`) | Universal | Storage hybrid EEPROM/Preferences/LittleFS, mode log ring-buffer |
+| ArduFast | `IskakINO_ArduFast`, `FastPin<P>` | Universal (AVR / ESP32 / ESP8266) | Akses register GPIO langsung, task manager non-blocking, EMA filter |
+| Storage | `IskakINO_Storage` (instance global `IskakStorage`) | Universal (AVR / ESP32 / ESP8266) | Storage hybrid EEPROM/Preferences/LittleFS, mode log ring-buffer |
 | LCD | `LiquidCrystal_I2C` | Universal (perlu I2C/Wire) | LCD karakter I2C, typewriter/scroll non-blocking, progress bar |
 | SmartVoice | `IskakINO_SmartVoice` | Universal (perlu `Stream&` tambahan) | Kontrol modul MP3 DFPlayer Mini |
 | WifiPortal | `IskakINO_WifiPortal` | **ESP32/ESP8266 saja** | Captive portal WiFi + custom parameter |

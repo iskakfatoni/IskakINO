@@ -20,8 +20,12 @@
 
 #include <IskakINO.h>
 
-#if defined(ARDUINO_ARCH_ESP32)
-    #define VOICE_SERIAL Serial2 // ESP32 punya UART hardware ekstra, lebih baik dipakai
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+    #if defined(SOC_UART_NUM) && (SOC_UART_NUM < 3)
+        #define VOICE_SERIAL Serial1
+    #else
+        #define VOICE_SERIAL Serial2
+    #endif
 #else
     #include <SoftwareSerial.h>
     SoftwareSerial voiceSoftSerial(10, 11); // RX=10, TX=11 -- sesuaikan pin Anda

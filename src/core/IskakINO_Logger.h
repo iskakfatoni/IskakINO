@@ -44,7 +44,10 @@ class IskakINO_Logger {
     inline void setDebug(bool) {}
     inline bool isDebug() const { return false; }
     inline void log(const __FlashStringHelper*) {}
+    inline void log(const char*) {}
+    inline void log(const String&) {}
     inline void log(const __FlashStringHelper*, long) {}
+    inline void log(const char*, long) {}
     inline void logFloat(const __FlashStringHelper*, float, uint8_t = 2) {}
     inline void logf(const __FlashStringHelper*, ...) {}
     inline void logResult(const __FlashStringHelper*, IskakINO_Result) {}
@@ -69,8 +72,28 @@ class IskakINO_Logger {
         Serial.println(msg);
     }
 
+    inline void log(const char* msg) {
+        if (!_debug || !msg) return;
+        Serial.print(F("[LOG] "));
+        Serial.println(msg);
+    }
+
+    inline void log(const String& msg) {
+        if (!_debug) return;
+        Serial.print(F("[LOG] "));
+        Serial.println(msg);
+    }
+
     inline void log(const __FlashStringHelper* msg, long val) {
         if (!_debug) return;
+        Serial.print(F("[LOG] "));
+        Serial.print(msg);
+        Serial.print(F(": "));
+        Serial.println(val);
+    }
+
+    inline void log(const char* msg, long val) {
+        if (!_debug || !msg) return;
         Serial.print(F("[LOG] "));
         Serial.print(msg);
         Serial.print(F(": "));

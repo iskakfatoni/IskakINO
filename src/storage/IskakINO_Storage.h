@@ -5,16 +5,12 @@
  * PILOT REFACTOR #3 — bagian dari penggabungan ekosistem IskakINO (setelah
  * ArduFast & WifiPortal). Signature semua fungsi PUBLIK di bawah TIDAK
  * BERUBAH dari v1.1.0 standalone. Yang berubah cuma internal:
- *   - #if defined(ESP32)/ESP8266||RP2040 mentah kini pakai
- *     ISKAKINO_HAS_PREFS/ISKAKINO_HAS_LITTLEFS dari core/IskakINO_Platform.h
- *     (grouping ESP8266+RP2040 ke LittleFS tetap sama persis).
- *   - `enum class IskakStorageResult` lokal DIHAPUS, digantikan alias dari
+ *   - Memakai ISKAKINO_HAS_PREFS (ESP32) / ISKAKINO_HAS_LITTLEFS (ESP8266) /
+ *     ISKAKINO_HAS_EEPROM (AVR) dari core/IskakINO_Platform.h.
+ *   - `enum class IskakStorageResult` lokal digantikan alias dari
  *     core/IskakINO_Result.h (`IskakINO_Result` + typedef IskakStorageResult).
  *     Urutan & nilai numerik tiap kode SAMA PERSIS (OK=0, NOT_FOUND=1,
- *     CRC_MISMATCH=2, OUT_OF_BOUNDS=3, WRITE_FAILED=4, VERSION_MISMATCH=5)
- *     — sengaja didesain begitu sejak core/IskakINO_Result.h dibuat, supaya
- *     modul ini bisa migrasi tanpa mengubah makna nilai lastError() yang
- *     mungkin sudah dibandingkan/disimpan di kode konsumen.
+ *     CRC_MISMATCH=2, OUT_OF_BOUNDS=3, WRITE_FAILED=4, VERSION_MISMATCH=5).
  *   - _printDebug() lokal digantikan IskakINO_Logger (_logger), pola sama
  *     seperti ArduFast & WifiPortal.
  *
@@ -26,7 +22,6 @@
  *   - saveString()/loadString() : dukungan Arduino String (panjang variabel, aman)
  *   - beginLog()/addLog()/readLog()/logCount()/clearLog() : mode ring-buffer/log
  *   - beginEncrypted()     : enkripsi ringan XOR-stream opsional
- *   - Dukungan platform RP2040 (LittleFS, mengikuti jalur ESP8266)
  *   - static_assert menolak tipe non trivially-copyable di save()/load()
  *
  * v1.0.1 - Bug fixes (lihat CHANGELOG.md)
@@ -139,6 +134,10 @@ class IskakINO_Storage {
 
       size_t totalLen = sizeof(DataWrapper) + dataLen;
       uint8_t* buffer = new uint8_t[totalLen];
+      if (!buffer) {
+        _lastError = IskakStorageResult::WRITE_FAILED;
+        return false;
+      }
       memcpy(buffer, &header, sizeof(DataWrapper));
       memcpy(buffer + sizeof(DataWrapper), data, dataLen);
       _xorCrypt(buffer, totalLen);
@@ -193,6 +192,10 @@ class IskakINO_Storage {
     bool _readSlot(int address, uint8_t* outData, size_t dataLen) {
       size_t totalLen = sizeof(DataWrapper) + dataLen;
       uint8_t* buffer = new uint8_t[totalLen];
+      if (!buffer) {
+        _lastError = IskakStorageResult::WRITE_FAILED;
+        return false;
+      }
       bool readOk = true;
 
       #if defined(ISKAKINO_HAS_PREFS)
@@ -395,6 +398,10 @@ class IskakINO_Storage {
       if (len > maxLen) len = maxLen;
       size_t totalDataSize = sizeof(uint16_t) + maxLen;
       uint8_t* dataBuf = new uint8_t[totalDataSize];
+      if (!dataBuf) {
+        _lastError = IskakStorageResult::WRITE_FAILED;
+        return false;
+      }
       memset(dataBuf, 0, totalDataSize);
       uint16_t len16 = (uint16_t)len;
       memcpy(dataBuf, &len16, sizeof(uint16_t));
@@ -407,6 +414,10 @@ class IskakINO_Storage {
     bool loadString(int address, String& value, size_t maxLen = 256) {
       size_t totalDataSize = sizeof(uint16_t) + maxLen;
       uint8_t* dataBuf = new uint8_t[totalDataSize];
+      if (!dataBuf) {
+        _lastError = IskakStorageResult::WRITE_FAILED;
+        return false;
+      }
       bool ok = _readSlot(address, dataBuf, totalDataSize);
       if (!ok) { delete[] dataBuf; return false; }
 

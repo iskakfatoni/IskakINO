@@ -1,0 +1,50 @@
+{
+  "name": "IskakINO",
+  "version": "1.0.0",
+  "description": "Unified IskakINO ecosystem: fast direct GPIO register I/O, hybrid storage (EEPROM/Preferences/LittleFS), LCD I2C non-blocking driver, WiFi captive portal, FastNTP clock sync, and DFPlayer voice controller.",
+  "keywords": [
+    "gpio",
+    "fastpin",
+    "storage",
+    "eeprom",
+    "preferences",
+    "littlefs",
+    "lcd",
+    "liquidcrystal",
+    "i2c",
+    "wifi",
+    "captive-portal",
+    "ntp",
+    "sntp",
+    "dfplayer",
+    "voice",
+    "mp3",
+    "scheduler",
+    "esp32",
+    "esp8266",
+    "avr",
+    "arduino"
+  ],
+  "authors": [
+    {
+      "name": "Iskak Fatoni",
+      "maintainer": true
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iskakfatoni/IskakINO.git"
+  },
+  "homepage": "https://github.com/iskakfatoni/IskakINO",
+  "license": "MIT",
+  "frameworks": ["arduino"],
+  "platforms": [
+    "atmelavr",
+    "espressif8266",
+    "espressif32"
+  ],
+  "headers": [
+    "IskakINO.h"
+  ],
+  "examples": "examples/*/*.ino"
+}

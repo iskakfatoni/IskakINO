@@ -141,9 +141,10 @@ class IskakINO_FastNTP {
     int getSeconds();
     int getMinutes();
     int getHours();
-    int getDay();
-    int getMonth();
-    int getYear();
+    int getDay();                       // Hari dalam bulan (1 - 31)
+    int getDayOfWeek();                 // Hari dalam pekan: 0 (Minggu) s/d 6 (Sabtu)
+    int getMonth();                     // Bulan (1 - 12)
+    int getYear();                      // Tahun (mis. 2026)
 
     // --- Getters Nama (Multibahasa) ---
     String getDayName(NTP_Language lang = LANG_ID);

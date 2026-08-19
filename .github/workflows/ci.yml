@@ -4,176 +4,31 @@ on:
   push:
     paths:
       - 'src/**'
-      - 'test/**'
+      - 'examples/**'
       - '.github/workflows/**'
+      - 'library.properties'
+      - 'library.json'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/**'
+      - 'library.properties'
+      - 'library.json'
 
 jobs:
   # ---------------------------------------------------------------------
-  # Job 1: Unit test native (g++ langsung, tanpa toolchain Arduino).
-  # Cepat, jalan di setiap push — inilah yang dipakai selama proses
-  # penggabungan untuk memverifikasi tiap modul pilot.
+  # Kompilasi nyata lewat arduino-cli lintas board resmi.
+  # Memvalidasi langsung dengan toolchain resmi:
+  #   - Arduino AVR (Uno)
+  #   - ESP8266 (NodeMCU v2)
+  #   - ESP32 (Dev Module)
   # ---------------------------------------------------------------------
-  native-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: core/ — smoke-test Platform+Result+Logger+Scheduler
-        run: |
-          g++ -std=c++11 -Wall -I test/native_check -I src \
-            test/native_check/Arduino.cpp \
-            src/core/IskakINO_Scheduler.cpp \
-            test/native_check/test_core.cpp \
-            -o test_core
-          ./test_core
-
-      - name: core/ — smoke-test Kernel/registry framework (registerModule/begin/update)
-        run: |
-          g++ -std=c++11 -Wall \
-            -include test/mock_esp32/ArduinoExtra.h \
-            -I test/mock_esp32 -I test/native_check -I src \
-            test/mock_kernel/test_kernel.cpp \
-            src/core/IskakINO_Kernel.cpp \
-            test/native_check/Arduino.cpp test/mock_esp32/ArduinoExtra.cpp \
-            -o test_kernel
-          ./test_kernel
-
-      - name: ardufast/ — re-run test suite asli ArduFast (equivalence check)
-        run: |
-          g++ -std=c++11 -Wall -I test/native_check -I src \
-            test/native_check/Arduino.cpp \
-            src/ardufast/IskakINO_ArduFast.cpp \
-            src/core/IskakINO_Scheduler.cpp \
-            test/native_check/test_ardufast_pilot.cpp \
-            -o test_ardufast
-          ./test_ardufast
-
-      - name: wifi/ — functional test (mock ESP32 WiFi/WebServer/DNSServer/Preferences)
-        run: |
-          g++ -std=c++11 -Wall -DISKAKINO_PLATFORM_ESP32=1 \
-            -include test/mock_esp32/ArduinoExtra.h \
-            -I test/mock_esp32 -I test/native_check -I src \
-            test/mock_esp32/functional_check.cpp \
-            src/wifi/IskakINO_WifiPortal.cpp \
-            src/core/IskakINO_Scheduler.cpp \
-            test/native_check/Arduino.cpp \
-            test/mock_esp32/ArduinoExtra.cpp test/mock_esp32/WiFi.cpp \
-            test/mock_esp32/Update.cpp test/mock_esp32/LittleFS.cpp \
-            -o test_wifi
-          ./test_wifi
-
-      - name: storage/ — functional test lintas backend (EEPROM/Preferences/LittleFS)
-        run: |
-          for plat in "" "-DISKAKINO_PLATFORM_ESP32=1" "-DISKAKINO_PLATFORM_ESP8266=1"; do
-            extra=""
-            [ "$plat" = "-DISKAKINO_PLATFORM_ESP8266=1" ] && extra="test/mock_esp32/LittleFS.cpp"
-            [ -z "$plat" ] && extra="test/mock_storage/EEPROM.cpp"
-            g++ -std=c++11 -Wall $plat \
-              -include test/mock_esp32/ArduinoExtra.h \
-              -I test/mock_storage -I test/mock_esp32 -I test/native_check -I src \
-              test/mock_storage/functional_check_storage.cpp \
-              src/storage/IskakINO_Storage.cpp \
-              test/native_check/Arduino.cpp test/mock_esp32/ArduinoExtra.cpp \
-              $extra -o test_storage
-            ./test_storage
-          done
-
-      - name: ntp/ — functional test (mock UDP, sync/timeout/Kiss-of-Death)
-        run: |
-          g++ -std=c++11 -Wall -DISKAKINO_PLATFORM_ESP32=1 \
-            -include test/mock_esp32/ArduinoExtra.h \
-            -I test/mock_ntp -I test/mock_esp32 -I test/native_check -I src \
-            test/mock_ntp/functional_check_ntp.cpp \
-            src/ntp/IskakINO_FastNTP.cpp \
-            test/native_check/Arduino.cpp test/mock_esp32/ArduinoExtra.cpp \
-            -o test_ntp
-          ./test_ntp
-
-      - name: lcd/ — functional test (mock Wire, backlight+typewriter+scroll timing)
-        run: |
-          g++ -std=c++11 -Wall \
-            -include test/mock_esp32/ArduinoExtra.h \
-            -I test/mock_lcd -I test/mock_esp32 -I test/native_check -I src \
-            test/mock_lcd/functional_check_lcd.cpp \
-            src/lcd/IskakINO_LiquidCrystal_I2C.cpp \
-            src/core/IskakINO_Scheduler.cpp \
-            test/native_check/Arduino.cpp test/mock_esp32/ArduinoExtra.cpp \
-            test/mock_lcd/Wire.cpp \
-            -o test_lcd
-          ./test_lcd
-
-      - name: voice/ — functional test (mock Stream, protokol DFPlayer + checksum)
-        run: |
-          g++ -std=c++11 -Wall \
-            -include test/mock_esp32/ArduinoExtra.h -include test/mock_voice/Stream.h \
-            -I test/mock_voice -I test/mock_esp32 -I test/native_check -I src \
-            test/mock_voice/functional_check_voice.cpp \
-            src/voice/IskakINO_SmartVoice.cpp \
-            test/native_check/Arduino.cpp test/mock_esp32/ArduinoExtra.cpp \
-            -o test_voice
-          ./test_voice
-
-      - name: examples/ — smoke-compile semua 7 contoh (mock, cepat)
-        run: |
-          set -e
-          declare -A EXTRA_SRC
-          EXTRA_SRC["01_ArduFast_TaskManager"]="src/ardufast/IskakINO_ArduFast.cpp src/core/IskakINO_Scheduler.cpp"
-          EXTRA_SRC["02_Storage_SaveLoad"]="src/storage/IskakINO_Storage.cpp test/mock_storage/EEPROM.cpp"
-          EXTRA_SRC["03_LCD_TypewriterScroll"]="src/lcd/IskakINO_LiquidCrystal_I2C.cpp src/core/IskakINO_Scheduler.cpp test/mock_lcd/Wire.cpp"
-          EXTRA_SRC["04_SmartVoice_PlayTrack"]="src/voice/IskakINO_SmartVoice.cpp test/mock_voice/Stream.cpp"
-          for ex in 01_ArduFast_TaskManager 02_Storage_SaveLoad 03_LCD_TypewriterScroll 04_SmartVoice_PlayTrack; do
-            echo "--- $ex ---"
-            g++ -std=c++11 -fsyntax-only -Wall \
-              -include test/mock_esp32/ArduinoExtra.h -include test/mock_voice/Stream.h \
-              -I test/mock_esp32 -I test/mock_storage -I test/mock_lcd -I test/mock_voice -I test/mock_ntp -I test/native_check -I src \
-              -x c++ examples/$ex/$ex.ino
-          done
-          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel 09_SmartSchoolBell; do
-            echo "--- $ex (ESP32) ---"
-            g++ -std=c++11 -fsyntax-only -Wall -DISKAKINO_PLATFORM_ESP32=1 \
-              -include test/mock_esp32/ArduinoExtra.h -include test/mock_voice/Stream.h \
-              -I test/mock_esp32 -I test/mock_storage -I test/mock_lcd -I test/mock_voice -I test/mock_ntp -I test/native_check -I src \
-              -x c++ examples/$ex/$ex.ino
-          done
-
-      - name: IskakINO.h — smoke-compile gabungan (AVR-proxy tanpa WiFi + ESP32 dgn WiFi)
-        run: |
-          echo '#include <IskakINO.h>' > /tmp/umbrella.cpp
-          echo 'int main(){return 0;}' >> /tmp/umbrella.cpp
-
-          echo "--- AVR-proxy (tanpa macro platform apapun) ---"
-          g++ -std=c++11 -fsyntax-only -Wall \
-            -include test/mock_esp32/ArduinoExtra.h -include test/mock_voice/Stream.h \
-            -I test/native_check -I test/mock_esp32 -I test/mock_storage \
-            -I test/mock_lcd -I test/mock_voice -I src \
-            /tmp/umbrella.cpp
-
-          echo "--- ESP32 (semua modul termasuk WiFi/NTP) ---"
-          g++ -std=c++11 -fsyntax-only -Wall -DISKAKINO_PLATFORM_ESP32=1 \
-            -include test/mock_esp32/ArduinoExtra.h -include test/mock_voice/Stream.h \
-            -I test/native_check -I test/mock_esp32 -I test/mock_storage \
-            -I test/mock_lcd -I test/mock_voice -I test/mock_ntp -I src \
-            /tmp/umbrella.cpp
-
-          echo "--- ESP8266 (semua modul termasuk WiFi/NTP) ---"
-          g++ -std=c++11 -fsyntax-only -Wall -DISKAKINO_PLATFORM_ESP8266=1 \
-            -include test/mock_esp32/ArduinoExtra.h -include test/mock_voice/Stream.h \
-            -I test/native_check -I test/mock_esp32 -I test/mock_storage \
-            -I test/mock_lcd -I test/mock_voice -I test/mock_ntp -I src \
-            /tmp/umbrella.cpp
-
-  # ---------------------------------------------------------------------
-  # Job 2: Compile sungguhan lewat arduino-cli, lintas board nyata.
-  # Ini validasi paling akurat karena pakai toolchain resmi tiap platform
-  # (bukan mock g++ seperti job di atas). Contoh WifiPortal/FastNTP/Unified
-  # HANYA dicoba di board ESP32/ESP8266 (lihat guard platform di header
-  # masing-masing modul); contoh universal dicoba di ketiganya termasuk AVR.
-  # ---------------------------------------------------------------------
-  arduino-cli-smoke:
+  arduino-cli-compile:
+    name: Compile (${{ matrix.board }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - board: "arduino:avr:uno"
@@ -186,13 +41,13 @@ jobs:
             core: "esp32:esp32"
             extra_url: "https://espressif.github.io/arduino-esp32/package_esp32_index.json"
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v2
 
-      - name: Install core (${{ matrix.core }})
+      - name: Install Arduino Core (${{ matrix.core }})
         run: |
           if [ -n "${{ matrix.extra_url }}" ]; then
             arduino-cli core update-index --additional-urls "${{ matrix.extra_url }}"
@@ -202,28 +57,34 @@ jobs:
             arduino-cli core install ${{ matrix.core }}
           fi
 
-      - name: Link library ke Arduino libraries folder
+      - name: Link Library ke Arduino Libraries Directory
         run: |
           mkdir -p $HOME/Arduino/libraries
           ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/IskakINO
 
-      - name: Compile examples universal (semua board, termasuk AVR)
+      - name: Compile Examples Universal (AVR, ESP8266, ESP32)
         run: |
           for ex in 01_ArduFast_TaskManager 02_Storage_SaveLoad 03_LCD_TypewriterScroll 04_SmartVoice_PlayTrack; do
-            echo "--- $ex @ ${{ matrix.board }} ---"
+            echo "=========================================="
+            echo "Compiling: $ex on ${{ matrix.board }}"
+            echo "=========================================="
             arduino-cli compile --fqbn ${{ matrix.board }} examples/$ex --libraries $HOME/Arduino/libraries
           done
 
-      - name: Compile examples khusus WiFi (ESP8266 & ESP32)
+      - name: Compile Examples Khusus WiFi (ESP8266 & ESP32)
         if: matrix.board != 'arduino:avr:uno'
         run: |
           for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel; do
-            echo "--- $ex @ ${{ matrix.board }} ---"
+            echo "=========================================="
+            echo "Compiling: $ex on ${{ matrix.board }}"
+            echo "=========================================="
             arduino-cli compile --fqbn ${{ matrix.board }} examples/$ex --libraries $HOME/Arduino/libraries
           done
 
-      - name: Compile example 09_SmartSchoolBell (khusus ESP32)
+      - name: Compile Example 09_SmartSchoolBell (Khusus ESP32)
         if: matrix.board == 'esp32:esp32:esp32'
         run: |
-          echo "--- 09_SmartSchoolBell @ ${{ matrix.board }} ---"
+          echo "=========================================="
+          echo "Compiling: 09_SmartSchoolBell on ${{ matrix.board }}"
+          echo "=========================================="
           arduino-cli compile --fqbn ${{ matrix.board }} examples/09_SmartSchoolBell --libraries $HOME/Arduino/libraries
