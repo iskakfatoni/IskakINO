@@ -46,8 +46,8 @@ Dokumen ini memuat daftar rencana fitur baru, usulan modul tambahan, dan penyemp
 3. **Penyempurnaan Tampilan UI:** Dukungan mode tema gelap (*Dark Mode*) bawaan yang lebih ringan.
 
 ### `IskakINO_LiquidCrystal_I2C`
-1. **Custom Icon Generator:** Helper bawaan untuk membuat ikon status baterai, level sinyal WiFi (0–4 bar), termometer, dan panah tanpa manipulasi byte manual.
-2. **Dynamic Banner:** Transisi multi-halaman layar otomatis dengan jeda waktu teratur (*page flipper*).
+1. **Custom Icon Generator:** Helper bawaan untuk membuat ikon status baterai (0–100%), level sinyal WiFi (0–4 bar / RSSI dBm), termometer (level 0–3), dan panah tanpa manipulasi byte manual. (✅ Selesai)
+2. **Dynamic Banner:** Transisi multi-halaman layar otomatis dengan jeda waktu teratur (*page flipper*), mendukung daftar teks statis maupun callback dinamis. (✅ Selesai)
 
 ### `09_SmartSchoolBell` (Production Project)
 1. **Dukungan RTC Offline:** Opsi otomatis membaca DS3231 saat WiFi tidak tersedia.

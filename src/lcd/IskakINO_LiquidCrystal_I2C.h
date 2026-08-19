@@ -7,30 +7,7 @@
 #include "core/IskakINO_Scheduler.h"
 #include "core/IskakINO_Logger.h"
 #include "core/IskakINO_Version.h"
-
-// PILOT REFACTOR #5 — bagian dari penggabungan ekosistem IskakINO. Signature
-// semua fungsi PUBLIK di bawah TIDAK BERUBAH dari v1.1.0 standalone. Yang
-// berubah cuma internal:
-//   - _lastActivityMillis (backlight auto-timeout) & _twLastMillis
-//     (interval typewriter/scroll) — dulu masing-masing variabel millis()
-//     manual — kini satu IskakINO_Scheduler bersama (id 0 = backlight,
-//     id 1 = typewriter/scroll). Titik reset (begin()/backlight()/
-//     setBacklightTimeout()/write() untuk id 0; typewriterStart()/
-//     scrollTextStart() untuk id 1) dipertahankan PERSIS di tempat yang
-//     sama, cuma manggil _scheduler.reset() alih-alih assignment manual.
-//     Efek samping kecil yang MENGUNTUNGKAN: backlight timeout dulu
-//     memanggil noBacklight() BERULANG setiap update() selama idle
-//     (redundant I2C write, tidak berbahaya tapi boros bus); sekarang
-//     cuma sekali per idle-period berkat semantik once(). Perilaku yang
-//     TERLIHAT USER (backlight mati) sama persis.
-//   - LCD_ENABLE_SERIAL_DEBUG (dulu flag compile-time) kini juga bisa
-//     dikontrol runtime lewat setDebug() (BARU, opsional) via
-//     IskakINO_Logger (_logger). Kalau LCD_ENABLE_SERIAL_DEBUG=1 di-set
-//     sebelum #include (cara lama), constructor otomatis panggil
-//     _logger.setDebug(true) supaya perilaku lama tetap sama persis.
-//     Dua baris yang mencetak alamat I2C dalam HEX tetap Serial.print
-//     mentah (Logger belum dukung format HEX), tapi tetap digerbang oleh
-//     _logger.isDebug() supaya konsisten dgn setDebug().
+#include "IskakINO_LCD_Icons.h"
 
 /* =========================================================
    Compile-time configuration
@@ -108,6 +85,25 @@
 ========================================================= */
 #define LCD_PROGRESSBAR_CHAR_LOC 7
 
+// Forward declaration
+class LiquidCrystal_I2C;
+
+/* =========================================================
+   Dynamic Banner / Page Flipper Helper Types
+========================================================= */
+struct LCDPage {
+    const char* line1;
+    const char* line2;
+    const char* line3;
+    const char* line4;
+
+    LCDPage() : line1(nullptr), line2(nullptr), line3(nullptr), line4(nullptr) {}
+    LCDPage(const char* l1, const char* l2 = nullptr, const char* l3 = nullptr, const char* l4 = nullptr)
+        : line1(l1), line2(l2), line3(l3), line4(l4) {}
+};
+
+typedef void (*LCDBannerCallback)(LiquidCrystal_I2C& lcd, uint8_t pageIndex);
+
 /* =========================================================
    Class Definition
 ========================================================= */
@@ -133,8 +129,7 @@ public:
     void backlight();
     void noBacklight();
 
-    // FITUR #3 (v1.1.0): Auto-off backlight setelah idle sekian ms.
-    // 0 = nonaktif (default). Aktivitas dihitung dari setiap write()/print().
+    // Auto-off backlight setelah idle sekian ms. 0 = nonaktif (default).
     // WAJIB panggil update() di loop() supaya timer ini berjalan.
     void setBacklightTimeout(unsigned long timeoutMs);
 
@@ -147,8 +142,6 @@ public:
     void noAutoscroll();
 
     /* Address control */
-    // Bisa dipanggil kapan saja. Jika dipanggil setelah begin(),
-    // LCD otomatis di-reinit dengan alamat baru.
     void setAddress(uint8_t addr);
     uint8_t getAddress() const;
 
@@ -159,52 +152,72 @@ public:
     virtual size_t write(uint8_t);
 
     /* ===================== Text Helpers ===================== */
-    // FITUR #2 (v1.1.0): overload const char* di samping String,
-    // supaya bisa pakai string literal langsung tanpa alokasi String
-    // (lebih hemat RAM di board kecil seperti Uno/Nano).
     void printCenter(const char* text, int row);
     void printCenter(const String& text, int row);
 
-    // Versi BLOCKING (perilaku lama, dipertahankan untuk backward compatibility)
+    // Versi BLOCKING (backward compatibility)
     void typewriter(const char* text, int row, int delayTime = 100);
     void typewriter(const String& text, int row, int delayTime = 100);
 
-    /* ================ FITUR #1 (v1.1.0): Non-blocking typewriter ================
-       Pola pemakaian:
-         lcd.typewriterStart("Hello World", 0);
-         // di loop():
-         lcd.update();
-    ================================================================= */
+    /* ================ Non-blocking typewriter ================ */
     void typewriterStart(const char* text, int row, int delayTime = 100);
     void typewriterStart(const String& text, int row, int delayTime = 100);
     void typewriterStop();
     bool isTypewriterActive() const;
 
-    /* ================ FITUR #4 (v1.1.0): Auto horizontal scroll text ================
-       Untuk teks yang lebih panjang dari lebar layar (mis. nama lagu, status panjang).
-       Non-blocking, jalan lewat update().
-    ================================================================= */
+    /* ================ Auto horizontal scroll text (Non-blocking) ================ */
     void scrollTextStart(const char* text, int row, uint16_t intervalMs = 300);
     void scrollTextStart(const String& text, int row, uint16_t intervalMs = 300);
     void scrollTextStop();
     bool isScrollActive() const;
 
-    // Panggil sekali tiap loop() — menjalankan timer non-blocking untuk
-    // typewriterStart(), scrollTextStart(), dan setBacklightTimeout().
-    void update();
+    /* ================ Dynamic Banner / Page Flipper ================ */
+    // Menjalankan banner multi-halaman teks statis
+    void bannerStart(const LCDPage* pages, uint8_t pageCount, uint16_t flipIntervalMs = 3000);
+    // Menjalankan banner multi-halaman dengan callback dinamis (untuk data sensor/realtime)
+    void bannerStart(uint8_t pageCount, uint16_t flipIntervalMs, LCDBannerCallback callback);
+    void bannerStop();
+    void bannerPause();
+    void bannerResume();
+    void bannerNext();
+    void bannerPrev();
+    void bannerSetPage(uint8_t pageIndex);
+    uint8_t bannerGetCurrentPage() const { return _bannerCurrentPage; }
+    uint8_t bannerGetPageCount() const { return _bannerPageCount; }
+    bool isBannerActive() const { return _bannerActive; }
+    bool isBannerPaused() const { return _bannerPaused; }
+    void bannerSetInterval(uint16_t intervalMs);
 
-    /* FITUR #5 (v1.1.0): Progress bar built-in (0-100%) */
+    /* ================ Custom Icon Generator Helpers ================ */
+    // Membuat custom character baterai pada slot tertentu (0-100%)
+    void createBatteryIcon(uint8_t slot, uint8_t percent);
+    // Membuat custom character bar sinyal Wi-Fi (0-4 bar)
+    void createWifiIcon(uint8_t slot, uint8_t level_0_to_4);
+    // Membuat custom character bar sinyal Wi-Fi dari nilai dBm RSSI (mis. -65 dBm)
+    void createWifiIconRssi(uint8_t slot, int rssi);
+    // Membuat custom character termometer (level 0-3)
+    void createThermometerIcon(uint8_t slot, uint8_t level_0_to_3);
+
+    // Helper langsung gambar custom icon pada koordinat (col, row)
+    void drawBattery(uint8_t col, uint8_t row, uint8_t percent, uint8_t slot = 0);
+    void drawWifiSignal(uint8_t col, uint8_t row, uint8_t level_0_to_4, uint8_t slot = 1);
+    void drawWifiSignalRssi(uint8_t col, uint8_t row, int rssi, uint8_t slot = 1);
+    void drawThermometer(uint8_t col, uint8_t row, uint8_t level_0_to_3, uint8_t slot = 2);
+
+    /* Progress bar built-in (0-100%) */
     void drawProgressBar(uint8_t percent, uint8_t row);
 
-    /* FITUR #7 (v1.1.0): printf-style formatted print
-       Contoh: lcd.printFormatted("Suhu: %d C", suhu); */
+    /* printf-style formatted print */
     void printFormatted(const char* format, ...);
 
-    bool isConnected(); // Fitur cek koneksi hardware
+    /* Panggil sekali tiap loop() */
+    void update();
 
-    // BARU (pilot refactor): kontrol debug runtime, selain
-    // LCD_ENABLE_SERIAL_DEBUG compile-time lama (yang tetap didukung).
+    bool isConnected();
+
     void setDebug(bool debugMode) { _logger.setDebug(debugMode); }
+
+    static void useExternalWireBegin();
 
 private:
     void _command(uint8_t value);
@@ -215,6 +228,7 @@ private:
     void _scanAddress();
     void _printCenterImpl(const char* text, int row);
     void _typewriterBlockingImpl(const char* text, int row, int delayTime);
+    void _renderBannerPage();
 #ifndef ISKAKINO_NO_SPLASH
     void _showSplashScreen();
 #endif
@@ -228,40 +242,28 @@ private:
     uint8_t _displaycontrol;
     uint8_t _displaymode;
 
-    // FITUR #6 (v1.1.0): status inisialisasi bus I2C dibuat static (per-class,
-    // bukan per-instance) supaya kalau ada beberapa objek LCD (multi-LCD di
-    // satu bus I2C dengan alamat berbeda), Wire.begin() cuma dipanggil SEKALI.
-    // Ini mencegah re-init bus menimpa konfigurasi pin custom (SDA/SCL) dari
-    // instance pertama.
     static bool _wireInitialized;
 
-public:
-    // FITUR TAMBAHAN (fix regresi v1.1.0): panggil method ini SETELAH kamu
-    // memanggil Wire.begin(SDA, SCL) sendiri secara manual (mis. custom pin
-    // di ESP32/ESP8266), dan SEBELUM lcd.begin(). Ini memberi tahu library
-    // supaya tidak memanggil Wire.begin() versi default lagi di dalam begin(),
-    // yang kalau tidak dicegah akan menimpa konfigurasi pin custom kamu.
-    //
-    // Contoh:
-    //   Wire.begin(18, 19);
-    //   LiquidCrystal_I2C::useExternalWireBegin();
-    //   lcd.begin();
-    static void useExternalWireBegin();
-private:
-
-    // --- State non-blocking (FITUR #1, #3, #4) ---
-    String _twBuffer;          // penyimpan teks aktif untuk typewriter/scroll
+    // --- State non-blocking ---
+    String _twBuffer;
     uint8_t _twIndex;
     uint8_t _twRow;
     uint16_t _twIntervalMs;
     bool _twActive;
-    bool _twIsScrollMode;      // true = mode scrollText, false = mode typewriter
+    bool _twIsScrollMode;
 
-    unsigned long _backlightTimeoutMs;   // 0 = nonaktif
+    unsigned long _backlightTimeoutMs;
 
-    // BARU (pilot refactor): menggantikan _twLastMillis (id 1, every()) dan
-    // _lastActivityMillis (id 0, once()) dari v1.1.0 lama.
-    IskakINO_Scheduler _scheduler{2};
+    // --- State Banner / Page Flipper ---
+    const LCDPage* _bannerPages;
+    LCDBannerCallback _bannerCallback;
+    uint8_t _bannerPageCount;
+    uint8_t _bannerCurrentPage;
+    uint16_t _bannerIntervalMs;
+    bool _bannerActive;
+    bool _bannerPaused;
+
+    IskakINO_Scheduler _scheduler{3};
     IskakINO_Logger _logger;
 
     bool _progressBarReady;

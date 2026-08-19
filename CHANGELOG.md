@@ -53,7 +53,10 @@ internal dan penambahan opsional.
 - **Baru:** Contoh sketsa `10_BasicIOShield_Overview` yang mendemonstrasikan pengoperasian LED, Button, Potensiometer, 7-Segment non-blocking, dan I2C DAC pada board Arduino Uno (AVR).
 
 ### storage, lcd, voice, ntp, wifi, shield — semua modul (rangkuman tambahan opsional)
-- `lcd/` (dari IskakINO_LiquidCrystal_I2C v1.1.0): backlight auto-timeout & interval typewriter/scroll kini pakai `IskakINO_Scheduler` bersama. `LCD_ENABLE_SERIAL_DEBUG` (compile-time) tetap didukung, plus `setDebug()` runtime baru.
+- `lcd/` (dari IskakINO_LiquidCrystal_I2C):
+  - Backlight auto-timeout & interval typewriter/scroll kini pakai `IskakINO_Scheduler` bersama. `LCD_ENABLE_SERIAL_DEBUG` (compile-time) tetap didukung, plus `setDebug()` runtime baru.
+  - **Baru:** **Custom Icon Generator** — helper dinamis untuk baterai (`createBatteryIcon()` / `drawBattery()`), sinyal Wi-Fi bar (`createWifiIcon()` / `drawWifiSignal()` / `drawWifiSignalRssi()`), dan termometer (`createThermometerIcon()` / `drawThermometer()`) tanpa manipulasi byte manual.
+  - **Baru:** **Dynamic Banner / Page Flipper** — transisi multi-halaman non-blocking otomatis (`bannerStart()`, `bannerStop()`, `bannerPause()`, `bannerResume()`, `bannerNext()`, `bannerPrev()`, `bannerSetPage()`) mendukung daftar statis `LCDPage` maupun callback realtime `LCDBannerCallback`.
 - `voice/` (dari IskakINO_SmartVoice, rilis sebelumnya belum bernomor versi resmi): **baru** `IskakINO_Logger` (default nonaktif) dan `lastError()` (`IskakINO_Result`) — banyak fungsi yang dulu diam-diam gagal validasi kini punya `NOT_CONNECTED`/`INVALID_ARG`/`TIMEOUT`/`WRITE_FAILED` yang bisa dicek.
 - `ntp/` (dari IskakINO_FastNTP v1.1.0): **baru** `IskakINO_Logger` opsional (default nonaktif). State machine backoff/rotate sengaja **tidak** dipetakan ke Scheduler (lihat komentar di header) karena logikanya terlalu spesifik.
 - `ntp/` dan `wifi/`: kedua header dibungkus `#if defined(ISKAKINO_HAS_WIFI)` secara menyeluruh (silent-skip di board non-WiFi, bukan `#error`) — penting karena Arduino mengkompilasi semua `.cpp` di `src/` terlepas dari pemakaian sketch.

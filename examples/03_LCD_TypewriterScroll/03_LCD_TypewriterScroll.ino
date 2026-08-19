@@ -2,9 +2,12 @@
  * 03_LCD_TypewriterScroll.ino
  * Modul: LiquidCrystal_I2C & IskakINO_ArduFast (Universal)
  *
- * Menunjukkan animasi teks typewriter, marquee scroll, dan progress bar
- * yang berjalan secara asinkron tanpa memblokir siklus program utama.
- * Penjadwalan transisi antar-efek dikelola menggunakan IskakINO_ArduFast scheduler.
+ * Menunjukkan fitur lengkap LCD I2C IskakINO:
+ * 1. Efek mesin ketik (Typewriter) non-blocking.
+ * 2. Teks berjalan panjang (Marquee scroll) non-blocking.
+ * 3. Indikator grafik Progress Bar (0-100%).
+ * 4. Generator Ikon Kustom Dinamis (Baterai, Sinyal WiFi bar / RSSI, Termometer).
+ * 5. Dynamic Banner / Page Flipper otomatis multi-halaman tanpa memblokir siklus program.
  */
 
 #include <IskakINO.h>
@@ -19,11 +22,22 @@ enum DemoState : uint8_t {
     STATE_SCROLL_WAIT,
     STATE_PROGRESS_START,
     STATE_PROGRESS_STEP,
+    STATE_ICONS_DEMO,
+    STATE_ICONS_WAIT,
+    STATE_BANNER_START,
+    STATE_BANNER_WAIT,
     STATE_FINISH
 };
 
 DemoState currentState = STATE_TYPEWRITER_START;
 uint8_t progressPercent = 0;
+
+// Definisi 3 halaman banner statis untuk demo Dynamic Banner
+const LCDPage demoPages[] = {
+    LCDPage("IskakINO Core", "Smart Library"),
+    LCDPage("Status: Online", "WiFi: 4 Bars"),
+    LCDPage("Suhu: 28 C", "Baterai: 95%")
+};
 
 void setup() {
     fast.begin(115200);
@@ -40,11 +54,11 @@ void setup() {
     }
 
     lcd.backlight();
-    lcd.setBacklightTimeout(30000); // Backlight mati otomatis setelah 30 detik idle
+    lcd.setBacklightTimeout(60000); // Backlight mati otomatis setelah 60 detik idle
 }
 
 void loop() {
-    // WAJIB: Panggil lcd.update() di setiap putaran loop untuk memproses animasi teks
+    // WAJIB: Panggil lcd.update() di setiap putaran loop untuk memproses animasi & banner
     lcd.update();
 
     // Mesin status demonstrasi non-blocking dikontrol via ArduFast scheduler
@@ -74,8 +88,8 @@ void loop() {
             break;
 
         case STATE_SCROLL_WAIT:
-            // Biarkan teks berjalan selama 6 detik
-            if (fast.once(6000, 1)) {
+            // Biarkan teks berjalan selama 5 detik
+            if (fast.once(5000, 1)) {
                 fast.reset(1);
                 lcd.scrollTextStop();
                 currentState = STATE_PROGRESS_START;
@@ -90,20 +104,61 @@ void loop() {
             break;
 
         case STATE_PROGRESS_STEP:
-            // Naikkan progress bar setiap 200 ms
-            if (fast.every(200, 2)) {
+            // Naikkan progress bar setiap 150 ms
+            if (fast.every(150, 2)) {
                 lcd.drawProgressBar(progressPercent, 1);
                 progressPercent += 10;
                 if (progressPercent > 100) {
-                    currentState = STATE_FINISH;
+                    currentState = STATE_ICONS_DEMO;
                 }
             }
             break;
 
-        case STATE_FINISH:
-            // Tunggu 2 detik lalu ulangi siklus demo dari awal
-            if (fast.once(2000, 3)) {
+        case STATE_ICONS_DEMO:
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("Icons: ");
+
+            // Gambar custom icons otomatis tanpa atur byte manual:
+            lcd.drawBattery(8, 0, 85);          // Baterai 85% di col 8, row 0 (slot 0)
+            lcd.drawWifiSignalRssi(11, 0, -62); // WiFi 3 bar (-62 dBm) di col 11, row 0 (slot 1)
+            lcd.drawThermometer(14, 0, 2);      // Termometer med (level 2) di col 14, row 0 (slot 2)
+
+            lcd.setCursor(0, 1);
+            lcd.print("Bat85% Wf3 Th2");
+
+            fast.reset(3);
+            currentState = STATE_ICONS_WAIT;
+            break;
+
+        case STATE_ICONS_WAIT:
+            // Tampilkan ikon selama 3 detik lalu masuk ke demo Banner
+            if (fast.once(3000, 3)) {
                 fast.reset(3);
+                currentState = STATE_BANNER_START;
+            }
+            break;
+
+        case STATE_BANNER_START:
+            // Mulai Dynamic Banner (3 halaman berganti otomatis tiap 2 detik)
+            lcd.bannerStart(demoPages, 3, 2000);
+            fast.reset(4);
+            currentState = STATE_BANNER_WAIT;
+            break;
+
+        case STATE_BANNER_WAIT:
+            // Biarkan banner berganti halaman selama 6.5 detik
+            if (fast.once(6500, 4)) {
+                fast.reset(4);
+                lcd.bannerStop();
+                currentState = STATE_FINISH;
+            }
+            break;
+
+        case STATE_FINISH:
+            // Tunggu 1.5 detik lalu ulangi siklus demo dari awal
+            if (fast.once(1500, 5)) {
+                fast.reset(5);
                 currentState = STATE_TYPEWRITER_START;
             }
             break;

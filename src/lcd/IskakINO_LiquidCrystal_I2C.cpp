@@ -2,11 +2,12 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-// ID slot pada _scheduler (lihat komentar di header)
+// ID slot pada _scheduler
 #define ISKAKINO_LCD_SCHED_BACKLIGHT   0
 #define ISKAKINO_LCD_SCHED_TYPEWRITER  1
+#define ISKAKINO_LCD_SCHED_BANNER      2
 
-// Definisi static member (FITUR #6)
+// Definisi static member
 bool LiquidCrystal_I2C::_wireInitialized = false;
 
 // Fix regresi v1.1.0: dipanggil user setelah Wire.begin(SDA, SCL) manual
@@ -32,12 +33,15 @@ LiquidCrystal_I2C::LiquidCrystal_I2C(uint8_t cols, uint8_t rows)
       _twActive(false),
       _twIsScrollMode(false),
       _backlightTimeoutMs(0),
+      _bannerPages(nullptr),
+      _bannerCallback(nullptr),
+      _bannerPageCount(0),
+      _bannerCurrentPage(0),
+      _bannerIntervalMs(3000),
+      _bannerActive(false),
+      _bannerPaused(false),
       _progressBarReady(false)
 {
-    // Perilaku default sama seperti v1.1.0 lama: LCD_ENABLE_SERIAL_DEBUG
-    // adalah flag compile-time; kalau di-set 1 sebelum #include, debug
-    // otomatis aktif dari awal (sama seperti dulu). setDebug() runtime
-    // (BARU) bisa mengubahnya kapan saja setelahnya.
     _logger.setDebug(LCD_ENABLE_SERIAL_DEBUG ? true : false);
 }
 
@@ -76,9 +80,6 @@ void LiquidCrystal_I2C::createChar(uint8_t location, const uint8_t charmap[]) {
 void LiquidCrystal_I2C::begin() {
     if (_initialized) return;
 
-    // FITUR #6: Wire.begin() cuma dipanggil sekali untuk SEMUA instance,
-    // supaya konfigurasi pin custom (SDA/SCL) dari instance pertama
-    // tidak ketiban/reset oleh instance LCD kedua/ketiga di bus yang sama.
     if (!_wireInitialized) {
         Wire.begin();
         Wire.setClock(100000);
@@ -167,7 +168,7 @@ void LiquidCrystal_I2C::noBlink() {
 
 void LiquidCrystal_I2C::backlight() {
     _backlight = true;
-    _scheduler.reset(ISKAKINO_LCD_SCHED_BACKLIGHT); // FITUR #3: hitung ini sebagai aktivitas
+    _scheduler.reset(ISKAKINO_LCD_SCHED_BACKLIGHT);
     _expanderWrite(0);
 }
 
@@ -176,7 +177,6 @@ void LiquidCrystal_I2C::noBacklight() {
     _expanderWrite(0);
 }
 
-// FITUR #3
 void LiquidCrystal_I2C::setBacklightTimeout(unsigned long timeoutMs) {
     _backlightTimeoutMs = timeoutMs;
     _scheduler.reset(ISKAKINO_LCD_SCHED_BACKLIGHT);
@@ -211,7 +211,7 @@ void LiquidCrystal_I2C::noAutoscroll() {
 }
 
 size_t LiquidCrystal_I2C::write(uint8_t value) {
-    _scheduler.reset(ISKAKINO_LCD_SCHED_BACKLIGHT); // FITUR #3: reset idle timer setiap ada output
+    _scheduler.reset(ISKAKINO_LCD_SCHED_BACKLIGHT);
     _send(value, Rs);
     return 1;
 }
@@ -286,7 +286,7 @@ void LiquidCrystal_I2C::_scanAddress() {
 }
 
 /* =========================================================
-   FITUR #2: printCenter — overload const char* & String
+   printCenter — overload const char* & String
 ========================================================= */
 void LiquidCrystal_I2C::_printCenterImpl(const char* text, int row) {
     int len = strlen(text);
@@ -306,7 +306,7 @@ void LiquidCrystal_I2C::printCenter(const String& text, int row) {
 }
 
 /* =========================================================
-   typewriter() versi BLOCKING (perilaku lama, dipertahankan)
+   typewriter() versi BLOCKING
 ========================================================= */
 void LiquidCrystal_I2C::_typewriterBlockingImpl(const char* text, int row, int delayTime) {
     setCursor(0, row);
@@ -328,10 +328,10 @@ void LiquidCrystal_I2C::typewriter(const String& text, int row, int delayTime) {
 }
 
 /* =========================================================
-   FITUR #1: typewriter NON-BLOCKING
+   typewriter NON-BLOCKING
 ========================================================= */
 void LiquidCrystal_I2C::typewriterStart(const char* text, int row, int delayTime) {
-    _twBuffer = text;          // disimpan sebagai String internal, aman dari lifetime issue
+    _twBuffer = text;
     _twIndex = 0;
     _twRow = row;
     _twIntervalMs = (uint16_t)delayTime;
@@ -340,7 +340,6 @@ void LiquidCrystal_I2C::typewriterStart(const char* text, int row, int delayTime
     _twIsScrollMode = false;
 
     setCursor(0, row);
-    // Bersihkan baris dulu supaya tidak tercampur teks lama
     for (uint8_t i = 0; i < _cols; i++) print(' ');
     setCursor(0, row);
 }
@@ -358,10 +357,9 @@ bool LiquidCrystal_I2C::isTypewriterActive() const {
 }
 
 /* =========================================================
-   FITUR #4: Auto horizontal scroll text (NON-BLOCKING)
+   Auto horizontal scroll text (NON-BLOCKING)
 ========================================================= */
 void LiquidCrystal_I2C::scrollTextStart(const char* text, int row, uint16_t intervalMs) {
-    // Tambahkan spasi pemisah di akhir supaya scroll terlihat "looping" mulus
     _twBuffer = text;
     _twBuffer += "   ";
 
@@ -386,59 +384,191 @@ bool LiquidCrystal_I2C::isScrollActive() const {
 }
 
 /* =========================================================
-   update() — dipanggil tiap loop(), menangani SEMUA fitur non-blocking:
-   - typewriterStart()
-   - scrollTextStart()
-   - setBacklightTimeout()
+   Dynamic Banner / Page Flipper
+========================================================= */
+void LiquidCrystal_I2C::bannerStart(const LCDPage* pages, uint8_t pageCount, uint16_t flipIntervalMs) {
+    if (pages == nullptr || pageCount == 0) return;
+    _bannerPages = pages;
+    _bannerCallback = nullptr;
+    _bannerPageCount = pageCount;
+    _bannerCurrentPage = 0;
+    _bannerIntervalMs = flipIntervalMs;
+    _bannerActive = true;
+    _bannerPaused = false;
+    _scheduler.reset(ISKAKINO_LCD_SCHED_BANNER);
+    _renderBannerPage();
+}
+
+void LiquidCrystal_I2C::bannerStart(uint8_t pageCount, uint16_t flipIntervalMs, LCDBannerCallback callback) {
+    if (callback == nullptr || pageCount == 0) return;
+    _bannerPages = nullptr;
+    _bannerCallback = callback;
+    _bannerPageCount = pageCount;
+    _bannerCurrentPage = 0;
+    _bannerIntervalMs = flipIntervalMs;
+    _bannerActive = true;
+    _bannerPaused = false;
+    _scheduler.reset(ISKAKINO_LCD_SCHED_BANNER);
+    _renderBannerPage();
+}
+
+void LiquidCrystal_I2C::bannerStop() {
+    _bannerActive = false;
+    _bannerPaused = false;
+}
+
+void LiquidCrystal_I2C::bannerPause() {
+    _bannerPaused = true;
+}
+
+void LiquidCrystal_I2C::bannerResume() {
+    _bannerPaused = false;
+    _scheduler.reset(ISKAKINO_LCD_SCHED_BANNER);
+}
+
+void LiquidCrystal_I2C::bannerNext() {
+    if (!_bannerActive || _bannerPageCount == 0) return;
+    _bannerCurrentPage = (_bannerCurrentPage + 1) % _bannerPageCount;
+    _scheduler.reset(ISKAKINO_LCD_SCHED_BANNER);
+    _renderBannerPage();
+}
+
+void LiquidCrystal_I2C::bannerPrev() {
+    if (!_bannerActive || _bannerPageCount == 0) return;
+    _bannerCurrentPage = (_bannerCurrentPage == 0) ? (_bannerPageCount - 1) : (_bannerCurrentPage - 1);
+    _scheduler.reset(ISKAKINO_LCD_SCHED_BANNER);
+    _renderBannerPage();
+}
+
+void LiquidCrystal_I2C::bannerSetPage(uint8_t pageIndex) {
+    if (!_bannerActive || pageIndex >= _bannerPageCount) return;
+    _bannerCurrentPage = pageIndex;
+    _scheduler.reset(ISKAKINO_LCD_SCHED_BANNER);
+    _renderBannerPage();
+}
+
+void LiquidCrystal_I2C::bannerSetInterval(uint16_t intervalMs) {
+    _bannerIntervalMs = intervalMs;
+}
+
+void LiquidCrystal_I2C::_renderBannerPage() {
+    if (!_initialized) return;
+
+    if (_bannerCallback != nullptr) {
+        clear();
+        _bannerCallback(*this, _bannerCurrentPage);
+    } else if (_bannerPages != nullptr) {
+        clear();
+        const LCDPage& p = _bannerPages[_bannerCurrentPage];
+        const char* lines[4] = { p.line1, p.line2, p.line3, p.line4 };
+        for (uint8_t r = 0; r < _rows && r < 4; r++) {
+            if (lines[r] != nullptr) {
+                setCursor(0, r);
+                print(lines[r]);
+            }
+        }
+    }
+}
+
+/* =========================================================
+   Custom Icon Generator Helpers
+========================================================= */
+void LiquidCrystal_I2C::createBatteryIcon(uint8_t slot, uint8_t percent) {
+    uint8_t map[8];
+    generateBatteryIcon(percent, map);
+    createChar(slot, map);
+}
+
+void LiquidCrystal_I2C::createWifiIcon(uint8_t slot, uint8_t level_0_to_4) {
+    uint8_t map[8];
+    generateWifiIcon(level_0_to_4, map);
+    createChar(slot, map);
+}
+
+void LiquidCrystal_I2C::createWifiIconRssi(uint8_t slot, int rssi) {
+    createWifiIcon(slot, rssiToWifiBars(rssi));
+}
+
+void LiquidCrystal_I2C::createThermometerIcon(uint8_t slot, uint8_t level_0_to_3) {
+    uint8_t map[8];
+    generateThermometerIcon(level_0_to_3, map);
+    createChar(slot, map);
+}
+
+void LiquidCrystal_I2C::drawBattery(uint8_t col, uint8_t row, uint8_t percent, uint8_t slot) {
+    createBatteryIcon(slot, percent);
+    setCursor(col, row);
+    write((uint8_t)slot);
+}
+
+void LiquidCrystal_I2C::drawWifiSignal(uint8_t col, uint8_t row, uint8_t level_0_to_4, uint8_t slot) {
+    createWifiIcon(slot, level_0_to_4);
+    setCursor(col, row);
+    write((uint8_t)slot);
+}
+
+void LiquidCrystal_I2C::drawWifiSignalRssi(uint8_t col, uint8_t row, int rssi, uint8_t slot) {
+    createWifiIconRssi(slot, rssi);
+    setCursor(col, row);
+    write((uint8_t)slot);
+}
+
+void LiquidCrystal_I2C::drawThermometer(uint8_t col, uint8_t row, uint8_t level_0_to_3, uint8_t slot) {
+    createThermometerIcon(slot, level_0_to_3);
+    setCursor(col, row);
+    write((uint8_t)slot);
+}
+
+/* =========================================================
+   update() — dipanggil tiap loop()
 ========================================================= */
 void LiquidCrystal_I2C::update() {
-    // --- Backlight auto-timeout (FITUR #3) ---
-    // Dulu: `if (now - _lastActivityMillis >= _backlightTimeoutMs) noBacklight();`
-    // — ini terpanggil ULANG setiap update() selama idle (I2C write redundan
-    // tapi tidak berbahaya). Sekarang once(): noBacklight() cuma sekali per
-    // idle-period, baru terpicu lagi setelah reset() (lihat titik reset di
-    // begin()/backlight()/setBacklightTimeout()/write()). Efek yang TERLIHAT
-    // user (backlight mati) identik.
+    // --- Backlight auto-timeout ---
     if (_backlightTimeoutMs > 0 && _backlight) {
         if (_scheduler.once(_backlightTimeoutMs, ISKAKINO_LCD_SCHED_BACKLIGHT)) {
             noBacklight();
         }
     }
 
-    // --- Typewriter / Scroll (FITUR #1 & #4) ---
-    if (!_twActive) return;
-    if (!_scheduler.every(_twIntervalMs, ISKAKINO_LCD_SCHED_TYPEWRITER)) return;
-
-    if (!_twIsScrollMode) {
-        // Mode typewriter: cetak 1 karakter per tick
-        if (_twIndex >= _twBuffer.length() || _twIndex >= _cols) {
-            _twActive = false;
-            return;
+    // --- Typewriter / Scroll ---
+    if (_twActive) {
+        if (_scheduler.every(_twIntervalMs, ISKAKINO_LCD_SCHED_TYPEWRITER)) {
+            if (!_twIsScrollMode) {
+                if (_twIndex >= _twBuffer.length() || _twIndex >= _cols) {
+                    _twActive = false;
+                } else {
+                    setCursor(_twIndex, _twRow);
+                    print(_twBuffer[_twIndex]);
+                    _twIndex++;
+                }
+            } else {
+                uint16_t totalLen = _twBuffer.length();
+                if (totalLen == 0) {
+                    _twActive = false;
+                } else {
+                    setCursor(0, _twRow);
+                    for (uint8_t i = 0; i < _cols; i++) {
+                        uint16_t charPos = (_twIndex + i) % totalLen;
+                        print(_twBuffer[charPos]);
+                    }
+                    _twIndex++;
+                    if (_twIndex >= totalLen) _twIndex = 0;
+                }
+            }
         }
-        setCursor(_twIndex, _twRow);
-        print(_twBuffer[_twIndex]);
-        _twIndex++;
-    } else {
-        // Mode scroll: geser window sepanjang _cols melalui _twBuffer
-        uint16_t totalLen = _twBuffer.length();
-        if (totalLen == 0) {
-            _twActive = false;
-            return;
-        }
+    }
 
-        setCursor(0, _twRow);
-        for (uint8_t i = 0; i < _cols; i++) {
-            uint16_t charPos = (_twIndex + i) % totalLen;
-            print(_twBuffer[charPos]);
+    // --- Dynamic Banner / Page Flipper ---
+    if (_bannerActive && !_bannerPaused && _bannerPageCount > 1) {
+        if (_scheduler.every(_bannerIntervalMs, ISKAKINO_LCD_SCHED_BANNER)) {
+            _bannerCurrentPage = (_bannerCurrentPage + 1) % _bannerPageCount;
+            _renderBannerPage();
         }
-
-        _twIndex++;
-        if (_twIndex >= totalLen) _twIndex = 0; // loop terus sampai scrollTextStop()
     }
 }
 
 /* =========================================================
-   FITUR #5: Progress bar built-in
+   Progress bar built-in
 ========================================================= */
 void LiquidCrystal_I2C::drawProgressBar(uint8_t percent, uint8_t row) {
     if (percent > 100) percent = 100;
@@ -460,7 +590,7 @@ void LiquidCrystal_I2C::drawProgressBar(uint8_t percent, uint8_t row) {
 }
 
 /* =========================================================
-   FITUR #7: printf-style formatted print
+   printf-style formatted print
 ========================================================= */
 void LiquidCrystal_I2C::printFormatted(const char* format, ...) {
     char buffer[LCD_PRINTF_BUFFER_SIZE];
