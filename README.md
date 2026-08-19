@@ -124,9 +124,9 @@ void loop() {
 
 ---
 
-## 📂 Contoh Sketsa Lengkap (`examples/`)
+## 📂 Ringkasan Contoh Sketsa (`examples/`)
 
-| No | Folder Contoh | Modul Terlibat | Platform Target | Deskripsi |
+| No | Folder Contoh | Modul Terlibat | Platform Target | Deskripsi Ringkas |
 |---|---|---|---|---|
 | **01** | [`01_ArduFast_TaskManager`](examples/01_ArduFast_TaskManager/) | ArduFast, Core Scheduler | Universal | Task scheduler non-blocking, manipulasi pin register cepat, dan filter ADC. |
 | **02** | [`02_Storage_SaveLoad`](examples/02_Storage_SaveLoad/) | Storage | Universal | Penyimpanan tipe struct, Arduino String, log ring-buffer, dan enkripsi XOR. |
@@ -140,33 +140,106 @@ void loop() {
 
 ---
 
+## 📖 Penjelasan & Panduan Tiap Contoh (Examples)
+
+Berikut adalah penjelasan mendalam mengenai tujuan, fitur utama, dan cara kerja masing-masing contoh sketsa:
+
+### 01. `01_ArduFast_TaskManager`
+- **Fokus:** Kecepatan eksekusi I/O & Penjadwalan Multi-tasking.
+- **Platform:** Universal (AVR, ESP8266, ESP32).
+- **Penjelasan:** Menunjukkan cara menggantikan `digitalWrite()` dan `delay()` dengan `FastPin<P>` (akses register langsung secepat siklus clock) serta task scheduler non-blocking `every()` dan `once()`. Dilengkapi demonstrasi pembacaan tombol anti-bouncing (`debounce()`) dan smoothing sensor analog menggunakan filter EMA (`readStable()`).
+
+### 02. `02_Storage_SaveLoad`
+- **Fokus:** Penyimpanan Data Non-Volatile Multi-Platform.
+- **Platform:** Universal (AVR = EEPROM, ESP32 = Preferences/NVS, ESP8266 = LittleFS).
+- **Penjelasan:** Memberikan contoh praktis penyimpanan data konfigurasi terstruktur (`struct`), teks dinamis (`String`), serta pencatatan riwayat sistem dengan mode ring-buffer log (`addLog()`, `readLog()`). Dilengkapi proteksi integritas data CRC32 dan enkripsi stream XOR opsional.
+
+### 03. `03_LCD_TypewriterScroll`
+- **Fokus:** Tampilan Visual & Animasi Teks Non-blocking pada I2C LCD.
+- **Platform:** Universal (membutuhkan modul LCD 16x2 atau 20x4 I2C).
+- **Penjelasan:** Menampilkan teks dengan efek mesin ketik (*typewriter*), teks berjalan horizontal yang mulus (*smooth marquee scroll*), dan grafik *progress bar* custom character tanpa menghentikan atau memperlambat alur program utama (`loop()` tetap responsif).
+
+### 04. `04_SmartVoice_PlayTrack`
+- **Fokus:** Pengendalian Audio MP3 DFPlayer Mini.
+- **Platform:** Universal (memerlukan jalur Serial / SoftwareSerial).
+- **Penjelasan:** Memutar rekaman suara MP3 berbasis *state-machine* non-blocking. Mendukung pengaturan volume digital, equalizer preset, pemutaran langsung nomor track/folder, dan mekanisme antrean pemutaran audio berurutan (*playback queue*).
+
+### 05. `05_WifiPortal_CaptivePortal`
+- **Fokus:** Konfigurasi Jaringan Mandiri via Web Portal.
+- **Platform:** ESP32 dan ESP8266.
+- **Penjelasan:** Menyediakan portal web konfigurasi WiFi captive portal. Jika koneksi ke router gagal, ESP secara otomatis beralih menjadi Access Point (AP) dan mengarahkan browser pengguna langsung ke halaman konfigurasi untuk memasukkan SSID, Password, serta parameter custom (misalnya Token MQTT, Host Server, dll.) tanpa perlu hardcode di sketsa.
+
+### 06. `06_FastNTP_ClockSync`
+- **Fokus:** Sinkronisasi Waktu Internet Akurat.
+- **Platform:** ESP32 dan ESP8266.
+- **Penjelasan:** Mengambil waktu terkini dari server NTP dunia secara asinkron tanpa memblokir CPU. Dilengkapi pengubah zona waktu otomatis, format waktu siap cetak (`HH:MM:SS`), serta teks nama hari dan bulan otomatis dalam Bahasa Indonesia maupun Bahasa Inggris.
+
+### 07. `07_Unified_SmartClock`
+- **Fokus:** Integrasi 5 Modul Sekaligus (Gaya Modular Manual).
+- **Platform:** ESP32 dan ESP8266.
+- **Penjelasan:** Membangun jam dinding digital pintar lengkap yang menggabungkan WiFiPortal (koneksi), FastNTP (waktu), LCD I2C (tampilan waktu & kalender), Storage (menyimpan preferensi zona waktu), dan SmartVoice (suara lonceng/chime setiap pergantian jam).
+
+### 08. `08_Framework_Kernel`
+- **Fokus:** Arsitektur Perangkat Lunak Berskala Terpadu.
+- **Platform:** ESP32 dan ESP8266 (atau board lain sesuai modul yang didaftarkan).
+- **Penjelasan:** Menunjukkan arsitektur aplikasi berbasis Kernel (`IskakINO_Kernel`). Seluruh modul dibungkus adapter (`IskakINO_*Module`) dan didaftarkan ke objek `IskakINO`. Cukup satu panggilan `IskakINO.begin()` di `setup()` dan satu panggilan `IskakINO.update()` di `loop()` untuk mengontrol siklus hidup semua modul secara serentak.
+
+### 09. `09_SmartSchoolBell`
+- **Fokus:** Proyek Bel Sekolah Otomatis Cerdas Siap Pakai (*Production-Ready*).
+- **Platform:** ESP32 (dan kompatibel ESP8266).
+- **Penjelasan:** Aplikasi bel sekolah otomatis lengkap yang memadukan jadwal tersimpan di non-volatile storage, sinkronisasi waktu presisi FastNTP, pemutaran suara pengumuman/bel MP3 via DFPlayer Mini, LCD indicator status, dan Web Dashboard responsif ([BellWebPage.h](examples/09_SmartSchoolBell/BellWebPage.h)) untuk mengubah jadwal pelajaran secara nirkabel via HP/komputer. Disertai berkas template Excel jadwal ([Template_Jadwal_Bel_Sekolah.xlsx](examples/09_SmartSchoolBell/Template_Jadwal_Bel_Sekolah.xlsx)) dan panduan tersendiri di [examples/09_SmartSchoolBell/README.md](examples/09_SmartSchoolBell/README.md).
+
+---
+
 ## 🏗️ Struktur Repositori
 
 ```text
 IskakINO/
 ├── src/
-│   ├── IskakINO.h               # Entry point utama library
-│   ├── core/                    # Shared core logic & framework
-│   │   ├── IskakINO_Platform.h  # Deteksi platform & FastPin<P>
-│   │   ├── IskakINO_Result.h    # Status enum error & hasil operasi
-│   │   ├── IskakINO_Logger.h    # Logging terpadu printf-style
-│   │   ├── IskakINO_Scheduler.h # Scheduler non-blocking every()/once()
-│   │   ├── IskakINO_Module.h    # Interface modul begin()/update()
-│   │   ├── IskakINO_Kernel.h    # Kernel registry global (IskakINO)
-│   │   └── IskakINO_Version.h   # Sumber versi tunggal (ISKAKINO_VERSION)
-│   ├── ardufast/                # Modul GPIO & Task Scheduler
-│   ├── storage/                 # Modul Storage hybrid (EEPROM/Prefs/LittleFS)
-│   ├── lcd/                     # Modul driver I2C LCD dengan animasi
-│   ├── voice/                   # Modul DFPlayer Mini MP3 Player
-│   ├── wifi/                    # Modul Captive Portal & Web Server
-│   └── ntp/                     # Modul Fast NTP Time Client
-├── examples/                    # 9 contoh sketch lengkap dan siap pakai
-├── .github/workflows/           # CI/CD otomatis via Arduino CLI matrix
-├── library.properties           # Arduino Library Manager metadata
-├── library.json                 # PlatformIO Library Registry metadata
-├── keywords.txt                 # Syntax highlighting Arduino IDE
-├── CHANGELOG.md                 # Riwayat perubahan dan rilis
-└── LICENSE                      # Lisensi MIT
+│   ├── IskakINO.h                                  # Entry point utama library
+│   ├── core/                                       # Shared core logic & framework
+│   │   ├── IskakINO_Platform.h                     # Deteksi platform & FastPin<P>
+│   │   ├── IskakINO_Result.h                       # Status enum error & hasil operasi
+│   │   ├── IskakINO_Logger.h                       # Logging terpadu printf-style
+│   │   ├── IskakINO_Scheduler.h                    # Scheduler non-blocking every()/once()
+│   │   ├── IskakINO_Module.h                       # Interface modul begin()/update()
+│   │   ├── IskakINO_Kernel.h                       # Kernel registry global (IskakINO)
+│   │   └── IskakINO_Version.h                      # Sumber versi tunggal (ISKAKINO_VERSION)
+│   ├── ardufast/                                   # Modul GPIO & Task Scheduler
+│   ├── storage/                                    # Modul Storage hybrid (EEPROM/Prefs/LittleFS)
+│   ├── lcd/                                        # Modul driver I2C LCD dengan animasi
+│   ├── voice/                                      # Modul DFPlayer Mini MP3 Player
+│   ├── wifi/                                       # Modul Captive Portal & Web Server
+│   └── ntp/                                        # Modul Fast NTP Time Client
+├── examples/                                       # 9 contoh sketch lengkap dan siap pakai
+│   ├── 01_ArduFast_TaskManager/
+│   │   └── 01_ArduFast_TaskManager.ino             # Contoh 01: FastPin & Task Scheduler
+│   ├── 02_Storage_SaveLoad/
+│   │   └── 02_Storage_SaveLoad.ino                 # Contoh 02: Simpan/Muat Struct & Log
+│   ├── 03_LCD_TypewriterScroll/
+│   │   └── 03_LCD_TypewriterScroll.ino             # Contoh 03: Animasi Teks & Progress Bar
+│   ├── 04_SmartVoice_PlayTrack/
+│   │   └── 04_SmartVoice_PlayTrack.ino             # Contoh 04: Kontrol MP3 & Playback Queue
+│   ├── 05_WifiPortal_CaptivePortal/
+│   │   └── 05_WifiPortal_CaptivePortal.ino         # Contoh 05: Captive Portal WiFi AP
+│   ├── 06_FastNTP_ClockSync/
+│   │   └── 06_FastNTP_ClockSync.ino                # Contoh 06: Sinkronisasi Waktu NTP
+│   ├── 07_Unified_SmartClock/
+│   │   └── 07_Unified_SmartClock.ino               # Contoh 07: Jam Pintar Terpadu (Manual)
+│   ├── 08_Framework_Kernel/
+│   │   └── 08_Framework_Kernel.ino                 # Contoh 08: Arsitektur Kernel IskakINO
+│   └── 09_SmartSchoolBell/
+│       ├── 09_SmartSchoolBell.ino                  # Contoh 09: Bel Sekolah Otomatis Cerdas
+│       ├── BellWebPage.h                           # Web Dashboard HTML/JS responsif
+│       ├── Template_Jadwal_Bel_Sekolah.xlsx        # Format spreadsheet template jadwal
+│       └── README.md                               # Panduan lengkap proyek Bel Sekolah
+├── .github/workflows/                              # CI/CD otomatis via Arduino CLI matrix
+│   └── ci.yml
+├── library.properties                              # Arduino Library Manager metadata
+├── library.json                                    # PlatformIO Library Registry metadata
+├── keywords.txt                                    # Syntax highlighting Arduino IDE
+├── CHANGELOG.md                                    # Riwayat perubahan dan rilis
+└── LICENSE                                         # Lisensi MIT
 ```
 
 ---
