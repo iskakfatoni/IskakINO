@@ -6,74 +6,73 @@
 [![GitHub release](https://img.shields.io/github/v/release/iskakfatoni/IskakINO?color=blue&logo=github)](https://github.com/iskakfatoni/IskakINO/releases)
 [![CI](https://github.com/iskakfatoni/IskakINO/actions/workflows/ci.yml/badge.svg)](https://github.com/iskakfatoni/IskakINO/actions)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-11%20%2F%2017-00599C.svg?logo=cplusplus&logoColor=white)](https://en.cppreference.com/)
-[![Code Size](https://img.shields.io/github/languages/code-size/iskakfatoni/IskakINO?color=blueviolet)](https://github.com/iskakfatoni/IskakINO)
-[![Last Commit](https://img.shields.io/github/last-commit/iskakfatoni/IskakINO?color=brightgreen)](https://github.com/iskakfatoni/IskakINO/commits/main)
-[![Issues](https://img.shields.io/github/issues/iskakfatoni/IskakINO?color=yellow)](https://github.com/iskakfatoni/IskakINO/issues)
+[![PlatformIO Registry](https://img.shields.io/badge/PlatformIO-Compatible-orange.svg?logo=platformio&logoColor=white)](library.json)
 [![Architecture](https://img.shields.io/badge/Architecture-Modular%20Kernel-orange.svg)](#)
 [![Task Scheduler](https://img.shields.io/badge/Scheduler-Non--Blocking-informational.svg)](#)
-[![Testing](https://img.shields.io/badge/Unit%20Tests-Mock%20Native-success.svg)](#)
 [![GitHub Stars](https://img.shields.io/github/stars/iskakfatoni/IskakINO?style=social)](https://github.com/iskakfatoni/IskakINO/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/iskakfatoni/IskakINO?style=social)](https://github.com/iskakfatoni/IskakINO/network/members)
 
+**IskakINO** adalah library ekosistem Arduino terpadu (*Unified Library*) — menggabungkan modul `IskakINO_ArduFast`, `IskakINO_Storage`, `IskakINO_LiquidCrystal_I2C`, `IskakINO_WifiPortal`, `IskakINO_FastNTP`, dan `IskakINO_SmartVoice` menjadi **satu library ringkas** dengan shared core (`src/core/`), plus kernel modular opsional untuk mengelola siklus hidup (`begin()` / `update()`) seluruh modul secara otomatis.
 
-Library Arduino gabungan — hasil penggabungan seluruh ekosistem
-`IskakINO_ArduFast`, `IskakINO_Storage`, `IskakINO_LiquidCrystal_I2C`,
-`IskakINO_WifiPortal`, `IskakINO_FastNTP`, dan `IskakINO_SmartVoice` menjadi
-**satu library** dengan shared core, plus lapisan framework opsional untuk
-mengelola siklus hidup (`begin()`/`update()`) semua modul sekaligus.
+---
 
-> Status: **belum dirilis** (`version=1.0.0` di `library.properties`, belum
-> ditag/dipublikasikan ke Arduino Library Manager).
+## 🌟 Kenapa Memakai IskakINO?
 
-## Kenapa digabung?
+Sebelumnya tiap modul merupakan library mandiri yang terpisah. Ketika dipakai bersamaan (misalnya *WifiPortal* + *FastNTP* + *LCD* + *SmartVoice* untuk bel sekolah otomatis atau jam pintar), sering terjadi duplikasi kode, bentrok nama, dan kesulitan dependensi antar-library.
 
-Sebelumnya tiap modul adalah library terpisah dengan versi & rilis sendiri.
-Masalahnya: modul-modul itu sering dipakai BERSAMAAN (mis. WifiPortal +
-FastNTP + LCD untuk jam pintar), tapi tidak bisa saling `depend` satu sama
-lain secara bersih di Arduino Library Manager, dan banyak kode terduplikasi
-(deteksi platform, logging, task manager non-blocking) di tiap modul.
+**Keunggulan IskakINO:**
+- **Single Entry Point:** Cukup satu baris `#include <IskakINO.h>` untuk mengakses seluruh modul.
+- **Shared Core Efisien:** Deteksi platform, driver register I/O cepat, logging terpadu, result codes, dan task scheduler non-blocking digunakan bersama tanpa redundansi memori.
+- **Platform-Safe:** Modul universal bekerja di semua board (AVR, ESP8266, ESP32). Modul yang membutuhkan koneksi WiFi (*WifiPortal* & *FastNTP*) otomatis non-aktif secara aman pada board non-WiFi (seperti Arduino Uno/Nano/Mega) tanpa menimbulkan error kompilasi.
+- **Zero Overhead:** Modul yang tidak dipakai tidak akan membebani ukuran memori flash mikrokontroler.
 
-Sekarang: satu `#include <IskakINO.h>`, satu versi, kode inti (`src/core/`)
-dipakai bersama, dan modul yang butuh WiFi (WifiPortal, FastNTP) otomatis
-"menghilang" secara aman di board non-WiFi seperti AVR Uno/Nano — bukan
-gagal compile.
+---
 
-## Instalasi
+## 📦 Instalasi
 
-Belum ada di Arduino Library Manager. Sementara ini:
-
-1. Download/`git clone` repo ini.
-2. Salin (atau symlink) foldernya ke `Documents/Arduino/libraries/IskakINO`.
+### 1. Arduino IDE
+1. Download atau `git clone` repositori ini:
+   ```bash
+   git clone https://github.com/iskakfatoni/IskakINO.git
+   ```
+2. Pindahkan folder `IskakINO` ke direktori library Arduino Anda:
+   - **Windows:** `Documents/Arduino/libraries/IskakINO`
+   - **Linux / macOS:** `~/Arduino/libraries/IskakINO`
 3. Restart Arduino IDE.
 
-Kalau lewat `arduino-cli` dari Git URL (butuh `enable_unsafe_install: true`
-di config `arduino-cli`, karena `--git-url` melewati proses submission
-Library Manager):
+### 2. Arduino CLI
 ```bash
 arduino-cli lib install --git-url https://github.com/iskakfatoni/IskakINO.git
 ```
 
-## Modul yang tersedia
+### 3. PlatformIO
+Tambahkan dependensi pada file `platformio.ini` proyek Anda:
+```ini
+lib_deps =
+    https://github.com/iskakfatoni/IskakINO.git
+```
 
-| Modul | Class utama | Platform | Fungsi |
+---
+
+## 🧩 Modul & Fitur Utama
+
+| Modul | Class Utama | Platform | Fungsi & Kemampuan |
 |---|---|---|---|
-| ArduFast | `IskakINO_ArduFast`, `FastPin<P>` | Universal (AVR / ESP32 / ESP8266) | Akses register GPIO langsung, task manager non-blocking, EMA filter |
-| Storage | `IskakINO_Storage` (instance global `IskakStorage`) | Universal (AVR / ESP32 / ESP8266) | Storage hybrid EEPROM/Preferences/LittleFS, mode log ring-buffer |
-| LCD | `LiquidCrystal_I2C` | Universal (perlu I2C/Wire) | LCD karakter I2C, typewriter/scroll non-blocking, progress bar |
-| SmartVoice | `IskakINO_SmartVoice` | Universal (perlu `Stream&` tambahan) | Kontrol modul MP3 DFPlayer Mini |
-| WifiPortal | `IskakINO_WifiPortal` | **ESP32/ESP8266 saja** | Captive portal WiFi + custom parameter |
-| FastNTP | `IskakINO_FastNTP` | **ESP32/ESP8266 saja** | Sinkronisasi waktu NTP non-blocking |
+| **ArduFast** | `IskakINO_ArduFast`, `FastPin<P>` | Universal (AVR / ESP32 / ESP8266) | Direct port manipulation (nanosecond I/O), software debounce, generator pulsa, & filter EMA. |
+| **Storage** | `IskakINO_Storage` (`IskakStorage`) | Universal (AVR / ESP32 / ESP8266) | Multi-backend hybrid (EEPROM di AVR, Preferences di ESP32, LittleFS di ESP8266) dengan CRC32, enkripsi ringan XOR, String helper, & Ring-buffer log. |
+| **LCD** | `LiquidCrystal_I2C` | Universal (I2C / Wire) | Driver I2C LCD dengan animasi teks non-blocking (*typewriter*, *smooth scrolling*, *marquee*, & *progress bar*). |
+| **SmartVoice** | `IskakINO_SmartVoice` | Universal (Stream / Serial) | Driver MP3 DFPlayer Mini non-blocking berbasis *state-machine*, antrean lagu (*playback queue*), & volume manager. |
+| **WifiPortal** | `IskakINO_WifiPortal` | **ESP32 & ESP8266** | Captive Portal WiFi AP, konfigurasi parameter kustom via Web UI dinamis, & OTA firmware update. |
+| **FastNTP** | `IskakINO_FastNTP` | **ESP32 & ESP8266** | Sinkronisasi waktu internet NTP non-blocking, format waktu instan, lokalisasi nama hari/bulan (Bahasa Indonesia & English), serta offset zona waktu. |
 
-Modul "Universal" aman di-`#include <IskakINO.h>` di board apa pun. Modul
-WiFi-only otomatis kosong (bukan error) kalau di-compile untuk board non-WiFi
-— lihat [`src/wifi/IskakINO_WifiPortal.h`](src/wifi/IskakINO_WifiPortal.h)
-untuk detail mekanismenya.
+---
 
-## Quick Start
+## 🚀 Panduan Penggunaan (Quick Start)
 
-Ada dua gaya pemakaian — pilih salah satu, keduanya didukung penuh.
+IskakINO mendukung dua paradigma penggunaan:
 
-### Gaya manual (kontrol penuh per modul)
+### 1. Gaya Manual (Modular & Kontrol Penuh)
+Cocok jika Anda ingin mengontrol inisialisasi dan timing setiap modul secara mandiri:
 
 ```cpp
 #include <IskakINO.h>
@@ -84,19 +83,21 @@ LiquidCrystal_I2C lcd(16, 2);
 void setup() {
     fast.begin(115200);
     lcd.begin();
+    lcd.typewriter("Halo IskakINO!", 0, 0, 80);
 }
 
 void loop() {
-    lcd.update(); // wajib dipanggil tiap loop() untuk efek non-blocking LCD
+    lcd.update(); // Update animasi non-blocking LCD
 
+    // Task non-blocking setiap 1000 ms
     if (fast.every(1000, 0)) {
-        lcd.setCursor(0, 0);
-        lcd.print(fast.readStable(A0));
+        fast.log("Sistem Aktif - Uptime: %lu ms", millis());
     }
 }
 ```
 
-### Gaya framework (satu `begin()`, satu `update()`)
+### 2. Gaya Framework / Kernel (Terpusat & Otomatis)
+Mendaftarkan modul ke Kernel global `IskakINO` sehingga `begin()` dan `update()` dikelola otomatis:
 
 ```cpp
 #include <IskakINO.h>
@@ -110,116 +111,103 @@ IskakINO_LCDModule      lcdMod(lcd);
 void setup() {
     IskakINO.registerModule(&fastMod);
     IskakINO.registerModule(&lcdMod);
-    IskakINO.begin();  // panggil begin() semua modul terdaftar, urut pendaftaran
+    
+    // Memanggil begin() seluruh modul yang terdaftar
+    IskakINO.begin();
 }
 
 void loop() {
-    IskakINO.update(); // panggil update() semua modul terdaftar
+    // Memanggil update() seluruh modul yang terdaftar
+    IskakINO.update();
 }
 ```
 
-Lihat [`examples/07_Unified_SmartClock`](examples/07_Unified_SmartClock) (gaya
-manual) vs [`examples/08_Framework_Kernel`](examples/08_Framework_Kernel)
-(gaya framework) untuk perbandingan langsung memakai 5 modul sekaligus.
+---
 
-## Contoh (`examples/`)
+## 📂 Contoh Sketsa Lengkap (`examples/`)
 
-| # | Nama | Modul | Platform |
-|---|---|---|---|
-| 01 | `ArduFast_TaskManager` | ArduFast | Universal |
-| 02 | `Storage_SaveLoad` | Storage | Universal |
-| 03 | `LCD_TypewriterScroll` | LCD | Universal |
-| 04 | `SmartVoice_PlayTrack` | SmartVoice | Universal |
-| 05 | `WifiPortal_CaptivePortal` | WifiPortal | ESP32/ESP8266 |
-| 06 | `FastNTP_ClockSync` | FastNTP | ESP32/ESP8266 |
-| 07 | `Unified_SmartClock` | Semua (gaya manual) | ESP32/ESP8266 |
-| 08 | `Framework_Kernel` | Semua (gaya framework) | ESP32/ESP8266 |
+| No | Folder Contoh | Modul Terlibat | Platform Target | Deskripsi |
+|---|---|---|---|---|
+| **01** | [`01_ArduFast_TaskManager`](examples/01_ArduFast_TaskManager/) | ArduFast, Core Scheduler | Universal | Task scheduler non-blocking, manipulasi pin register cepat, dan filter ADC. |
+| **02** | [`02_Storage_SaveLoad`](examples/02_Storage_SaveLoad/) | Storage | Universal | Penyimpanan tipe struct, Arduino String, log ring-buffer, dan enkripsi XOR. |
+| **03** | [`03_LCD_TypewriterScroll`](examples/03_LCD_TypewriterScroll/) | LCD I2C | Universal | Efek teks mesin ketik, teks berjalan (*marquee*), dan baris progress bar. |
+| **04** | [`04_SmartVoice_PlayTrack`](examples/04_SmartVoice_PlayTrack/) | SmartVoice | Universal | Pemutaran trek suara DFPlayer Mini, antrean pesan suara, dan feedback serial. |
+| **05** | [`05_WifiPortal_CaptivePortal`](examples/05_WifiPortal_CaptivePortal/) | WifiPortal | ESP32 / ESP8266 | Portal konfigurasi WiFi interaktif (Captive Portal) dengan parameter dinamis. |
+| **06** | [`06_FastNTP_ClockSync`](examples/06_FastNTP_ClockSync/) | FastNTP | ESP32 / ESP8266 | Sinkronisasi jam internet, kalkulasi waktu lokal, dan teks tanggal multibahasa. |
+| **07** | [`07_Unified_SmartClock`](examples/07_Unified_SmartClock/) | Semua Modul (Manual) | ESP32 / ESP8266 | Jam digital pintar lengkap (WiFi + NTP + LCD + Storage + Voice). |
+| **08** | [`08_Framework_Kernel`](examples/08_Framework_Kernel/) | Semua Modul (Kernel) | ESP32 / ESP8266 | Contoh arsitektur terpadu menggunakan framework `IskakINO_Kernel`. |
+| **09** | [`09_SmartSchoolBell`](examples/09_SmartSchoolBell/) | Lengkap (Real Project) | ESP32 / ESP8266 | Proyek bel sekolah otomatis berbasis jadwal NTP, pengumuman suara MP3, LCD, & Web Portal. |
 
-## Struktur proyek
+---
 
-```
+## 🏗️ Struktur Repositori
+
+```text
 IskakINO/
 ├── src/
-│   ├── IskakINO.h              # entry point tunggal — #include ini saja
-│   ├── core/                   # dipakai bersama semua modul
-│   │   ├── IskakINO_Platform.h #   deteksi platform + FastPin<P>
-│   │   ├── IskakINO_Result.h   #   enum status operasi terpusat
-│   │   ├── IskakINO_Logger.h   #   logging printf-style, flag debug per-instance
-│   │   ├── IskakINO_Scheduler.h#   task manager non-blocking every()/once()
-│   │   ├── IskakINO_Module.h   #   interface begin()/update() seragam
-│   │   ├── IskakINO_Kernel.h   #   registry/kernel (instance global `IskakINO`)
-│   │   └── IskakINO_Version.h  #   satu sumber versi (ISKAKINO_VERSION)
-│   ├── ardufast/  storage/  lcd/  voice/  wifi/  ntp/
-│   │   ├── IskakINO_<Modul>.h/.cpp        # implementasi modul
-│   │   └── IskakINO_<Modul>Module.h       # adapter utk IskakINO_Kernel
-├── examples/      # 9 contoh, per-subfolder (konvensi Arduino Library Manager)
-├── test/          # native unit test (g++ langsung, tanpa toolchain Arduino)
-│   ├── native_check/   # mock Arduino.h dasar
-│   ├── mock_esp32/     # mock WiFi/WebServer/DNSServer/Preferences/LittleFS
-│   ├── mock_storage/   # mock EEPROM
-│   ├── mock_lcd/       # mock Wire/Print
-│   ├── mock_voice/     # mock Stream
-│   ├── mock_ntp/       # mock UDP/WiFiUdp
-│   ├── mock_kernel/    # test IskakINO_Kernel murni
-│   └── mock_examples/  # test tiap file di examples/
-├── library.properties
-├── keywords.txt
-├── CHANGELOG.md
-└── .github/workflows/ci.yml
+│   ├── IskakINO.h               # Entry point utama library
+│   ├── core/                    # Shared core logic & framework
+│   │   ├── IskakINO_Platform.h  # Deteksi platform & FastPin<P>
+│   │   ├── IskakINO_Result.h    # Status enum error & hasil operasi
+│   │   ├── IskakINO_Logger.h    # Logging terpadu printf-style
+│   │   ├── IskakINO_Scheduler.h # Scheduler non-blocking every()/once()
+│   │   ├── IskakINO_Module.h    # Interface modul begin()/update()
+│   │   ├── IskakINO_Kernel.h    # Kernel registry global (IskakINO)
+│   │   └── IskakINO_Version.h   # Sumber versi tunggal (ISKAKINO_VERSION)
+│   ├── ardufast/                # Modul GPIO & Task Scheduler
+│   ├── storage/                 # Modul Storage hybrid (EEPROM/Prefs/LittleFS)
+│   ├── lcd/                     # Modul driver I2C LCD dengan animasi
+│   ├── voice/                   # Modul DFPlayer Mini MP3 Player
+│   ├── wifi/                    # Modul Captive Portal & Web Server
+│   └── ntp/                     # Modul Fast NTP Time Client
+├── examples/                    # 9 contoh sketch lengkap dan siap pakai
+├── .github/workflows/           # CI/CD otomatis via Arduino CLI matrix
+├── library.properties           # Arduino Library Manager metadata
+├── library.json                 # PlatformIO Library Registry metadata
+├── keywords.txt                 # Syntax highlighting Arduino IDE
+├── CHANGELOG.md                 # Riwayat perubahan dan rilis
+└── LICENSE                      # Lisensi MIT
 ```
 
-## Menjalankan test
+---
 
-Semua modul, kernel, dan contoh diverifikasi lewat **native unit test**
-(compile+run langsung dengan `g++`, tanpa perlu toolchain Arduino/board
-fisik) memakai mock hardware yang dibuat khusus untuk repo ini. Lihat
-`.github/workflows/ci.yml` job `native-test` untuk daftar lengkap perintahnya
-— setiap command di CI itu bisa dijalankan langsung dari root repo, contoh:
+## ⚙️ Pengujian & CI/CD
 
+Integrasi Berkelanjutan (*Continuous Integration*) berjalan otomatis di GitHub Actions menggunakan **[Arduino CLI](https://github.com/arduino/arduino-cli)** untuk memverifikasi kompilasi seluruh contoh sketch pada arsitektur target resmi:
+- **Arduino AVR:** `arduino:avr:uno`
+- **ESP8266:** `esp8266:esp8266:nodemcuv2`
+- **ESP32:** `esp32:esp32:esp32`
+
+Untuk menjalankan verifikasi kompilasi lokal via terminal:
 ```bash
-g++ -std=c++11 -Wall -I test/native_check -I src \
-  test/native_check/Arduino.cpp src/core/IskakINO_Scheduler.cpp \
-  test/native_check/test_core.cpp -o test_core
-./test_core
+# Uji kompilasi AVR
+arduino-cli compile --fqbn arduino:avr:uno examples/01_ArduFast_TaskManager
+
+# Uji kompilasi ESP8266
+arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 examples/07_Unified_SmartClock
+
+# Uji kompilasi ESP32
+arduino-cli compile --fqbn esp32:esp32:esp32 examples/09_SmartSchoolBell
 ```
 
-Job `arduino-cli-smoke` di CI yang sama melakukan compile sungguhan lintas
-board AVR/ESP32/ESP8266 lewat `arduino-cli` — inilah validasi paling akurat
-sebelum dipakai di hardware asli.
+---
 
-## Menambah modul baru
+## 🔄 Migrasi dari Library Lama
 
-Ringkasnya:
-1. `src/<nama_modul>/IskakINO_<NamaModul>.h/.cpp` — kode modul.
-2. Kalau platform-spesifik (butuh WiFi dkk.), bungkus **seluruh isi** file
-   dengan `#if defined(ISKAKINO_HAS_WIFI)` (atau makro serupa) — JANGAN
-   `#error`, karena Arduino mengkompilasi semua `.cpp` di `src/` terlepas
-   dari pemakaian sketch.
-3. `src/<nama_modul>/IskakINO_<NamaModul>Module.h` — adapter turunan
-   `IskakINO_Module` (lihat 6 contoh yang sudah ada sebagai referensi).
-4. Tambahkan 2 baris `#include` ke `src/IskakINO.h`.
-5. Update `keywords.txt`, tambah entry di `CHANGELOG.md`.
-6. Bikin contoh di `examples/` + native test di `test/mock_<nama_modul>/`.
+Bagi pengguna library versi standalone terdahulu (`IskakINO_ArduFast`, `IskakINO_Storage`, `IskakINO_LiquidCrystal_I2C`, `IskakINO_WifiPortal`, `IskakINO_FastNTP`, `IskakINO_SmartVoice`):
 
-## Migrasi dari library lama
+1. Hapus instalasi library lama.
+2. Pasang library **IskakINO**.
+3. Ganti header spesifik lama menjadi `#include <IskakINO.h>`.
+4. Seluruh nama class publik, fungsi, dan method **100% kompatibel** tanpa perlu mengubah logika kode Anda.
 
-Library standalone (`IskakINO_ArduFast`, `IskakINO_Storage`,
-`IskakINO_LiquidCrystal_I2C`, `IskakINO_WifiPortal`, `IskakINO_FastNTP`,
-`IskakINO_SmartVoice`) **deprecated** sejak penggabungan ini. Semua nama
-class publik TIDAK BERUBAH (`IskakINO_WifiPortal`, `LiquidCrystal_I2C`, dst.
-tetap sama persis), jadi migrasi cukup:
+---
 
-1. Uninstall library lama, install `IskakINO`.
-2. Ganti `#include <IskakINO_WifiPortal.h>` (dst.) jadi `#include <IskakINO.h>`.
-3. Selesai — tidak ada perubahan lain yang dibutuhkan di kode sketch.
+## 📄 Lisensi
 
-Detail perubahan internal tiap modul ada di [`CHANGELOG.md`](CHANGELOG.md).
+Proyek ini dilisensikan di bawah lisensi **MIT** — lihat berkas [LICENSE](LICENSE) untuk detail lengkap.
 
-## Lisensi
+## ✍️ Author & Maintainer
 
-MIT — lihat [`LICENSE`](LICENSE).
-
-## Author
-
-Iskak Fatoni ([github.com/iskakfatoni](https://github.com/iskakfatoni)) —
-Nisnas Computer, SMKN 1 Jetis Mojokerto.
+**Iskak Fatoni** ([@iskakfatoni](https://github.com/iskakfatoni))  
+*Nisnas Computer — SMKN 1 Jetis Mojokerto*
