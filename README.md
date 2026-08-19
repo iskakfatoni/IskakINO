@@ -66,6 +66,7 @@ Dokumentasi detail, referensi API lengkap, dan panduan teknis tiap modul tersedi
 | **SmartVoice** | `IskakINO_SmartVoice` | Universal (Stream / Serial) | [📖 `readme_smartvoice.md`](readme/readme_smartvoice.md) |
 | **Buzzer** | `IskakINO_Buzzer` | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_buzzer.md`](readme/readme_buzzer.md) |
 | **BasicIOShield** | `IskakINO_BasicIOShield` (`BasicIOShield`) | **Khusus Arduino AVR** (Uno/Nano/Mega) | [📖 `readme_basicioshield.md`](readme/readme_basicioshield.md) |
+| **Cam** | `IskakINO_Cam` | **Khusus ESP32** (ESP32-CAM / OV2640) | [📖 `readme_cam.md`](readme/readme_cam.md) |
 | **WifiPortal** | `IskakINO_WifiPortal` | **ESP32 & ESP8266** | [📖 `readme_wifiportal.md`](readme/readme_wifiportal.md) |
 | **FastNTP** | `IskakINO_FastNTP` | **ESP32 & ESP8266** | [📖 `readme_fastntp.md`](readme/readme_fastntp.md) |
 
@@ -142,6 +143,7 @@ void loop() {
 | **13** | [`13_Button_MultiGesture`](examples/13_Button_MultiGesture/) | Button, Core | Universal | Deteksi tombol multi-gesture (Single, Double, Multi-Click, & Long Press). |
 | **14** | [`14_Relay_PulseBlink`](examples/14_Relay_PulseBlink/) | Relay, Core | Universal | Kontrol relay pintar dengan auto-off pulse timer, blink cadence, & menu Serial. |
 | **15** | [`15_Filter_SensorSmoothing`](examples/15_Filter_SensorSmoothing/) | Filter, Core | Universal | Komparasi filter sensor (Raw vs Moving Median vs 1D Kalman vs Linear Calibrator). |
+| **16** | [`16_ESP32Cam_SnapshotStream`](examples/16_ESP32Cam_SnapshotStream/) | Cam, Core | **Khusus ESP32** | Snapshot foto JPEG kamera OV2640, kontrol Flash LED, & penyesuaian sensor. |
 
 ---
 
@@ -159,6 +161,7 @@ IskakINO/
 │   ├── button/                                     # Modul driver tombol multi-gesture
 │   ├── relay/                                      # Modul driver relay & aktuator pintar
 │   ├── filter/                                     # Modul filter sinyal & kalibrasi sensor
+│   ├── cam/                                        # Modul driver kamera ESP32 (ESP32-CAM)
 │   ├── voice/                                      # Modul DFPlayer Mini MP3 Player
 │   ├── buzzer/                                     # Modul Driver Buzzer & RTTTL Melody Player
 │   ├── shield/                                     # Modul driver EMS Basic I/O Shield (AVR)
@@ -173,12 +176,13 @@ IskakINO/
 │   ├── readme_button.md                            # Dokumentasi Modul Button
 │   ├── readme_relay.md                             # Dokumentasi Modul Relay
 │   ├── readme_filter.md                            # Dokumentasi Modul Filter
+│   ├── readme_cam.md                               # Dokumentasi Modul Cam ESP32
 │   ├── readme_smartvoice.md                        # Dokumentasi Modul SmartVoice
 │   ├── readme_buzzer.md                            # Dokumentasi Modul Buzzer & RTTTL
 │   ├── readme_basicioshield.md                     # Dokumentasi Modul Basic I/O Shield
 │   ├── readme_wifiportal.md                        # Dokumentasi Modul WifiPortal
 │   └── readme_fastntp.md                           # Dokumentasi Modul FastNTP
-├── examples/                                       # 15 contoh sketch lengkap dan siap pakai
+├── examples/                                       # 16 contoh sketch lengkap dan siap pakai
 ├── .github/workflows/                              # CI/CD otomatis via Arduino CLI matrix
 ├── library.properties                              # Arduino Library Manager metadata
 ├── library.json                                    # PlatformIO Library Registry metadata

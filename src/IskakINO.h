@@ -23,6 +23,7 @@
  *   - IskakINO_Button          : driver tombol pintar gesture (single, double, hold) non-blocking (semua platform)
  *   - IskakINO_Relay           : driver relay pintar dengan auto-off pulse & blink cadence (semua platform)
  *   - IskakINO_Filter          : filter sinyal (Kalman 1D, Median, EMA, Linear Calibrator) (semua platform)
+ *   - IskakINO_Cam             : driver modul kamera ESP32 (ESP32-CAM, OV2640, PSRAM, Flash LED) (HANYA ESP32)
  *   - IskakINO_WifiPortal      : captive portal WiFi + custom parameter
  *                                 (HANYA ESP32/ESP8266 — otomatis kosong di
  *                                 board lain, lihat catatan di bawah)
@@ -32,7 +33,7 @@
  *                                 button, potensiometer, 7-segment non-blocking,
  *                                 DAC AD5612 I2C) (HANYA platform AVR)
  *
- * CATATAN PENTING soal WifiPortal & FastNTP di board non-WiFi (mis. AVR
+ * CATATAN PENTING soal WifiPortal, FastNTP, & Cam di board non-WiFi (mis. AVR
  * Uno/Nano) serta BasicIOShield di board non-AVR: header-header modul
  * khusus itu SUDAH otomatis membungkus seluruh isinya dengan guard platform,
  * jadi #include <IskakINO.h> di platform mana pun TETAP AMAN (otomatis jadi
@@ -44,8 +45,8 @@
  * juga bisa didaftarkan ke kernel global `IskakINO` lewat kelas adapter
  * (IskakINO_WifiPortalModule, IskakINO_FastNTPModule, IskakINO_LCDModule,
  * IskakINO_OLEDModule, IskakINO_ButtonModule, IskakINO_RelayModule,
- * IskakINO_StorageModule, IskakINO_SmartVoiceModule, IskakINO_BuzzerModule,
- * IskakINO_ArduFastModule, IskakINO_BasicIOShieldModule)
+ * IskakINO_CamModule, IskakINO_StorageModule, IskakINO_SmartVoiceModule,
+ * IskakINO_BuzzerModule, IskakINO_ArduFastModule, IskakINO_BasicIOShieldModule)
  * supaya begin()/update() semuanya terpanggil otomatis lewat satu
  * IskakINO.begin() dan satu IskakINO.update(). Lihat
  * examples/08_Framework_Kernel dan src/core/IskakINO_Kernel.h. Pola
@@ -90,13 +91,16 @@
 #include "shield/IskakINO_BasicIOShield.h"
 #include "shield/IskakINO_BasicIOShieldModule.h"
 
-// --- Modul khusus WiFi (ESP32/ESP8266 saja) ---
+// --- Modul khusus WiFi & ESP32 (ESP32/ESP8266 saja) ---
 // Header-header ini AMAN di-include tanpa syarat di sini — masing-masing
-// sudah membungkus SELURUH isinya dengan `#if defined(ISKAKINO_HAS_WIFI)`
-// secara internal, jadi otomatis jadi no-op di board non-WiFi.
+// sudah membungkus SELURUH isinya dengan guard platform internal,
+// jadi otomatis jadi no-op di board yang tidak didukung.
 #include "wifi/IskakINO_WifiPortal.h"
 #include "wifi/IskakINO_WifiPortalModule.h"
 #include "ntp/IskakINO_FastNTP.h"
 #include "ntp/IskakINO_FastNTPModule.h"
+#include "cam/IskakINO_CamPins.h"
+#include "cam/IskakINO_Cam.h"
+#include "cam/IskakINO_CamModule.h"
 
 #endif

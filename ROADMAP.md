@@ -17,6 +17,7 @@ Dokumen ini memuat daftar rencana fitur baru, usulan modul tambahan, dan penyemp
 | **Release** | **`IskakINO_Button`** | Universal | Deteksi *gesture* tombol non-blocking (*Single*, *Double*, *Long Press*, *Hold*). | ✅ Selesai (v1.1.0) |
 | **Release** | **`IskakINO_Relay`** | Universal | Driver relay pintar dengan auto-off pulse timer dan kontrol keamanan state. | ✅ Selesai (v1.1.0) |
 | **Release** | **`IskakINO_Filter`** | Universal | Sinyal filter lanjutan: 1D Kalman Filter, Moving Median, EMA, & Linear Calibrator. | ✅ Selesai (v1.1.0) |
+| **Release** | **`IskakINO_Cam`** | ESP32 | Driver modul kamera ESP32 (ESP32-CAM, OV2640, PSRAM, Flash LED). | ✅ Selesai (v1.1.0) |
 
 ---
 

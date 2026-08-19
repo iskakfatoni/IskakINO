@@ -82,13 +82,15 @@ jobs:
             arduino-cli compile --fqbn ${{ matrix.board }} examples/$ex --libraries $HOME/Arduino/libraries
           done
 
-      - name: Compile Example 09_SmartSchoolBell (Khusus ESP32)
+      - name: Compile Examples Khusus ESP32 (SmartSchoolBell & Cam)
         if: matrix.board == 'esp32:esp32:esp32'
         run: |
-          echo "=========================================="
-          echo "Compiling: 09_SmartSchoolBell on ${{ matrix.board }}"
-          echo "=========================================="
-          arduino-cli compile --fqbn ${{ matrix.board }} examples/09_SmartSchoolBell --libraries $HOME/Arduino/libraries
+          for ex in 09_SmartSchoolBell 16_ESP32Cam_SnapshotStream; do
+            echo "=========================================="
+            echo "Compiling: $ex on ${{ matrix.board }}"
+            echo "=========================================="
+            arduino-cli compile --fqbn ${{ matrix.board }} examples/$ex --libraries $HOME/Arduino/libraries
+          done
 
       - name: Compile Example 10_BasicIOShield_Overview (Khusus AVR)
         if: matrix.board == 'arduino:avr:uno'

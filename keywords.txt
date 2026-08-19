@@ -23,6 +23,7 @@ IskakINO_BuzzerModule	KEYWORD1
 IskakINO_OLEDModule	KEYWORD1
 IskakINO_ButtonModule	KEYWORD1
 IskakINO_RelayModule	KEYWORD1
+IskakINO_CamModule	KEYWORD1
 
 # --- ardufast ---
 IskakINO_ArduFast	KEYWORD1
@@ -65,6 +66,10 @@ IskakINO_WifiPortal	KEYWORD1
 IskakParam	KEYWORD1
 IskakWifiCred	KEYWORD1
 IskakPortalState	KEYWORD1
+
+# --- cam (ESP32 saja) ---
+IskakINO_Cam	KEYWORD1
+IskakCamModel	KEYWORD1
 
 # --- ntp (ESP32/ESP8266 saja) ---
 IskakINO_FastNTP	KEYWORD1
@@ -292,6 +297,17 @@ addPoint	KEYWORD2
 calibrate	KEYWORD2
 getEstimate	KEYWORD2
 
+# --- cam ---
+capture	KEYWORD2
+release	KEYWORD2
+setFlashPin	KEYWORD2
+flashOn	KEYWORD2
+flashOff	KEYWORD2
+flashPulse	KEYWORD2
+setVFlip	KEYWORD2
+setHMirror	KEYWORD2
+setResolution	KEYWORD2
+
 #######################################
 # Constants (LITERAL1)
 #######################################
@@ -344,3 +360,7 @@ OLED_CHIP_SSD1306	LITERAL1
 OLED_CHIP_SH1106	LITERAL1
 ISKAK_RELAY_ACTIVE_HIGH	LITERAL1
 ISKAK_RELAY_ACTIVE_LOW	LITERAL1
+CAM_MODEL_AI_THINKER	LITERAL1
+CAM_MODEL_M5STACK_PSRAM	LITERAL1
+CAM_MODEL_WROVER_KIT	LITERAL1
+CAM_MODEL_ESP_EYE	LITERAL1
