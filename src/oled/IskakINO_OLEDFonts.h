@@ -7,7 +7,11 @@
 #define ISKAKINO_OLEDFONTS_H
 
 #include <Arduino.h>
-#include <avr/pgmspace.h>
+#if defined(__AVR__)
+  #include <avr/pgmspace.h>
+#elif defined(ESP8266) || defined(ESP32)
+  #include <pgmspace.h>
+#endif
 
 // ============================================================================
 // Font ASCII Standar 5x7 (Kolom per byte, LSB di atas)

@@ -72,12 +72,11 @@ void loop() {
         float tempC     = tempCalibrator.calibrate(kalmanVal);
 
         // 5. Cetak data (Format ramah Serial Plotter)
-        fast.logf(F("%u\tRaw:%.1f\tMedian:%.1f\tKalman:%.1f\tEMA:%.1f\tTemp:%.2f\n"),
-                  sampleIndex,
-                  (double)rawValue,
-                  (double)medianVal,
-                  (double)kalmanVal,
-                  (double)emaVal,
-                  (double)tempC);
+        Serial.print(sampleIndex);
+        Serial.print(F("\tRaw:")); Serial.print(rawValue, 1);
+        Serial.print(F("\tMedian:")); Serial.print(medianVal, 1);
+        Serial.print(F("\tKalman:")); Serial.print(kalmanVal, 1);
+        Serial.print(F("\tEMA:")); Serial.print(emaVal, 1);
+        Serial.print(F("\tTemp:")); Serial.println(tempC, 2);
     }
 }
