@@ -1,66 +1,73 @@
 /*
  * 06_FastNTP_ClockSync.ino
- * Modul: IskakINO_FastNTP (HANYA ESP32/ESP8266)
+ * Modul: IskakINO_FastNTP & IskakINO_ArduFast (HANYA ESP32 & ESP8266)
  *
- * Menunjukkan sinkronisasi waktu via NTP setelah WiFi tersambung (di sini
- * pakai WiFi.begin() polos supaya contoh berdiri sendiri -- lihat
- * 07_Unified_SmartClock untuk versi yang dipadukan dengan WifiPortal).
- *
- * CATATAN: sketch ini HANYA bisa di-compile untuk board ESP32/ESP8266.
+ * Menunjukkan:
+ *   1. Sinkronisasi waktu internet NTP secara asinkron (non-blocking)
+ *   2. Konversi zona waktu lokal (WIB GMT+7) & lokalisasi nama hari Bahasa Indonesia
+ *   3. Penjadwalan pencetakan jam per detik via ArduFast scheduler
  */
 
 #include <IskakINO.h>
 #include <WiFiUdp.h>
 
+#if !defined(ISKAKINO_HAS_WIFI)
+  #error "Sketsa ini hanya mendukung board ESP32 atau ESP8266."
+#endif
+
 const char* WIFI_SSID = "Nama_WiFi_Anda";
 const char* WIFI_PASS = "Password_WiFi_Anda";
 
-WiFiUDP ntpUdp;
-IskakINO_FastNTP ntp(ntpUdp, "pool.ntp.org");
+IskakINO_ArduFast fast;
+WiFiUDP           ntpUdp;
+IskakINO_FastNTP  ntp(ntpUdp, "pool.ntp.org");
 
 void onSyncSukses(uint32_t utcEpoch) {
     (void)utcEpoch;
-    Serial.println(F("[NTP] Sinkronisasi berhasil."));
+    fast.log(F("[NTP] Sinkronisasi waktu berhasil!"));
 }
 
 void onSyncGagal(uint8_t consecutiveFails) {
-    Serial.print(F("[NTP] Gagal sync, percobaan ke-"));
-    Serial.println(consecutiveFails);
+    fast.logf(F("[NTP] Gagal sinkronisasi, percobaan ke-%u"), consecutiveFails);
 }
 
 void setup() {
-    Serial.begin(115200);
+    fast.begin(115200);
+    fast.log(F("========================================"));
+    fast.log(F("  IskakINO - FastNTP Clock Sync Demo    "));
+    fast.log(F("========================================"));
+
     WiFi.begin(WIFI_SSID, WIFI_PASS);
-    Serial.print(F("Menyambungkan WiFi"));
-    while (WiFi.status() != WL_CONNECTED) {
+    fast.log(F("Menyambungkan ke WiFi..."));
+
+    while (WiFi.status() != WL_CONNECTED && millis() < 10000) {
         delay(300);
-        Serial.print(F("."));
     }
-    Serial.println(F(" tersambung."));
+
+    if (WiFi.status() == WL_CONNECTED) {
+        fast.logf(F("[WiFi] Tersambung! IP: %s"), WiFi.localIP().toString().c_str());
+    } else {
+        fast.log(F("[WiFi] Gagal tersambung dalam 10 detik. Periksa SSID/Password."));
+    }
 
     ntp.setDebug(true);
     ntp.onSync(onSyncSukses);
     ntp.onSyncFail(onSyncGagal);
-    ntp.setSyncInterval(3600000UL); // sync ulang tiap 1 jam
+    ntp.setSyncInterval(3600000UL); // Sync ulang setiap 1 jam
 
-    ntp.begin(25200, 0); // GMT+7 (WIB), tanpa DST
+    // Atur GMT+7 (25200 detik), tanpa DST (0)
+    ntp.begin(25200, 0);
 }
 
 void loop() {
-    ntp.update(); // WAJIB dipanggil tiap loop() -- non-blocking, tidak pernah delay()
+    // WAJIB: Panggil ntp.update() di setiap loop untuk sinkronisasi waktu berkala
+    ntp.update();
 
-    static unsigned long lastPrint = 0;
-    if (ntp.isTimeSet() && millis() - lastPrint >= 1000) {
-        lastPrint = millis();
-        Serial.print(ntp.getFormattedDate());
-        Serial.print(F(" "));
-        Serial.println(ntp.getFormattedTime());
-
-        // Contoh alarm: cetak pesan tepat jam 07:00:00, cuma sekali (tidak
-        // retrigger terus selama detiknya masih 0 di frame yg sama)
-        static bool alarmFired = false;
-        if (ntp.isAlarmActive(7, 0, 0, alarmFired)) {
-            Serial.println(F(">> Alarm 07:00 berbunyi! <<"));
-        }
+    // Cetak waktu setiap 1000 ms menggunakan ArduFast scheduler
+    if (ntp.isTimeSet() && fast.every(1000, 0)) {
+        fast.logf(F("[Waktu] %s, %s %s"),
+                  ntp.getDayName(LANG_ID).c_str(),
+                  ntp.getFormattedDate().c_str(),
+                  ntp.getFormattedTime().c_str());
     }
 }

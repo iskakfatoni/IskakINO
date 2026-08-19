@@ -1,57 +1,69 @@
 /*
  * 05_WifiPortal_CaptivePortal.ino
- * Modul: IskakINO_WifiPortal (HANYA ESP32/ESP8266)
+ * Modul: IskakINO_WifiPortal & IskakINO_ArduFast (HANYA ESP32 & ESP8266)
  *
- * Menunjukkan captive portal dasar dengan satu custom parameter (API Key),
- * timeout portal, dan cara membaca status koneksi. Kalau belum ada WiFi
- * tersimpan, board akan membuka Access Point "IskakINO-Setup" -- konek ke
- * situ dari HP, portal akan otomatis muncul untuk isi SSID/password.
- *
- * CATATAN: sketch ini HANYA bisa di-compile untuk board ESP32/ESP8266.
- * Kalau di-compile untuk AVR, class IskakINO_WifiPortal tidak akan ada
- * (lihat catatan guard platform di src/wifi/IskakINO_WifiPortal.h).
+ * Menunjukkan:
+ *   1. Captive Portal otomatis saat ESP belum terhubung ke router WiFi
+ *   2. Parameter kustom web (API Key) yang tersimpan di NVS/LittleFS
+ *   3. Perlindungan PIN Admin dan fitur OTA Web Firmware Update
+ *   4. Integrasi task scheduler dan logging via ArduFast
  */
 
 #include <IskakINO.h>
 
+#if !defined(ISKAKINO_HAS_WIFI)
+  #error "Sketsa ini hanya mendukung board ESP32 atau ESP8266."
+#endif
+
+IskakINO_ArduFast   fast;
 IskakINO_WifiPortal portal;
-char apiKey[33] = ""; // buffer utk custom parameter, HARUS bertahan selama portal aktif
+
+// Buffer string untuk parameter kustom Web UI
+char apiKey[33] = "";
 
 void setup() {
-    Serial.begin(115200);
+    fast.begin(115200);
+    fast.log(F("========================================"));
+    fast.log(F("  IskakINO - WiFi Captive Portal Demo   "));
+    fast.log(F("========================================"));
+
     portal.setDebug(true);
 
-    // Custom parameter muncul otomatis di halaman portal sebagai input teks
-    portal.addParameter("apikey", "API Key", apiKey, sizeof(apiKey));
+    // Tambahkan parameter input kustom ke formulir Web UI
+    portal.addParameter("apikey", "API Key / Token", apiKey, sizeof(apiKey));
 
-    // Opsional: tambah kredensial WiFi hardcode sebagai fallback (selain
-    // yang nanti disimpan lewat portal)
-    // portal.addWifi("SSID_Cadangan", "password_cadangan");
+    portal.setPortalTimeout(180); // Portal otomatis restart jika 3 menit idle
+    portal.setAdminPin("1234");   // Kunci menu restart/reset dengan PIN
+    portal.enableOTA(true);       // Buka menu update firmware via Web browser
 
-    portal.setPortalTimeout(180); // portal otomatis restart kalau 3 menit tidak diisi
-    portal.setAdminPin("1234");   // lindungi tombol reboot/reset dgn PIN
-
-    portal.beginAsync("IskakINO-Setup"); // non-blocking, langsung lanjut ke loop()
+    // Mulai mode koneksi atau Captive Portal secara asinkron
+    portal.beginAsync("IskakINO-Setup");
+    fast.log(F("[Info] Memulai koneksi WiFi..."));
 }
 
 void loop() {
-    portal.tick(); // WAJIB dipanggil tiap loop() -- ini yang menjalankan seluruh state machine
+    // WAJIB: Panggil portal.tick() di setiap loop untuk menjalankan Web Server & DNS
+    portal.tick();
 
+    // Pantau perubahan status koneksi WiFi
     static IskakPortalState lastState = IskakPortalState::IDLE;
-    IskakPortalState state = portal.state();
-    if (state != lastState) {
-        if (state == IskakPortalState::CONNECTED) {
-            Serial.println(F("WiFi tersambung!"));
+    IskakPortalState currentState = portal.state();
+
+    if (currentState != lastState) {
+        if (currentState == IskakPortalState::CONNECTED) {
+            fast.log(F("[Success] WiFi tersambung ke router!"));
             if (strlen(apiKey) > 0) {
-                Serial.print(F("API Key tersimpan: "));
-                Serial.println(apiKey);
+                fast.logf(F("[Config] API Key tersimpan: %s"), apiKey);
             }
-        } else if (state == IskakPortalState::PORTAL) {
-            Serial.println(F("Membuka portal konfigurasi -- konek ke AP 'IskakINO-Setup'"));
+        } else if (currentState == IskakPortalState::PORTAL) {
+            fast.log(F("[Portal] Gagal tersambung -> Access Point aktif: 'IskakINO-Setup'"));
+            fast.log(F("[Portal] Konek ke AP tersebut dari HP/PC untuk mengisi SSID & Password."));
         }
-        lastState = state;
+        lastState = currentState;
     }
 
-    // Kode aplikasi lain bisa jalan di sini, cek portal.isConnected() dulu
-    // sebelum melakukan hal yang butuh internet (mis. kirim data ke server).
+    // Task berkala setiap 5 detik saat sudah online
+    if (portal.isConnected() && fast.every(5000, 0)) {
+        fast.logf(F("[Online] Uptime: %lu ms | IP: %s"), millis(), WiFi.localIP().toString().c_str());
+    }
 }

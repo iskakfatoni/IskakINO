@@ -42,10 +42,17 @@ internal dan penambahan opsional.
 - **Baru:** `lastError()` (`IskakINO_Result`), `setDebug(bool)`.
 - **Perbaikan struktural:** seluruh header/cpp kini dibungkus `#if defined(ISKAKINO_HAS_WIFI)` supaya aman di-include dari `IskakINO.h` di board non-WiFi (AVR) tanpa gagal compile.
 
+### shield/ (dari BASIC-I-O-SHIELD-LIBRARY)
+- **Baru:** Integrasi modul driver hardware **EMS Basic I/O Shield** (`IskakINO_BasicIOShield`, alias `BasicIOShield`) khusus untuk mikrokontroler **Arduino AVR**.
+- Fitur lengkap: 4x LED Output, 2x Push Button Input, 1x Potensiometer ADC, Dual-digit 7-Segment multiplexing non-blocking (`setDisplay()`, `update()`, `clearDisplay()`), dan 10-Bit I2C DAC AD5612 (`WriteDAC()`).
+- Adapter kernel framework `IskakINO_BasicIOShieldModule` untuk integrasi otomatis ke `IskakINO_Kernel`.
+- Seluruh file dibungkus guard platform `#if defined(ISKAKINO_PLATFORM_AVR)` sehingga silent-skip (no-op aman) jika di-compile pada board non-AVR (ESP32/ESP8266).
+
 ### examples/
 - **Bug fix (ditemukan lewat CI sungguhan `arduino:avr:uno`):** `04_SmartVoice_PlayTrack` hardcode `Serial2` untuk komunikasi ke DFPlayer Mini — gagal compile di Arduino Uno/Nano (`error: 'Serial2' was not declared in this scope`) karena ATmega328P cuma punya SATU UART hardware. Diperbaiki jadi portable: `SoftwareSerial` (pin 10/11) untuk board tanpa UART kedua, `Serial2` asli tetap dipakai di ESP32 (punya UART hardware ekstra, lebih baik daripada SoftwareSerial).
+- **Baru:** Contoh sketsa `10_BasicIOShield_Overview` yang mendemonstrasikan pengoperasian LED, Button, Potensiometer, 7-Segment non-blocking, dan I2C DAC pada board Arduino Uno (AVR).
 
-### storage, lcd, voice, ntp, wifi — semua modul (rangkuman tambahan opsional)
+### storage, lcd, voice, ntp, wifi, shield — semua modul (rangkuman tambahan opsional)
 - `lcd/` (dari IskakINO_LiquidCrystal_I2C v1.1.0): backlight auto-timeout & interval typewriter/scroll kini pakai `IskakINO_Scheduler` bersama. `LCD_ENABLE_SERIAL_DEBUG` (compile-time) tetap didukung, plus `setDebug()` runtime baru.
 - `voice/` (dari IskakINO_SmartVoice, rilis sebelumnya belum bernomor versi resmi): **baru** `IskakINO_Logger` (default nonaktif) dan `lastError()` (`IskakINO_Result`) — banyak fungsi yang dulu diam-diam gagal validasi kini punya `NOT_CONNECTED`/`INVALID_ARG`/`TIMEOUT`/`WRITE_FAILED` yang bisa dicek.
 - `ntp/` (dari IskakINO_FastNTP v1.1.0): **baru** `IskakINO_Logger` opsional (default nonaktif). State machine backoff/rotate sengaja **tidak** dipetakan ke Scheduler (lihat komentar di header) karena logikanya terlalu spesifik.

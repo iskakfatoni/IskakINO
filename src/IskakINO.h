@@ -21,22 +21,23 @@
  *                                 board lain, lihat catatan di bawah)
  *   - IskakINO_FastNTP         : sinkronisasi waktu NTP non-blocking
  *                                 (HANYA ESP32/ESP8266 — sama seperti di atas)
+ *   - IskakINO_BasicIOShield   : driver modul EMS Basic I/O Shield (LED,
+ *                                 button, potensiometer, 7-segment non-blocking,
+ *                                 DAC AD5612 I2C) (HANYA platform AVR)
  *
  * CATATAN PENTING soal WifiPortal & FastNTP di board non-WiFi (mis. AVR
- * Uno/Nano): kedua header modul itu SUDAH otomatis membungkus seluruh
- * isinya dengan guard platform (lihat komentar di masing-masing header),
- * jadi #include <IskakINO.h> di board AVR TETAP AMAN — modul WiFi-only
- * itu cuma "menghilang" (tidak ter-generate kode apa pun, bukan error).
- * Anda hanya perlu berhati-hati: JANGAN menulis kode yang menggunakan
- * class IskakINO_WifiPortal / IskakINO_FastNTP di board non-WiFi, karena
- * class-nya sendiri tidak akan ada (undefined) di platform itu.
+ * Uno/Nano) serta BasicIOShield di board non-AVR: header-header modul
+ * khusus itu SUDAH otomatis membungkus seluruh isinya dengan guard platform,
+ * jadi #include <IskakINO.h> di platform mana pun TETAP AMAN (otomatis jadi
+ * no-op di board yang tidak didukung).
  *
  * --- Framework (opsional) ---
  * Selain dipakai satu-satu secara manual (tiap modul begin()/tick()/
  * update() sendiri-sendiri seperti contoh 07_Unified_SmartClock), modul
  * juga bisa didaftarkan ke kernel global `IskakINO` lewat kelas adapter
  * (IskakINO_WifiPortalModule, IskakINO_FastNTPModule, IskakINO_LCDModule,
- * IskakINO_StorageModule, IskakINO_SmartVoiceModule, IskakINO_ArduFastModule)
+ * IskakINO_StorageModule, IskakINO_SmartVoiceModule, IskakINO_ArduFastModule,
+ * IskakINO_BasicIOShieldModule)
  * supaya begin()/update() semuanya terpanggil otomatis lewat satu
  * IskakINO.begin() dan satu IskakINO.update(). Lihat
  * examples/08_Framework_Kernel dan src/core/IskakINO_Kernel.h. Pola
@@ -65,6 +66,10 @@
 #include "lcd/IskakINO_LCDModule.h"
 #include "voice/IskakINO_SmartVoice.h"
 #include "voice/IskakINO_SmartVoiceModule.h"
+
+// --- Modul khusus AVR (Arduino Uno/Nano/Mega saja) ---
+#include "shield/IskakINO_BasicIOShield.h"
+#include "shield/IskakINO_BasicIOShieldModule.h"
 
 // --- Modul khusus WiFi (ESP32/ESP8266 saja) ---
 // Header-header ini AMAN di-include tanpa syarat di sini — masing-masing

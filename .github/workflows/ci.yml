@@ -88,3 +88,11 @@ jobs:
           echo "Compiling: 09_SmartSchoolBell on ${{ matrix.board }}"
           echo "=========================================="
           arduino-cli compile --fqbn ${{ matrix.board }} examples/09_SmartSchoolBell --libraries $HOME/Arduino/libraries
+
+      - name: Compile Example 10_BasicIOShield_Overview (Khusus AVR)
+        if: matrix.board == 'arduino:avr:uno'
+        run: |
+          echo "=========================================="
+          echo "Compiling: 10_BasicIOShield_Overview on ${{ matrix.board }}"
+          echo "=========================================="
+          arduino-cli compile --fqbn ${{ matrix.board }} examples/10_BasicIOShield_Overview --libraries $HOME/Arduino/libraries

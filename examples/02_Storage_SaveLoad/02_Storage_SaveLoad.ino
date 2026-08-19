@@ -1,17 +1,20 @@
 /*
  * 02_Storage_SaveLoad.ino
- * Modul: IskakINO_Storage (universal — EEPROM di AVR, Preferences di ESP32,
- * LittleFS di ESP8266, otomatis dipilih lewat core/IskakINO_Platform.h)
+ * Modul: IskakINO_Storage & IskakINO_ArduFast
+ * (Universal — EEPROM di AVR, Preferences di ESP32, LittleFS di ESP8266)
  *
- * Menunjukkan save()/load() struct sederhana, plus cara membaca lastError()
- * (IskakINO_Result) untuk tahu PERSIS kenapa sebuah operasi gagal --
- * bukan cuma "gagal" tanpa keterangan.
+ * Menunjukkan:
+ *   1. Penyimpanan struct konfigurasi via IskakStorage.save()/load()
+ *   2. Membaca IskakINO_Result via lastError() untuk diagnostik presisi
+ *   3. Logging terpadu menggunakan IskakINO_ArduFast (fast.log / fast.logf)
+ *   4. Riwayat pencatatan kejadian dengan ring-buffer log
  */
 
 #include <IskakINO.h>
 
-// Struct WAJIB trivially-copyable (tanpa String, tanpa pointer) --
-// save()/load() akan gagal di compile-time (static_assert) kalau tidak.
+IskakINO_ArduFast fast;
+
+// Struct konfigurasi (trivially-copyable)
 struct Settings {
     uint8_t wifiChannel;
     float   suhuTarget;
@@ -21,43 +24,47 @@ struct Settings {
 int settingsAddr;
 
 void setup() {
-    Serial.begin(115200);
-    IskakStorage.begin("demo", true); // namespace "demo", debug aktif
+    fast.begin(115200);
+    fast.log(F("========================================"));
+    fast.log(F("  IskakINO - Storage Save & Load Demo   "));
+    fast.log(F("========================================"));
 
+    // Inisialisasi storage dengan namespace "demo"
+    IskakStorage.begin("demo", true);
+
+    // Pesan alamat memori untuk struct Settings
     settingsAddr = IskakStorage.reserve(sizeof(Settings));
 
-    Settings s; // dideklarasikan di sini -- load() akan MENGISI s kalau sukses
+    Settings s;
     if (IskakStorage.load(settingsAddr, s)) {
-        Serial.println(F("Settings ditemukan, memuat dari penyimpanan:"));
+        fast.log(F("Settings ditemukan, berhasil dimuat dari penyimpanan."));
     } else {
-        // lastError() kasih tahu KENAPA gagal -- pertama kali boot biasanya
-        // NOT_FOUND (belum pernah disimpan), beda dengan CRC_MISMATCH
-        // (data korup) atau OUT_OF_BOUNDS (alamat salah).
-        Serial.print(F("Load gagal, alasan: "));
-        Serial.println(IskakINO_ResultToString(IskakStorage.lastError()));
+        // Diagnostik error terperinci
+        fast.logf(F("Load gagal (alasan: %s) -> Menyiapkan nilai default."),
+                  IskakINO_ResultToString(IskakStorage.lastError()));
 
-        Serial.println(F("Pakai nilai default & simpan."));
         s.wifiChannel = 6;
-        s.suhuTarget = 28.5f;
+        s.suhuTarget  = 28.5f;
         strncpy(s.namaAlat, "Alat-01", sizeof(s.namaAlat));
 
         if (!IskakStorage.save(settingsAddr, s)) {
-            Serial.print(F("Save GAGAL: "));
-            Serial.println(IskakINO_ResultToString(IskakStorage.lastError()));
+            fast.logf(F("Save GAGAL: %s"), IskakINO_ResultToString(IskakStorage.lastError()));
+        } else {
+            fast.log(F("Nilai default berhasil disimpan ke storage."));
         }
     }
 
-    Serial.print(F("wifiChannel = ")); Serial.println(s.wifiChannel);
-    Serial.print(F("suhuTarget  = ")); Serial.println(s.suhuTarget);
-    Serial.print(F("namaAlat    = ")); Serial.println(s.namaAlat);
+    // Tampilkan data konfigurasi via ArduFast
+    fast.logf(F(">> wifiChannel : %u"), s.wifiChannel);
+    fast.logf(F(">> namaAlat    : %s"), s.namaAlat);
+    fast.log(F(">> suhuTarget  : "), (long)s.suhuTarget);
 
-    // --- Bonus: mode log ring-buffer, cocok utk histori pembacaan sensor ---
-    IskakStorage.beginLog(500, 600, 10); // area log terpisah dari settingsAddr
+    // --- Bonus: Ring-Buffer Logging untuk histori sensor/event ---
+    IskakStorage.beginLog(500, 600, 10);
     IskakStorage.addLog((int)s.wifiChannel);
-    Serial.print(F("Jumlah entri log tersimpan: "));
-    Serial.println(IskakStorage.logCount());
+    fast.logf(F("Jumlah entri log tersimpan: %u"), IskakStorage.logCount());
 }
 
 void loop() {
-    // Kosong -- contoh ini murni demonstrasi setup()
+    // Kosong -- contoh ini murni demonstrasi setup & storage lifecycle
 }
