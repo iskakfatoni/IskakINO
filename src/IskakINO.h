@@ -18,6 +18,11 @@
  *                                 perlu Stream/Serial)
  *   - IskakINO_Buzzer          : driver buzzer non-blocking, nada status,
  *                                 dan RTTTL melody player (semua platform)
+ *   - IskakINO_OLED            : driver layar OLED I2C (SSD1306 & SH1106)
+ *                                 ultra-hemat RAM dengan animasi teks & ikon (semua platform)
+ *   - IskakINO_Button          : driver tombol pintar gesture (single, double, hold) non-blocking (semua platform)
+ *   - IskakINO_Relay           : driver relay pintar dengan auto-off pulse & blink cadence (semua platform)
+ *   - IskakINO_Filter          : filter sinyal (Kalman 1D, Median, EMA, Linear Calibrator) (semua platform)
  *   - IskakINO_WifiPortal      : captive portal WiFi + custom parameter
  *                                 (HANYA ESP32/ESP8266 — otomatis kosong di
  *                                 board lain, lihat catatan di bawah)
@@ -38,6 +43,7 @@
  * update() sendiri-sendiri seperti contoh 07_Unified_SmartClock), modul
  * juga bisa didaftarkan ke kernel global `IskakINO` lewat kelas adapter
  * (IskakINO_WifiPortalModule, IskakINO_FastNTPModule, IskakINO_LCDModule,
+ * IskakINO_OLEDModule, IskakINO_ButtonModule, IskakINO_RelayModule,
  * IskakINO_StorageModule, IskakINO_SmartVoiceModule, IskakINO_BuzzerModule,
  * IskakINO_ArduFastModule, IskakINO_BasicIOShieldModule)
  * supaya begin()/update() semuanya terpanggil otomatis lewat satu
@@ -71,6 +77,14 @@
 #include "buzzer/IskakINO_Pitches.h"
 #include "buzzer/IskakINO_Buzzer.h"
 #include "buzzer/IskakINO_BuzzerModule.h"
+#include "oled/IskakINO_OLEDFonts.h"
+#include "oled/IskakINO_OLED.h"
+#include "oled/IskakINO_OLEDModule.h"
+#include "button/IskakINO_Button.h"
+#include "button/IskakINO_ButtonModule.h"
+#include "relay/IskakINO_Relay.h"
+#include "relay/IskakINO_RelayModule.h"
+#include "filter/IskakINO_Filter.h"
 
 // --- Modul khusus AVR (Arduino Uno/Nano/Mega saja) ---
 #include "shield/IskakINO_BasicIOShield.h"

@@ -59,6 +59,10 @@ Dokumentasi detail, referensi API lengkap, dan panduan teknis tiap modul tersedi
 | **ArduFast** | `IskakINO_ArduFast` | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_ardufast.md`](readme/readme_ardufast.md) |
 | **Storage** | `IskakINO_Storage` (`IskakStorage`) | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_storage.md`](readme/readme_storage.md) |
 | **LCD** | `LiquidCrystal_I2C` | Universal (I2C / Wire) | [📖 `readme_lcd.md`](readme/readme_lcd.md) |
+| **OLED** | `IskakINO_OLED` | Universal (I2C / SSD1306 / SH1106) | [📖 `readme_oled.md`](readme/readme_oled.md) |
+| **Button** | `IskakINO_Button` | Universal (GPIO / Gestures) | [📖 `readme_button.md`](readme/readme_button.md) |
+| **Relay** | `IskakINO_Relay` | Universal (Actuator / Pulse) | [📖 `readme_relay.md`](readme/readme_relay.md) |
+| **Filter** | `IskakINO_Kalman1D`, `IskakINO_MedianFilter` | Universal (DSP & Calibration) | [📖 `readme_filter.md`](readme/readme_filter.md) |
 | **SmartVoice** | `IskakINO_SmartVoice` | Universal (Stream / Serial) | [📖 `readme_smartvoice.md`](readme/readme_smartvoice.md) |
 | **Buzzer** | `IskakINO_Buzzer` | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_buzzer.md`](readme/readme_buzzer.md) |
 | **BasicIOShield** | `IskakINO_BasicIOShield` (`BasicIOShield`) | **Khusus Arduino AVR** (Uno/Nano/Mega) | [📖 `readme_basicioshield.md`](readme/readme_basicioshield.md) |
@@ -134,6 +138,10 @@ void loop() {
 | **09** | [`09_SmartSchoolBell`](examples/09_SmartSchoolBell/) | Proyek Produksi | ESP32 / ESP8266 | Bel sekolah otomatis berbasis NTP, jadwal storage, LCD, & Web Dashboard. |
 | **10** | [`10_BasicIOShield_Overview`](examples/10_BasicIOShield_Overview/) | BasicIOShield, Core | **Khusus AVR** | Driver hardware EMS Basic I/O Shield (LED, Tombol, 7-Seg, & DAC). |
 | **11** | [`11_Buzzer_MelodyBeep`](examples/11_Buzzer_MelodyBeep/) | Buzzer, Core | Universal | Driver buzzer non-blocking, nada status instan, melodi RTTTL, & menu interaktif. |
+| **12** | [`12_OLED_GraphicsAnimation`](examples/12_OLED_GraphicsAnimation/) | OLED, Core | Universal | Driver OLED I2C ultra-hemat RAM, animasi teks, dashboard ikon IoT, & progress bar. |
+| **13** | [`13_Button_MultiGesture`](examples/13_Button_MultiGesture/) | Button, Core | Universal | Deteksi tombol multi-gesture (Single, Double, Multi-Click, & Long Press). |
+| **14** | [`14_Relay_PulseBlink`](examples/14_Relay_PulseBlink/) | Relay, Core | Universal | Kontrol relay pintar dengan auto-off pulse timer, blink cadence, & menu Serial. |
+| **15** | [`15_Filter_SensorSmoothing`](examples/15_Filter_SensorSmoothing/) | Filter, Core | Universal | Komparasi filter sensor (Raw vs Moving Median vs 1D Kalman vs Linear Calibrator). |
 
 ---
 
@@ -147,6 +155,10 @@ IskakINO/
 │   ├── ardufast/                                   # Modul GPIO & Task Scheduler
 │   ├── storage/                                    # Modul Storage hybrid (EEPROM/Prefs/LittleFS)
 │   ├── lcd/                                        # Modul driver I2C LCD dengan animasi
+│   ├── oled/                                       # Modul driver I2C OLED (SSD1306/SH1106)
+│   ├── button/                                     # Modul driver tombol multi-gesture
+│   ├── relay/                                      # Modul driver relay & aktuator pintar
+│   ├── filter/                                     # Modul filter sinyal & kalibrasi sensor
 │   ├── voice/                                      # Modul DFPlayer Mini MP3 Player
 │   ├── buzzer/                                     # Modul Driver Buzzer & RTTTL Melody Player
 │   ├── shield/                                     # Modul driver EMS Basic I/O Shield (AVR)
@@ -157,12 +169,16 @@ IskakINO/
 │   ├── readme_ardufast.md                          # Dokumentasi Modul ArduFast
 │   ├── readme_storage.md                           # Dokumentasi Modul Storage
 │   ├── readme_lcd.md                               # Dokumentasi Modul LCD I2C
+│   ├── readme_oled.md                              # Dokumentasi Modul OLED I2C
+│   ├── readme_button.md                            # Dokumentasi Modul Button
+│   ├── readme_relay.md                             # Dokumentasi Modul Relay
+│   ├── readme_filter.md                            # Dokumentasi Modul Filter
 │   ├── readme_smartvoice.md                        # Dokumentasi Modul SmartVoice
 │   ├── readme_buzzer.md                            # Dokumentasi Modul Buzzer & RTTTL
 │   ├── readme_basicioshield.md                     # Dokumentasi Modul Basic I/O Shield
 │   ├── readme_wifiportal.md                        # Dokumentasi Modul WifiPortal
 │   └── readme_fastntp.md                           # Dokumentasi Modul FastNTP
-├── examples/                                       # 11 contoh sketch lengkap dan siap pakai
+├── examples/                                       # 15 contoh sketch lengkap dan siap pakai
 ├── .github/workflows/                              # CI/CD otomatis via Arduino CLI matrix
 ├── library.properties                              # Arduino Library Manager metadata
 ├── library.json                                    # PlatformIO Library Registry metadata

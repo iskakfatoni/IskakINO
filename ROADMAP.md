@@ -4,23 +4,23 @@ Dokumen ini memuat daftar rencana fitur baru, usulan modul tambahan, dan penyemp
 
 ---
 
-## 🎯 Skala Prioritas Pengembangan
+## 🎯 Skala Prioritas & Status Pengembangan
 
 | Prioritas | Modul / Fitur | Platform Target | Deskripsi Singkat | Status |
 |:---:|---|---|---|:---:|
-| **P1** | **`IskakINO_RTC`** | Universal (AVR / ESP32 / ESP8266) | Driver RTC hardware (DS3231/DS1307/PCF8563) dengan sinkronisasi otomatis FastNTP (Hybrid Clock). | 📝 Terencana |
-| **P1** | **`IskakINO_Button`** | Universal | Deteksi *gesture* tombol non-blocking (*Single*, *Double*, *Long Press*, *Hold*). | 📝 Terencana |
-| **P2** | **`IskakINO_Buzzer`** | Universal | Generator nada, status beeping, chime, dan melodi RTTTL non-blocking tanpa `delay()`. | ✅ Selesai (v1.1.0) |
-| **P2** | **`IskakINO_Relay`** | Universal | Driver relay pintar dengan auto-off pulse timer dan kontrol keamanan state. | 📝 Terencana |
+| **P1** | **`IskakINO_RTC`** | Universal (AVR / ESP32 / ESP8266) | Driver RTC hardware (DS3231/DS1307/PCF8563) dengan sinkronisasi otomatis FastNTP (Hybrid Clock). | 📝 Terencana (Next P1) |
 | **P2** | **Multi-SSID Fallback** | ESP32 / ESP8266 | Penyimpanan multi-profil WiFi cadangan pada `IskakINO_WifiPortal`. | 📝 Terencana |
-| **P3** | **`IskakINO_Filter`** | Universal | Sinyal filter lanjutan: 1D Kalman Filter, Moving Median, dan kalibrasi multi-titik linear. | 💡 Ide |
 | **P3** | **`IskakINO_MQTT`** | ESP32 / ESP8266 | Client MQTT ringan terintegrasi siklus hidup Kernel dengan *auto-reconnect*. | 💡 Ide |
 | **P3** | **`IskakINO_Telegram`** | ESP32 / ESP8266 | Notifier bot Telegram sederhana untuk alert sistem / bel sekolah. | 💡 Ide |
-| **P3** | **`IskakINO_OLED`** | Universal | Driver display SSD1306/SH1106 I2C ultra-hemat memori dengan animasi teks. | 💡 Ide |
+| **Release** | **`IskakINO_Buzzer`** | Universal | Generator nada, status beeping, chime, dan melodi RTTTL non-blocking. | ✅ Selesai (v1.1.0) |
+| **Release** | **`IskakINO_OLED`** | Universal | Driver display SSD1306/SH1106 I2C ultra-hemat memori (< 40B RAM) & animasi. | ✅ Selesai (v1.1.0) |
+| **Release** | **`IskakINO_Button`** | Universal | Deteksi *gesture* tombol non-blocking (*Single*, *Double*, *Long Press*, *Hold*). | ✅ Selesai (v1.1.0) |
+| **Release** | **`IskakINO_Relay`** | Universal | Driver relay pintar dengan auto-off pulse timer dan kontrol keamanan state. | ✅ Selesai (v1.1.0) |
+| **Release** | **`IskakINO_Filter`** | Universal | Sinyal filter lanjutan: 1D Kalman Filter, Moving Median, EMA, & Linear Calibrator. | ✅ Selesai (v1.1.0) |
 
 ---
 
-## 📦 Rincian Rencana Modul Baru
+## 📦 Rincian Rencana Modul Berikutnya
 
 ### 1. `IskakINO_RTC` (Hardware Real-Time Clock)
 * **Target Hardware:** DS3231 (TCXO High Precision), DS1307, PCF8563 (I2C interface).
@@ -29,31 +29,7 @@ Dokumen ini memuat daftar rencana fitur baru, usulan modul tambahan, dan penyemp
   * **Sinergi Hybrid NTP:** Saat terhubung ke internet, `FastNTP` otomatis menyinkronkan jam fisik RTC. Ketika internet mati, sistem otomatis beralih membaca RTC tanpa jeda.
   * Dukungan kompensasi suhu dan alarm interrupt harian.
 
-### 2. `IskakINO_Button` (Advanced Gesture Button)
-* **Fitur Utama:**
-  * Kontrol multi-aksi hanya dengan satu pin tombol fisik (Active LOW / PULLUP).
-  * Callback event: `onClick()`, `onDoubleClick()`, `onLongPressStart()`, `onLongPressEnd()`, `duringLongPress()`.
-  * Sepenuhnya non-blocking berbasis state-machine internal.
-
-### 3. `IskakINO_Buzzer` (Non-Blocking Chime & Melody)
-* **Fitur Utama:**
-  * Nada status instan: `beep()`, `successTone()`, `errorTone()`, `warningTone()`.
-  * Pemutaran not melodi / string RTTTL ringtone secara asinkron.
-  * Sangat cocok sebagai alternatif audio murah tanpa memerlukan DFPlayer Mini.
-
-### 4. `IskakINO_Relay` (Smart Actuator Manager)
-* **Fitur Utama:**
-  * Proteksi active-level (Active HIGH / Active LOW terkonfigurasi).
-  * Fungsi pulsa otomatis non-blocking: `pulse(3000)` (menyalakan relay selama 3 detik lalu mati otomatis).
-  * Toggle, blink, dan proteksi batasan frekuensi switching untuk mencegah kerusakan mekanis relay.
-
-### 5. `IskakINO_Filter` (Advanced Signal Processing)
-* **Fitur Utama:**
-  * **1D Kalman Filter:** Menstabilkan pembacaan sensor berisik seperti sensor jarak ultrasonik HC-SR04, ToF VL53L0X, dan load cell.
-  * **Moving Median Filter:** Mengeliminasi *spike* data ekstrem.
-  * **Multi-Point Linear Regression:** Kalibrasi sensor analog multi-titik (misal sensor pH, TDS, atau suhu NTC).
-
-### 6. `IskakINO_MQTT` & `IskakINO_Telegram` (IoT Communication)
+### 2. `IskakINO_MQTT` & `IskakINO_Telegram` (IoT Communication)
 * **Fitur Utama:**
   * MQTT client dengan reconnect loop otomatis non-blocking.
   * Integrasi ringkas untuk publish sensor dan subscribe perintah kendali jarak jauh.

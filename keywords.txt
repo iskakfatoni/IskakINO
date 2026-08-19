@@ -20,6 +20,9 @@ IskakINO_SmartVoiceModule	KEYWORD1
 IskakINO_WifiPortalModule	KEYWORD1
 IskakINO_FastNTPModule	KEYWORD1
 IskakINO_BuzzerModule	KEYWORD1
+IskakINO_OLEDModule	KEYWORD1
+IskakINO_ButtonModule	KEYWORD1
+IskakINO_RelayModule	KEYWORD1
 
 # --- ardufast ---
 IskakINO_ArduFast	KEYWORD1
@@ -38,6 +41,24 @@ IskakINO_SmartVoice	KEYWORD1
 # --- buzzer ---
 IskakINO_Buzzer	KEYWORD1
 IskakBuzzerType	KEYWORD1
+
+# --- oled ---
+IskakINO_OLED	KEYWORD1
+IskakOLEDChip	KEYWORD1
+
+# --- button ---
+IskakINO_Button	KEYWORD1
+ButtonCallback	KEYWORD1
+
+# --- relay ---
+IskakINO_Relay	KEYWORD1
+IskakRelayMode	KEYWORD1
+
+# --- filter ---
+IskakINO_Kalman1D	KEYWORD1
+IskakINO_MedianFilter	KEYWORD1
+IskakINO_EMAFilter	KEYWORD1
+IskakINO_LinearCalibrator	KEYWORD1
 
 # --- wifi (ESP32/ESP8266 saja) ---
 IskakINO_WifiPortal	KEYWORD1
@@ -230,6 +251,47 @@ playRTTTL	KEYWORD2
 setMute	KEYWORD2
 isMuted	KEYWORD2
 
+# --- oled ---
+clearRow	KEYWORD2
+clearArea	KEYWORD2
+setTextSize	KEYWORD2
+invertDisplay	KEYWORD2
+setContrast	KEYWORD2
+displayOn	KEYWORD2
+displayOff	KEYWORD2
+setChipType	KEYWORD2
+drawHLine	KEYWORD2
+drawWifiIcon	KEYWORD2
+drawBatteryIcon	KEYWORD2
+drawIcon	KEYWORD2
+drawBitmap	KEYWORD2
+
+# --- button ---
+isClicked	KEYWORD2
+isDoubleClicked	KEYWORD2
+isLongPressed	KEYWORD2
+isHolding	KEYWORD2
+getHoldDuration	KEYWORD2
+getClickCount	KEYWORD2
+onClick	KEYWORD2
+onDoubleClick	KEYWORD2
+onLongPressStart	KEYWORD2
+onLongPressEnd	KEYWORD2
+
+# --- relay ---
+pulse	KEYWORD2
+blink	KEYWORD2
+setMinSwitchInterval	KEYWORD2
+isPulsing	KEYWORD2
+isBlinking	KEYWORD2
+
+# --- filter ---
+setParameters	KEYWORD2
+setAlpha	KEYWORD2
+addPoint	KEYWORD2
+calibrate	KEYWORD2
+getEstimate	KEYWORD2
+
 #######################################
 # Constants (LITERAL1)
 #######################################
@@ -277,3 +339,8 @@ AD5612_I2C_ADDRESS	LITERAL1
 ISKAK_BUZZER_PASSIVE	LITERAL1
 ISKAK_BUZZER_ACTIVE	LITERAL1
 REST	LITERAL1
+OLED_CHIP_AUTO	LITERAL1
+OLED_CHIP_SSD1306	LITERAL1
+OLED_CHIP_SH1106	LITERAL1
+ISKAK_RELAY_ACTIVE_HIGH	LITERAL1
+ISKAK_RELAY_ACTIVE_LOW	LITERAL1
