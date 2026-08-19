@@ -60,9 +60,12 @@ Dokumentasi detail, referensi API lengkap, dan panduan teknis tiap modul tersedi
 | **Storage** | `IskakINO_Storage` (`IskakStorage`) | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_storage.md`](readme/readme_storage.md) |
 | **LCD** | `LiquidCrystal_I2C` | Universal (I2C / Wire) | [📖 `readme_lcd.md`](readme/readme_lcd.md) |
 | **SmartVoice** | `IskakINO_SmartVoice` | Universal (Stream / Serial) | [📖 `readme_smartvoice.md`](readme/readme_smartvoice.md) |
+| **Buzzer** | `IskakINO_Buzzer` | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_buzzer.md`](readme/readme_buzzer.md) |
 | **BasicIOShield** | `IskakINO_BasicIOShield` (`BasicIOShield`) | **Khusus Arduino AVR** (Uno/Nano/Mega) | [📖 `readme_basicioshield.md`](readme/readme_basicioshield.md) |
 | **WifiPortal** | `IskakINO_WifiPortal` | **ESP32 & ESP8266** | [📖 `readme_wifiportal.md`](readme/readme_wifiportal.md) |
 | **FastNTP** | `IskakINO_FastNTP` | **ESP32 & ESP8266** | [📖 `readme_fastntp.md`](readme/readme_fastntp.md) |
+
+> 💡 **Rencana Modul Baru & Roadmap:** Lihat berkas [ROADMAP.md](ROADMAP.md) untuk melihat daftar modul baru dan penyempurnaan fitur yang sedang direncanakan.
 
 ---
 
@@ -130,6 +133,7 @@ void loop() {
 | **08** | [`08_Framework_Kernel`](examples/08_Framework_Kernel/) | Multi-Modul (Kernel) | ESP32 / ESP8266 | Arsitektur kernel terpusat menggunakan `IskakINO_Kernel`. |
 | **09** | [`09_SmartSchoolBell`](examples/09_SmartSchoolBell/) | Proyek Produksi | ESP32 / ESP8266 | Bel sekolah otomatis berbasis NTP, jadwal storage, LCD, & Web Dashboard. |
 | **10** | [`10_BasicIOShield_Overview`](examples/10_BasicIOShield_Overview/) | BasicIOShield, Core | **Khusus AVR** | Driver hardware EMS Basic I/O Shield (LED, Tombol, 7-Seg, & DAC). |
+| **11** | [`11_Buzzer_MelodyBeep`](examples/11_Buzzer_MelodyBeep/) | Buzzer, Core | Universal | Driver buzzer non-blocking, nada status instan, melodi RTTTL, & menu interaktif. |
 
 ---
 
@@ -144,6 +148,7 @@ IskakINO/
 │   ├── storage/                                    # Modul Storage hybrid (EEPROM/Prefs/LittleFS)
 │   ├── lcd/                                        # Modul driver I2C LCD dengan animasi
 │   ├── voice/                                      # Modul DFPlayer Mini MP3 Player
+│   ├── buzzer/                                     # Modul Driver Buzzer & RTTTL Melody Player
 │   ├── shield/                                     # Modul driver EMS Basic I/O Shield (AVR)
 │   ├── wifi/                                       # Modul Captive Portal & Web Server
 │   └── ntp/                                        # Modul Fast NTP Time Client
@@ -153,10 +158,11 @@ IskakINO/
 │   ├── readme_storage.md                           # Dokumentasi Modul Storage
 │   ├── readme_lcd.md                               # Dokumentasi Modul LCD I2C
 │   ├── readme_smartvoice.md                        # Dokumentasi Modul SmartVoice
+│   ├── readme_buzzer.md                            # Dokumentasi Modul Buzzer & RTTTL
 │   ├── readme_basicioshield.md                     # Dokumentasi Modul Basic I/O Shield
 │   ├── readme_wifiportal.md                        # Dokumentasi Modul WifiPortal
 │   └── readme_fastntp.md                           # Dokumentasi Modul FastNTP
-├── examples/                                       # 10 contoh sketch lengkap dan siap pakai
+├── examples/                                       # 11 contoh sketch lengkap dan siap pakai
 ├── .github/workflows/                              # CI/CD otomatis via Arduino CLI matrix
 ├── library.properties                              # Arduino Library Manager metadata
 ├── library.json                                    # PlatformIO Library Registry metadata
@@ -183,4 +189,4 @@ Proyek ini dilisensikan di bawah lisensi **MIT** — lihat berkas [LICENSE](LICE
 ## ✍️ Author & Maintainer
 
 **Iskak Fatoni** ([@iskakfatoni](https://github.com/iskakfatoni))  
-*Nisnas Computer — SMKN 1 Jetis Mojokerto*
+*Supported by Nisnas Computer for SMKN 1 Jetis Mojokerto*

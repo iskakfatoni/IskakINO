@@ -64,7 +64,7 @@ jobs:
 
       - name: Compile Examples Universal (AVR, ESP8266, ESP32)
         run: |
-          for ex in 01_ArduFast_TaskManager 02_Storage_SaveLoad 03_LCD_TypewriterScroll 04_SmartVoice_PlayTrack; do
+          for ex in 01_ArduFast_TaskManager 02_Storage_SaveLoad 03_LCD_TypewriterScroll 04_SmartVoice_PlayTrack 11_Buzzer_MelodyBeep; do
             echo "=========================================="
             echo "Compiling: $ex on ${{ matrix.board }}"
             echo "=========================================="

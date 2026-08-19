@@ -16,6 +16,8 @@
  *                                 scroll/progress bar (semua platform, perlu Wire)
  *   - IskakINO_SmartVoice      : kontrol DFPlayer Mini MP3 (semua platform,
  *                                 perlu Stream/Serial)
+ *   - IskakINO_Buzzer          : driver buzzer non-blocking, nada status,
+ *                                 dan RTTTL melody player (semua platform)
  *   - IskakINO_WifiPortal      : captive portal WiFi + custom parameter
  *                                 (HANYA ESP32/ESP8266 — otomatis kosong di
  *                                 board lain, lihat catatan di bawah)
@@ -36,8 +38,8 @@
  * update() sendiri-sendiri seperti contoh 07_Unified_SmartClock), modul
  * juga bisa didaftarkan ke kernel global `IskakINO` lewat kelas adapter
  * (IskakINO_WifiPortalModule, IskakINO_FastNTPModule, IskakINO_LCDModule,
- * IskakINO_StorageModule, IskakINO_SmartVoiceModule, IskakINO_ArduFastModule,
- * IskakINO_BasicIOShieldModule)
+ * IskakINO_StorageModule, IskakINO_SmartVoiceModule, IskakINO_BuzzerModule,
+ * IskakINO_ArduFastModule, IskakINO_BasicIOShieldModule)
  * supaya begin()/update() semuanya terpanggil otomatis lewat satu
  * IskakINO.begin() dan satu IskakINO.update(). Lihat
  * examples/08_Framework_Kernel dan src/core/IskakINO_Kernel.h. Pola
@@ -66,6 +68,9 @@
 #include "lcd/IskakINO_LCDModule.h"
 #include "voice/IskakINO_SmartVoice.h"
 #include "voice/IskakINO_SmartVoiceModule.h"
+#include "buzzer/IskakINO_Pitches.h"
+#include "buzzer/IskakINO_Buzzer.h"
+#include "buzzer/IskakINO_BuzzerModule.h"
 
 // --- Modul khusus AVR (Arduino Uno/Nano/Mega saja) ---
 #include "shield/IskakINO_BasicIOShield.h"

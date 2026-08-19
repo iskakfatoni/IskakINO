@@ -19,6 +19,7 @@ IskakINO_LCDModule	KEYWORD1
 IskakINO_SmartVoiceModule	KEYWORD1
 IskakINO_WifiPortalModule	KEYWORD1
 IskakINO_FastNTPModule	KEYWORD1
+IskakINO_BuzzerModule	KEYWORD1
 
 # --- ardufast ---
 IskakINO_ArduFast	KEYWORD1
@@ -33,6 +34,10 @@ LiquidCrystal_I2C	KEYWORD1
 
 # --- voice ---
 IskakINO_SmartVoice	KEYWORD1
+
+# --- buzzer ---
+IskakINO_Buzzer	KEYWORD1
+IskakBuzzerType	KEYWORD1
 
 # --- wifi (ESP32/ESP8266 saja) ---
 IskakINO_WifiPortal	KEYWORD1
@@ -214,6 +219,17 @@ getConsecutiveFails	KEYWORD2
 onSync	KEYWORD2
 onSyncFail	KEYWORD2
 
+# --- buzzer ---
+playSuccess	KEYWORD2
+playError	KEYWORD2
+playWarning	KEYWORD2
+playNotification	KEYWORD2
+playAlarm	KEYWORD2
+playSequence	KEYWORD2
+playRTTTL	KEYWORD2
+setMute	KEYWORD2
+isMuted	KEYWORD2
+
 #######################################
 # Constants (LITERAL1)
 #######################################
@@ -258,3 +274,6 @@ SEGMENT_G_PIN	LITERAL1
 SEGMENT_DP_PIN	LITERAL1
 AD5612Address	LITERAL1
 AD5612_I2C_ADDRESS	LITERAL1
+ISKAK_BUZZER_PASSIVE	LITERAL1
+ISKAK_BUZZER_ACTIVE	LITERAL1
+REST	LITERAL1
