@@ -102,9 +102,9 @@ void setup() {
     fast.log(F("========================================================="));
     fast.log(F("   IskakINO - Advanced Non-Blocking Buzzer Showcase      "));
     fast.log(F("========================================================="));
-    fast.log(F("[Info] Pin Buzzer : GPIO %d"), BUZZER_PIN);
-    fast.log(F("[Info] Pin Status : GPIO %d (LED)"), STATUS_LED);
-    fast.log(F("[Info] Platform   : %s"),
+    fast.logf(F("[Info] Pin Buzzer : GPIO %d\n"), BUZZER_PIN);
+    fast.logf(F("[Info] Pin Status : GPIO %d (LED)\n"), STATUS_LED);
+    fast.logf(F("[Info] Platform   : %s\n"),
 #if defined(ISKAKINO_PLATFORM_AVR)
              "Arduino AVR (Uno/Nano/Mega)"
 #elif defined(ISKAKINO_PLATFORM_ESP8266)
@@ -152,10 +152,10 @@ void loop() {
     if (millis() - lastReportMillis >= 3000) {
         lastReportMillis = millis();
         // Cetak uptime dan throughput loop per detik
-        fast.log(F("[Heartbeat] Uptime: %lu ms | CPU Loop Throughput: %lu iterasi/3dtk | Audio: %s"),
-                 millis(),
-                 loopCounter,
-                 buzzer.isPlaying() ? "PLAYING 🎵" : "IDLE ⏸️");
+        fast.logf(F("[Heartbeat] Uptime: %lu ms | CPU Loop Throughput: %lu iterasi/3dtk | Audio: %s\n"),
+                  (unsigned long)millis(),
+                  (unsigned long)loopCounter,
+                  buzzer.isPlaying() ? "PLAYING" : "IDLE");
         loopCounter = 0;
     }
 }
@@ -314,7 +314,7 @@ void handleSerialInput() {
         char cmd = Serial.read();
         if (cmd == '\r' || cmd == '\n' || cmd == ' ') continue;
 
-        fast.log(F("[Serial Cmd] Menjalankan perintah: '%c'"), cmd);
+        fast.logf(F("[Serial Cmd] Menjalankan perintah: '%c'\n"), cmd);
 
         switch (cmd) {
             case '1':
@@ -366,7 +366,7 @@ void handleSerialInput() {
             case 'm':
             case 'M':
                 buzzer.setMute(!buzzer.isMuted());
-                fast.log(F("-> Mute Status: %s"), buzzer.isMuted() ? "MUTED (Hening 🔕)" : "UNMUTED (Bersuara 🔔)");
+                fast.logf(F("-> Mute Status: %s\n"), buzzer.isMuted() ? "MUTED (Hening)" : "UNMUTED (Bersuara)");
                 break;
             case 'a':
             case 'A':
