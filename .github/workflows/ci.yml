@@ -15,6 +15,7 @@ on:
       - '.github/workflows/**'
       - 'library.properties'
       - 'library.json'
+  workflow_dispatch:
 
 jobs:
   # ---------------------------------------------------------------------
