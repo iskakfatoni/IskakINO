@@ -75,7 +75,7 @@ jobs:
       - name: Compile Examples Khusus WiFi (ESP8266 & ESP32)
         if: matrix.board != 'arduino:avr:uno'
         run: |
-          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel; do
+          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel 17_MQTT_Telemetry 18_Telegram_AlertBot; do
             echo "=========================================="
             echo "Compiling: $ex on ${{ matrix.board }}"
             echo "=========================================="

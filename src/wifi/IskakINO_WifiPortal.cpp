@@ -220,6 +220,55 @@ bool IskakINO_WifiPortal::addWifi(const char* ssid, const char* pass) {
     return true;
 }
 
+bool IskakINO_WifiPortal::removeWifi(const char* ssid) {
+    if (!ssid || strlen(ssid) == 0) return false;
+    int foundIndex = -1;
+    for (int i = 0; i < _wifiCount; i++) {
+        if (strcmp(_wifiList[i].ssid, ssid) == 0) {
+            foundIndex = i;
+            break;
+        }
+    }
+    if (foundIndex == -1) return false;
+
+    for (int i = foundIndex; i < _wifiCount - 1; i++) {
+        _wifiList[i] = _wifiList[i + 1];
+    }
+    _wifiCount--;
+    saveWifiList();
+    return true;
+}
+
+void IskakINO_WifiPortal::clearWifiList() {
+    _wifiCount = 0;
+    saveWifiList();
+}
+
+const char* IskakINO_WifiPortal::getWifiSSID(uint8_t index) const {
+    if (index >= _wifiCount) return "";
+    return _wifiList[index].ssid;
+}
+
+String IskakINO_WifiPortal::getCurrentSSID() const {
+    if (WiFi.status() == WL_CONNECTED) {
+        return WiFi.SSID();
+    }
+    return "";
+}
+
+void IskakINO_WifiPortal::handleDeleteWifi() {
+    if (!checkAdminPin()) {
+        _server->send(401, "text/plain", "Unauthorized: PIN salah atau tidak disertakan.");
+        return;
+    }
+    String ssid = _server->arg("s");
+    if (ssid.length() > 0) {
+        removeWifi(ssid.c_str());
+    }
+    _server->sendHeader("Location", "/");
+    _server->send(302, "text/plain", "");
+}
+
 void IskakINO_WifiPortal::mergeWifiCredential(const char* ssid, const char* pass) {
     if (!ssid || strlen(ssid) == 0) return;
 
@@ -488,6 +537,7 @@ void IskakINO_WifiPortal::setupPortal() {
         // (misalnya lewat manual trigger).
         _server->on("/", std::bind(&IskakINO_WifiPortal::handleRoot, this));
         _server->on("/save", HTTP_POST, std::bind(&IskakINO_WifiPortal::handleSave, this));
+        _server->on("/delete_wifi", std::bind(&IskakINO_WifiPortal::handleDeleteWifi, this));
 
         // --- Deteksi Captive Portal OS (agar popup "Sign in to network" muncul otomatis) ---
         _server->on("/generate_204", std::bind(&IskakINO_WifiPortal::handleRoot, this));            // Android
@@ -628,16 +678,17 @@ void IskakINO_WifiPortal::tick() {
         }
     }
 
-    // 5. Fitur Auto-Reconnect (setiap 30 detik), hanya saat sudah pernah CONNECTED
+    // 5. Fitur Auto-Reconnect & Failover (setiap 30 detik), hanya saat sudah pernah CONNECTED
     if (_state == IskakPortalState::CONNECTED && _scheduler.every(30000, ISKAKINO_SCHED_WIFI_CHECK)) {
         if (WiFi.status() != WL_CONNECTED) {
-            _logger.log(F("[IskakINO] WiFi disconnected! Reconnecting..."));
+            _logger.log(F("[IskakINO] WiFi terputus! Mencoba menghubungkan kembali..."));
             WiFi.reconnect();
             _reconnectAttempts++;
 
             if (_reconnectAttempts >= _maxReconnectAttempts) {
-                _logger.log(F("[IskakINO] Failed to reconnect. Opening Portal..."));
-                setupPortal();
+                _logger.log(F("[IskakINO] Gagal reconnect ke SSID aktif. Memulai failover scan ke profil tersimpan lain..."));
+                _reconnectAttempts = 0;
+                startScan();
             }
         } else {
             _reconnectAttempts = 0;
@@ -664,7 +715,28 @@ void IskakINO_WifiPortal::handleRoot() {
         }
     }
 
-    // 2. SYSTEM INFO
+    // 2. SAVED PROFILES LIST
+    String savedList = "";
+    bool pinRequired = (_adminPin[0] != '\0');
+
+    if (_wifiCount == 0) {
+        savedList = "<p style='color:#888;font-size:0.85em;padding:6px 0;'>Belum ada profil WiFi tersimpan.</p>";
+    } else {
+        for (int i = 0; i < _wifiCount; i++) {
+            String s = htmlEscape(String(_wifiList[i].ssid));
+            String sJs = jsEscape(String(_wifiList[i].ssid));
+            savedList += "<div class='saved-item'>";
+            savedList += "<span>" + s + "</span>";
+            if (pinRequired) {
+                savedList += "<button type='button' class='del-btn' onclick=\"var p=prompt('Masukkan PIN Admin:'); if(p!=null) location.href='/delete_wifi?s=" + sJs + "&pin='+encodeURIComponent(p)\" title='Hapus Profil'>&times;</button>";
+            } else {
+                savedList += "<button type='button' class='del-btn' onclick=\"if(confirm('Hapus WiFi " + sJs + "?')) location.href='/delete_wifi?s=" + sJs + "'\" title='Hapus Profil'>&times;</button>";
+            }
+            savedList += "</div>";
+        }
+    }
+
+    // 3. SYSTEM INFO
     unsigned long sec = millis() / 1000;
     unsigned long minutes = sec / 60;
     unsigned long hr = minutes / 60;
@@ -673,9 +745,7 @@ void IskakINO_WifiPortal::handleRoot() {
     String ipAddr = WiFi.localIP().toString();
     if (ipAddr == "0.0.0.0") ipAddr = "Disconnected";
 
-    bool pinRequired = (_adminPin[0] != '\0');
-
-    // 3. HTML & CSS
+    // 4. HTML & CSS
     String html = "<html><head><title>IskakINO Config</title>";
     html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
     html += "<style>";
@@ -683,6 +753,11 @@ void IskakINO_WifiPortal::handleRoot() {
     html += ".card{background:#252525;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.5);max-width:400px;margin:0 auto;}";
     html += "h2{color:#00d1b2;} h3{font-size:1.1em;color:#888;text-align:left;margin:15px 0 5px 0;}";
     html += ".net-box{margin-bottom:20px;max-height:150px;overflow-y:auto;background:#111;border-radius:5px;border:1px solid #444;}";
+    html += ".saved-box{margin-bottom:20px;background:#111;border-radius:5px;border:1px solid #444;padding:4px 8px;}";
+    html += ".saved-item{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid #282828;font-size:0.9em;}";
+    html += ".saved-item:last-child{border-bottom:none;}";
+    html += ".del-btn{width:auto!important;margin:0!important;padding:2px 8px!important;background:#e74c3c!important;font-size:1em;line-height:1;border-radius:3px;}";
+    html += ".del-btn:hover{background:#c0392b!important;}";
     html += ".nw{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #333;cursor:pointer;font-size:0.9em;}";
     html += ".nw:hover{background:#00d1b2;color:#fff;} .rssi{color:#666;font-size:0.8em;}";
     html += ".dash{background:#111;padding:10px;border-radius:5px;border-left:4px solid #00d1b2;text-align:left;font-size:0.85em;margin-top:20px;}";
@@ -695,9 +770,11 @@ void IskakINO_WifiPortal::handleRoot() {
     html += "<script>function fillSSID(s){document.getElementsByName('s')[0].value=s;document.getElementsByName('p')[0].focus();}</script>";
     html += "</head><body><div class='card'><h2>" + htmlEscape(String(_brandName)) + "</h2>";
 
+    html += "<h3>Saved WiFi Profiles</h3><div class='saved-box'>" + savedList + "</div>";
+
     html += "<h3>Select Network</h3><div class='net-box'>" + wifiList + "</div>";
 
-    html += "<form action='/save' method='POST'><h3>WiFi Credentials</h3>";
+    html += "<form action='/save' method='POST'><h3>Add / Connect WiFi</h3>";
     html += "<input name='s' placeholder='SSID' required>";
     html += "<input name='p' type='password' placeholder='Password'>";
 
@@ -723,7 +800,7 @@ void IskakINO_WifiPortal::handleRoot() {
         html += "<button onclick=\"if(confirm('Restart device?')) location.href='/reboot'\" style='background:#f39c12;'>RESTART</button>";
         html += "<button onclick=\"if(confirm('Clear all settings?')) location.href='/clear'\" style='background:#e74c3c;'>RESET INFO</button>";
     }
-    html += "</div><div class='footer'>IskakINO_WifiPortal v1.1.0</div></div></body></html>";
+    html += "</div><div class='footer'>IskakINO_WifiPortal v1.2.0</div></div></body></html>";
 
     if (_server) {
         _server->send(200, "text/html", html);

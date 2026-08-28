@@ -9,9 +9,9 @@ Dokumen ini memuat daftar rencana fitur baru, usulan modul tambahan, dan penyemp
 | Prioritas | Modul / Fitur | Platform Target | Deskripsi Singkat | Status |
 |:---:|---|---|---|:---:|
 | **P1** | **`IskakINO_RTC`** | Universal (AVR / ESP32 / ESP8266) | Driver RTC hardware (DS3231/DS1307/PCF8563) dengan sinkronisasi otomatis FastNTP (Hybrid Clock). | 📝 Terencana (Next P1) |
-| **P2** | **Multi-SSID Fallback** | ESP32 / ESP8266 | Penyimpanan multi-profil WiFi cadangan pada `IskakINO_WifiPortal`. | 📝 Terencana |
-| **P3** | **`IskakINO_MQTT`** | ESP32 / ESP8266 | Client MQTT ringan terintegrasi siklus hidup Kernel dengan *auto-reconnect*. | 💡 Ide |
-| **P3** | **`IskakINO_Telegram`** | ESP32 / ESP8266 | Notifier bot Telegram sederhana untuk alert sistem / bel sekolah. | 💡 Ide |
+| **Release** | **`IskakINO_MQTT`** | ESP32 / ESP8266 | Client MQTT v3.1.1 zero-dependency terintegrasi siklus hidup Kernel dengan *auto-reconnect*. | ✅ Selesai (v1.3.0) |
+| **Release** | **`IskakINO_Telegram`** | ESP32 / ESP8266 | Bot Telegram notifier & remote command handler via HTTPS REST. | ✅ Selesai (v1.3.0) |
+| **Release** | **Multi-SSID Fallback** | ESP32 / ESP8266 | Manajemen multi-profil WiFi cadangan, Web UI delete/add profil, & runtime auto-failover pada `IskakINO_WifiPortal`. | ✅ Selesai (v1.2.0) |
 | **Release** | **`IskakINO_Buzzer`** | Universal | Generator nada, status beeping, chime, dan melodi RTTTL non-blocking. | ✅ Selesai (v1.1.0) |
 | **Release** | **`IskakINO_OLED`** | Universal | Driver display SSD1306/SH1106 I2C ultra-hemat memori (< 40B RAM) & animasi. | ✅ Selesai (v1.1.0) |
 | **Release** | **`IskakINO_Button`** | Universal | Deteksi *gesture* tombol non-blocking (*Single*, *Double*, *Long Press*, *Hold*). | ✅ Selesai (v1.1.0) |

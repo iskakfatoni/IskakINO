@@ -36,9 +36,13 @@ void setup() {
     portal.setAdminPin("1234");   // Kunci menu restart/reset dengan PIN
     portal.enableOTA(true);       // Buka menu update firmware via Web browser
 
+    // Opsional: Daftarkan profil WiFi cadangan (Multi-SSID Fallback) via kode
+    // portal.addWifi("Kantor-WiFi", "password123");
+    // portal.addWifi("Hotspot-HP", "hotspot123");
+
     // Mulai mode koneksi atau Captive Portal secara asinkron
     portal.beginAsync("IskakINO-Setup");
-    fast.log(F("[Info] Memulai koneksi WiFi..."));
+    fast.logf(F("[Info] Memulai koneksi WiFi... Profil tersimpan: %d"), portal.getWifiCount());
 }
 
 void loop() {
@@ -51,7 +55,7 @@ void loop() {
 
     if (currentState != lastState) {
         if (currentState == IskakPortalState::CONNECTED) {
-            fast.log(F("[Success] WiFi tersambung ke router!"));
+            fast.logf(F("[Success] WiFi tersambung ke: %s"), portal.getCurrentSSID().c_str());
             if (strlen(apiKey) > 0) {
                 fast.logf(F("[Config] API Key tersimpan: %s"), apiKey);
             }
@@ -64,6 +68,7 @@ void loop() {
 
     // Task berkala setiap 5 detik saat sudah online
     if (portal.isConnected() && fast.every(5000, 0)) {
-        fast.logf(F("[Online] Uptime: %lu ms | IP: %s"), millis(), WiFi.localIP().toString().c_str());
+        fast.logf(F("[Online] SSID: %s | Uptime: %lu ms | IP: %s"), 
+                   portal.getCurrentSSID().c_str(), millis(), WiFi.localIP().toString().c_str());
     }
 }

@@ -7,6 +7,37 @@ lama (`IskakINO_ArduFast`, `IskakINO_Storage`, `IskakINO_LiquidCrystal_I2C`,
 **deprecated** per rilis ini — histori versi masing-masing sebelum
 penggabungan tetap didokumentasikan di bawah untuk keperluan migrasi.
 
+## [1.3.0] — IskakINO_MQTT & IskakINO_Telegram untuk IoT
+
+Penambahan dua modul komunikasi IoT baru berarsitektur *zero-dependency* khusus board WiFi (ESP32 & ESP8266) dengan integrasi penuh ke core logger, scheduler, result, dan framework kernel.
+
+### mqtt/ (IskakINO_MQTT) [BARU]
+- **MQTT v3.1.1 Client Mandiri:** Tidak memerlukan library eksternal (seperti `PubSubClient`). Diimplementasikan langsung di atas `WiFiClient` dengan buffer efisien.
+- **Fitur Lengkap:** Publish/Subscribe, topic-specific callback, global message callback, Last Will and Testament (LWT), keepalive ping (15s), dan auto-reconnect loop non-blocking.
+- **Kernel Adapter:** `IskakINO_MQTTModule` untuk pendaftaran otomatis ke kernel `IskakINO`.
+- **Contoh Sketsa:** `17_MQTT_Telemetry.ino` — demonstrasi pengiriman data telemetri sensor & penanganan perintah aktuator jarak jauh.
+
+### telegram/ (IskakINO_Telegram) [BARU]
+- **Telegram Bot Client via HTTPS:** Menggunakan `WiFiClientSecure` dengan mode `setInsecure()` otomatis untuk efisiensi RAM tanpa perlu instalasi CA certificate manual.
+- **Fitur Lengkap:** `sendMessage()`, `sendAlert(title, message, emoji)`, pendaftaran command handler interaktif (`onCommand("/cmd", cb)`), dan polling pesan masuk asinkron non-blocking (`enablePolling()`).
+- **Kernel Adapter:** `IskakINO_TelegramModule` untuk pendaftaran otomatis ke kernel `IskakINO`.
+- **Contoh Sketsa:** `18_Telegram_AlertBot.ino` — demonstrasi bot interaktif kendali & notifikasi alert sistem IoT.
+
+## [1.2.0] — Multi-SSID Profile Fallback di IskakINO_WifiPortal
+
+Penyempurnaan modul `IskakINO_WifiPortal` dengan dukungan manajemen multi-profil WiFi, antarmuka Web UI interaktif, dan auto-failover saat koneksi terputus.
+
+### wifi/ (IskakINO_WifiPortal)
+- **Web UI Profil Tersimpan:** Dashboard konfigurasi Captive Portal kini menampilkan daftar profil SSID yang tersimpan di NVS/LittleFS lengkap dengan tombol hapus (`/delete_wifi`) per-profil.
+- **Runtime Auto-Failover di `tick()`:** Saat perangkat kehilangan koneksi WiFi di tengah operasi, sistem melakukan percobaan reconnect 3x. Jika gagal, sistem memicu *async scan* untuk mencari dan beralih secara mulus ke SSID cadangan lain yang tersimpan (diurutkan berdasarkan sinyal RSSI terkuat) sebelum memutuskan membuka AP Portal.
+- **API Publik Baru:**
+  - `bool removeWifi(const char* ssid)` — menghapus profil WiFi tertentu dari daftar & storage.
+  - `void clearWifiList()` — mengosongkan seluruh profil tersimpan.
+  - `uint8_t getWifiCount()` — mendapatkan jumlah profil tersimpan.
+  - `const char* getWifiSSID(uint8_t index)` — membaca SSID pada indeks tertentu.
+  - `String getCurrentSSID()` — membaca SSID aktif yang sedang tersambung.
+- **Contoh Sketsa:** Pembaruan pada `05_WifiPortal_CaptivePortal.ino` untuk mendemonstrasikan pendaftaran profil cadangan dan pemantauan SSID aktif.
+
 ## [1.0.0] — Rilis pertama IskakINO gabungan
 
 Penggabungan 6 library standalone menjadi satu library dengan shared

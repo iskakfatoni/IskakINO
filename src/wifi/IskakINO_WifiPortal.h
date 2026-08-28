@@ -109,6 +109,11 @@ class IskakINO_WifiPortal {
     // diurutkan dari sinyal (RSSI) terkuat. Kredensial yang disimpan lewat
     // portal (tombol SAVE) juga otomatis masuk ke daftar ini secara permanen.
     bool addWifi(const char* ssid, const char* pass = NULL);
+    bool removeWifi(const char* ssid);
+    void clearWifiList();
+    uint8_t getWifiCount() const { return _wifiCount; }
+    const char* getWifiSSID(uint8_t index) const;
+    String getCurrentSSID() const;
 
     // --- Custom Parameters ---
     void addParameter(const char* id, const char* label, char* value, int length);
@@ -140,7 +145,7 @@ class IskakINO_WifiPortal {
     const char* _brandName = "IskakINO Portal";
 
     int _reconnectAttempts = 0;
-    const int _maxReconnectAttempts = 5;
+    const int _maxReconnectAttempts = 3;
 
     bool _portalActive = false;
     bool _otaEnabled = false;
@@ -175,6 +180,7 @@ class IskakINO_WifiPortal {
     // --- Handlers ---
     void handleRoot();
     void handleSave();
+    void handleDeleteWifi();
     void handleOTA();
 
     // --- State machine helpers ---
