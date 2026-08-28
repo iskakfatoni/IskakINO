@@ -8,7 +8,9 @@ Dokumen ini memuat daftar rencana fitur baru, usulan modul tambahan, dan penyemp
 
 | Prioritas | Modul / Fitur | Platform Target | Deskripsi Singkat | Status |
 |:---:|---|---|---|:---:|
-| **P1** | **`IskakINO_RTC`** | Universal (AVR / ESP32 / ESP8266) | Driver RTC hardware (DS3231/DS1307/PCF8563) dengan sinkronisasi otomatis FastNTP (Hybrid Clock). | 📝 Terencana (Next P1) |
+| **Release** | **`IskakINO_BLE`** | ESP32 | Bluetooth Low Energy (BLE) UART bridge (Nordic UART Service) & command dispatcher. | ✅ Selesai (v1.6.0) |
+| **Release** | **`IskakINO_Sensors`** | Universal (AVR / ESP32 / ESP8266) | Driver sensor populer zero-dependency: DHT11/22, DS18B20 1-Wire, & Ultrasonic HC-SR04 terfilter. | ✅ Selesai (v1.5.0) |
+| **Release** | **`IskakINO_RTC`** | Universal (AVR / ESP32 / ESP8266) | Driver RTC hardware (DS3231/DS1307/PCF8563) dengan sinkronisasi otomatis FastNTP (Hybrid Clock). | ✅ Selesai (v1.4.0) |
 | **Release** | **`IskakINO_MQTT`** | ESP32 / ESP8266 | Client MQTT v3.1.1 zero-dependency terintegrasi siklus hidup Kernel dengan *auto-reconnect*. | ✅ Selesai (v1.3.0) |
 | **Release** | **`IskakINO_Telegram`** | ESP32 / ESP8266 | Bot Telegram notifier & remote command handler via HTTPS REST. | ✅ Selesai (v1.3.0) |
 | **Release** | **Multi-SSID Fallback** | ESP32 / ESP8266 | Manajemen multi-profil WiFi cadangan, Web UI delete/add profil, & runtime auto-failover pada `IskakINO_WifiPortal`. | ✅ Selesai (v1.2.0) |

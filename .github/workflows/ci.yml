@@ -65,7 +65,7 @@ jobs:
 
       - name: Compile Examples Universal (AVR, ESP8266, ESP32)
         run: |
-          for ex in 01_ArduFast_TaskManager 02_Storage_SaveLoad 03_LCD_TypewriterScroll 04_SmartVoice_PlayTrack 11_Buzzer_MelodyBeep 12_OLED_GraphicsAnimation 13_Button_MultiGesture 14_Relay_PulseBlink 15_Filter_SensorSmoothing; do
+          for ex in 01_ArduFast_TaskManager 02_Storage_SaveLoad 03_LCD_TypewriterScroll 04_SmartVoice_PlayTrack 11_Buzzer_MelodyBeep 12_OLED_GraphicsAnimation 13_Button_MultiGesture 14_Relay_PulseBlink 15_Filter_SensorSmoothing 19_RTC_ClockCalendar 21_Sensors_DHT_Environment 22_Sensors_DS18B20_1Wire 23_Sensors_Ultrasonic_Filtered; do
             echo "=========================================="
             echo "Compiling: $ex on ${{ matrix.board }}"
             echo "=========================================="
@@ -75,17 +75,17 @@ jobs:
       - name: Compile Examples Khusus WiFi (ESP8266 & ESP32)
         if: matrix.board != 'arduino:avr:uno'
         run: |
-          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel 17_MQTT_Telemetry 18_Telegram_AlertBot; do
+          for ex in 05_WifiPortal_CaptivePortal 06_FastNTP_ClockSync 07_Unified_SmartClock 08_Framework_Kernel 17_MQTT_Telemetry 18_Telegram_AlertBot 20_RTC_HybridNTP; do
             echo "=========================================="
             echo "Compiling: $ex on ${{ matrix.board }}"
             echo "=========================================="
             arduino-cli compile --fqbn ${{ matrix.board }} examples/$ex --libraries $HOME/Arduino/libraries
           done
 
-      - name: Compile Examples Khusus ESP32 (SmartSchoolBell & Cam)
+      - name: Compile Examples Khusus ESP32 (SmartSchoolBell, Cam, & BLE)
         if: matrix.board == 'esp32:esp32:esp32'
         run: |
-          for ex in 09_SmartSchoolBell 16_ESP32Cam_SnapshotStream; do
+          for ex in 09_SmartSchoolBell 16_ESP32Cam_SnapshotStream 24_BLE_SerialTerminal; do
             echo "=========================================="
             echo "Compiling: $ex on ${{ matrix.board }}"
             echo "=========================================="

@@ -7,6 +7,44 @@ lama (`IskakINO_ArduFast`, `IskakINO_Storage`, `IskakINO_LiquidCrystal_I2C`,
 **deprecated** per rilis ini — histori versi masing-masing sebelum
 penggabungan tetap didokumentasikan di bawah untuk keperluan migrasi.
 
+## [1.6.0] — IskakINO_BLE (ESP32 Bluetooth Low Energy UART Bridge)
+
+Penambahan modul driver komunikasi nirkabel BLE dua arah berbasis standar industri **Nordic UART Service (NUS)** khusus untuk platform **ESP32**.
+
+### ble/ (IskakINO_BLE) [BARU]
+- **Nordic UART Service (NUS):** Kompatibel dengan semua aplikasi terminal BLE di Android, iOS, dan Web Bluetooth.
+- **Komunikasi Dua Arah & Command Dispatcher:** Mengirim data/telemetri ke smartphone via BLE Notify (`send()`, `sendf()`) dan memproses perintah interaktif dari chat BLE (`onCommand("/relay", cb)`).
+- **Auto Re-Advertising:** Otomatis memulai ulang advertising saat smartphone terputus.
+- **Kernel Adapter:** `IskakINO_BLEModule` untuk pendaftaran otomatis ke kernel `IskakINO`.
+- **Contoh Sketsa:** `24_BLE_SerialTerminal.ino` — demonstrasi komunikasi serial BLE dua arah dan kendali aktuator.
+
+## [1.5.0] — IskakINO_Sensors (Zero-Dependency Sensor Suite)
+
+Penambahan paket driver sensor populer universal berarsitektur *zero-dependency* (murni manipulasi register & timing mikrodetik langsung) yang kompatibel di seluruh platform (**AVR**, **ESP32**, **ESP8266**).
+
+### sensors/ (IskakINO_Sensors) [BARU]
+- **IskakINO_DHT (DHT11, DHT22, AM2302, DHT21):** Pembacaan suhu, kelembapan, dan perhitungan Heat Index (indeks kenyamanan termal) dengan validasi checksum 8-bit otomatis dan pembatasan interval sampling non-blocking.
+- **IskakINO_DS18B20 (Maxim 1-Wire Digital Thermometer):** Protokol 1-Wire native mandiri (Reset, Presence pulse, Scratchpad Read/Write) dengan validasi CRC-8 internal dan resolusi presisi tinggi 12-bit (0.0625°C).
+- **IskakINO_Ultrasonic (HC-SR04, JSN-SR04T):** Pengukuran jarak ultrasonik akurat dengan integrasi filter penghalus sinyal bawaan (`IskakINO_MedianFilter` 5-sample) untuk menyingkirkan lonjakan nilai acak akibat pantulan gema akustik.
+- **Contoh Sketsa:**
+  - `21_Sensors_DHT_Environment.ino` — demonstrasi sensor suhu & kelembapan DHT11/DHT22.
+  - `22_Sensors_DS18B20_1Wire.ino` — demonstrasi sensor suhu waterproof 1-Wire.
+  - `23_Sensors_Ultrasonic_Filtered.ino` — demonstrasi perbandingan jarak ultrasonik mentah vs terfilter.
+
+## [1.4.0] — IskakINO_RTC (Hardware Real-Time Clock & Hybrid NTP Sync)
+
+Penambahan modul driver hardware RTC universal berarsitektur *zero-dependency* (murni protokol I2C via `Wire.h`) yang kompatibel di semua platform (**AVR**, **ESP32**, **ESP8266**).
+
+### rtc/ (IskakINO_RTC) [BARU]
+- **Multi-Chip Auto Detection:** Mendeteksi secara otomatis chip RTC populer pada bus I2C: **DS3231** (TCXO presisi tinggi ±2ppm), **DS1307** (standard RTC), atau **PCF8563** (low-power).
+- **Struktur Waktu & Formatter `IskakDateTime`:** Konversi dua arah UNIX epoch, nama hari & bulan dalam Bahasa Indonesia dan Inggris (`getDateString()`, `getTimeString()`, `format()`), serta algoritma Day-of-Week Tomohiko Sakamoto.
+- **Sensor Suhu Presisi (DS3231):** Membaca temperatur on-chip resolusi 0.25°C via `getTemperature()`.
+- **Hybrid Clock Sinergi FastNTP:** Pada ESP32/ESP8266, metode `syncWithNTP(ntp)` secara otomatis memperbarui jam fisik RTC dari NTP saat online dan beralih mulus membaca jam dari RTC saat offline/mati lampu.
+- **Kernel Adapter:** `IskakINO_RTCModule` untuk pendaftaran otomatis ke kernel `IskakINO`.
+- **Contoh Sketsa:**
+  - `19_RTC_ClockCalendar.ino` — demonstrasi universal membaca jam, kalender, suhu, dan deteksi chip.
+  - `20_RTC_HybridNTP.ino` — demonstrasi sinkronisasi otomatis FastNTP ke DS3231 saat online & fallback offline.
+
 ## [1.3.0] — IskakINO_MQTT & IskakINO_Telegram untuk IoT
 
 Penambahan dua modul komunikasi IoT baru berarsitektur *zero-dependency* khusus board WiFi (ESP32 & ESP8266) dengan integrasi penuh ke core logger, scheduler, result, dan framework kernel.

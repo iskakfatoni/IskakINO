@@ -23,6 +23,7 @@
  *   - IskakINO_Button          : driver tombol pintar gesture (single, double, hold) non-blocking (semua platform)
  *   - IskakINO_Relay           : driver relay pintar dengan auto-off pulse & blink cadence (semua platform)
  *   - IskakINO_Filter          : filter sinyal (Kalman 1D, Median, EMA, Linear Calibrator) (semua platform)
+ *   - IskakINO_RTC             : driver hardware RTC (DS3231/DS1307/PCF8563) & Hybrid NTP Sync (semua platform, perlu Wire)
  *   - IskakINO_Cam             : driver modul kamera ESP32 (ESP32-CAM, OV2640, PSRAM, Flash LED) (HANYA ESP32)
  *   - IskakINO_MQTT            : client MQTT v3.1.1 zero-dependency (pub/sub, keepalive, auto-reconnect) (HANYA ESP32/ESP8266)
  *   - IskakINO_Telegram        : bot Telegram notifier & remote control via HTTPS REST (HANYA ESP32/ESP8266)
@@ -46,7 +47,7 @@
  * update() sendiri-sendiri seperti contoh 07_Unified_SmartClock), modul
  * juga bisa didaftarkan ke kernel global `IskakINO` lewat kelas adapter
  * (IskakINO_WifiPortalModule, IskakINO_FastNTPModule, IskakINO_MQTTModule,
- * IskakINO_TelegramModule, IskakINO_LCDModule, IskakINO_OLEDModule,
+ * IskakINO_TelegramModule, IskakINO_RTCModule, IskakINO_LCDModule, IskakINO_OLEDModule,
  * IskakINO_ButtonModule, IskakINO_RelayModule, IskakINO_CamModule,
  * IskakINO_StorageModule, IskakINO_SmartVoiceModule, IskakINO_BuzzerModule,
  * IskakINO_ArduFastModule, IskakINO_BasicIOShieldModule)
@@ -89,6 +90,9 @@
 #include "relay/IskakINO_Relay.h"
 #include "relay/IskakINO_RelayModule.h"
 #include "filter/IskakINO_Filter.h"
+#include "rtc/IskakINO_RTC.h"
+#include "rtc/IskakINO_RTCModule.h"
+#include "sensors/IskakINO_Sensors.h"
 
 // --- Modul khusus AVR (Arduino Uno/Nano/Mega saja) ---
 #include "shield/IskakINO_BasicIOShield.h"
@@ -109,5 +113,7 @@
 #include "cam/IskakINO_CamPins.h"
 #include "cam/IskakINO_Cam.h"
 #include "cam/IskakINO_CamModule.h"
+#include "ble/IskakINO_BLE.h"
+#include "ble/IskakINO_BLEModule.h"
 
 #endif

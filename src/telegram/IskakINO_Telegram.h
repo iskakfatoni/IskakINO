@@ -10,7 +10,14 @@
 
 #if defined(ISKAKINO_HAS_WIFI)
 
-#include <WiFiClientSecure.h>
+#if defined(ISKAKINO_PLATFORM_ESP32)
+  #include <WiFi.h>
+  #include <WiFiClientSecure.h>
+#elif defined(ISKAKINO_PLATFORM_ESP8266)
+  #include <ESP8266WiFi.h>
+  #include <WiFiClientSecure.h>
+#endif
+
 #include <functional>
 
 #define ISKAKINO_TELEGRAM_MAX_CMDS 8
