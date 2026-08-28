@@ -33,7 +33,7 @@ class IskakINO_Ultrasonic {
     uint32_t _timeoutUs = 25000;
     float    _lastDistanceCm = 0.0f;
 
-    IskakINO_MedianFilter<float, 5> _medianFilter;
+    IskakINO_MedianFilter<5> _medianFilter;
     IskakINO_Logger _logger;
     IskakINO_Result _lastError = IskakINO_Result::OK;
 
