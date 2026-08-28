@@ -18,8 +18,9 @@
 const char* WIFI_SSID = "YOUR_WIFI_SSID";
 const char* WIFI_PASS = "YOUR_WIFI_PASS";
 
+WiFiUDP           ntpUdp;
 IskakINO_ArduFast fast;
-IskakINO_FastNTP  ntp;
+IskakINO_FastNTP  ntp(ntpUdp, "pool.ntp.org");
 IskakINO_RTC      rtc;
 
 void setup() {
@@ -53,7 +54,7 @@ void loop() {
     if (fast.every(2000, 0)) {
         if (WiFi.status() == WL_CONNECTED && ntp.isSynced()) {
             // Mode Online: Waktu bersumber dari FastNTP
-            fast.logf(F("[Online / NTP] %s %s"), ntp.getDateFormatted(LANG_ID).c_str(), ntp.getTimeFormatted().c_str());
+            fast.logf(F("[Online / NTP] %s %s"), ntp.getFormattedDate().c_str(), ntp.getFormattedTime().c_str());
         } else {
             // Mode Offline: Waktu bersumber dari RTC Fisik
             IskakDateTime dt = rtc.now();

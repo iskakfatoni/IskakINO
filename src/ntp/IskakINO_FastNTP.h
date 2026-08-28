@@ -131,6 +131,7 @@ class IskakINO_FastNTP {
 
     // --- Status & Validasi ---
     bool isTimeSet() const { return _currentEpoch > 0; }
+    bool isSynced() const { return isTimeSet(); }
     bool isTimeReliable(uint32_t maxAgeSeconds = 86400);
     uint32_t getEpoch();                // epoch lokal (legacy, sama seperti v1.0.x)
     uint32_t getUtcEpoch();             // (v1.1.0) epoch UTC murni, tanpa offset GMT/DST
