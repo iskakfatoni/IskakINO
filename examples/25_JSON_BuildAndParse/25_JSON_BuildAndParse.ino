@@ -52,7 +52,9 @@ void setup() {
     String jsonResult = builder.toString();
     Serial.println(F("Hasil JSON:"));
     Serial.println(jsonResult);
-    Serial.printf("Panjang karakter: %u bytes\n\n", (unsigned int)builder.length());
+    Serial.print(F("Panjang karakter: "));
+    Serial.print(builder.length());
+    Serial.println(F(" bytes\n"));
 
     // ------------------------------------------------------------------------
     // BAGIAN 2: MEMBACA (DESERIALIZE) DATA JSON DENGAN IskakJSONReader
@@ -72,33 +74,35 @@ void setup() {
         float hum      = reader.getFloat("humidity");
         bool relay     = reader.getBool("relay_active");
 
-        Serial.printf("-> Device Name  : %s\n", devName.c_str());
-        Serial.printf("-> Firmware     : %s\n", ver.c_str());
-        Serial.printf("-> Uptime       : %ld detik\n", uptime);
-        Serial.printf("-> Suhu         : %.2f *C\n", temp);
-        Serial.printf("-> Kelembapan   : %.1f %%\n", hum);
-        Serial.printf("-> Status Relay : %s\n", relay ? "AKTIF" : "NONAKTIF");
+        Serial.print(F("-> Device Name  : ")); Serial.println(devName);
+        Serial.print(F("-> Firmware     : ")); Serial.println(ver);
+        Serial.print(F("-> Uptime       : ")); Serial.print(uptime); Serial.println(F(" detik"));
+        Serial.print(F("-> Suhu         : ")); Serial.print(temp, 2); Serial.println(F(" *C"));
+        Serial.print(F("-> Kelembapan   : ")); Serial.print(hum, 1); Serial.println(F(" %"));
+        Serial.print(F("-> Status Relay : ")); Serial.println(relay ? F("AKTIF") : F("NONAKTIF"));
 
         // Membaca Objek Bersarang
         String netJson = reader.getObject("network");
         IskakJSONReader netReader(netJson);
-        Serial.printf("-> Network IP   : %s\n", netReader.getString("ip").c_str());
-        Serial.printf("-> Sinyal RSSI  : %ld dBm\n", netReader.getInt("rssi"));
+        Serial.print(F("-> Network IP   : ")); Serial.println(netReader.getString("ip"));
+        Serial.print(F("-> Sinyal RSSI  : ")); Serial.print(netReader.getInt("rssi")); Serial.println(F(" dBm"));
 
         // Membaca Elemen Array
         size_t sensorCount = reader.getArrayLength("sensors");
-        Serial.printf("-> Total Sensor : %u sensor\n", (unsigned int)sensorCount);
+        Serial.print(F("-> Total Sensor : ")); Serial.print(sensorCount); Serial.println(F(" sensor"));
 
         for (size_t i = 0; i < sensorCount; i++) {
             String item = reader.getArrayItem(i, "sensors");
-            Serial.printf("   [%u] Sensor: %s\n", (unsigned int)(i + 1), item.c_str());
+            Serial.print(F("   [")); Serial.print(i + 1); Serial.print(F("] Sensor: "));
+            Serial.println(item);
         }
 
         #if defined(ESP32) || defined(ESP8266)
         // Alternatif iterasi dengan lambda forEach (ESP32/ESP8266)
         Serial.println(F("-> Iterasi via forEach lambda:"));
         reader.forEach("sensors", [](size_t idx, const String& s) {
-            Serial.printf("   - (Lambda) #%u: %s\n", (unsigned int)(idx + 1), s.c_str());
+            Serial.print(F("   - (Lambda) #")); Serial.print(idx + 1); Serial.print(F(": "));
+            Serial.println(s);
         });
         #endif
 
