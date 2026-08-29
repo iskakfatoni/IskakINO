@@ -591,6 +591,11 @@ void IskakINO_WifiPortal::setupPortal() {
             resetSettings();
         });
 
+        // Fitur Live Web Log Stream API
+        _server->on("/api/logs", [this]() {
+            handleLogsApi();
+        });
+
         _server->onNotFound(std::bind(&IskakINO_WifiPortal::handleRoot, this));
         _server->begin();
     }
@@ -599,6 +604,7 @@ void IskakINO_WifiPortal::setupPortal() {
     _scheduler.reset(ISKAKINO_SCHED_PORTAL_TIMEOUT); // baseline timeout portal, ganti _portalStartTime lama
     _state = IskakPortalState::PORTAL;
     _logger.log(F("[IskakINO] Portal Aktif di 192.168.4.1"));
+    appendLog(F("[IskakINO] Portal Aktif di 192.168.4.1"));
 }
 
 String IskakINO_WifiPortal::htmlEscape(const String& raw) {
@@ -745,35 +751,54 @@ void IskakINO_WifiPortal::handleRoot() {
     String ipAddr = WiFi.localIP().toString();
     if (ipAddr == "0.0.0.0") ipAddr = "Disconnected";
 
-    // 4. HTML & CSS
-    String html = "<html><head><title>IskakINO Config</title>";
+    // 4. HTML & CSS (dengan Dukungan Dark Mode Otomatis/Manual & Live Log Console)
+    String html = "<!DOCTYPE html><html lang='id' data-theme='auto'><head><title>" + htmlEscape(String(_brandName)) + "</title>";
     html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
     html += "<style>";
-    html += "body{background:#1a1a1a;color:#eee;font-family:sans-serif;text-align:center;padding:20px;}";
-    html += ".card{background:#252525;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.5);max-width:400px;margin:0 auto;}";
-    html += "h2{color:#00d1b2;} h3{font-size:1.1em;color:#888;text-align:left;margin:15px 0 5px 0;}";
-    html += ".net-box{margin-bottom:20px;max-height:150px;overflow-y:auto;background:#111;border-radius:5px;border:1px solid #444;}";
-    html += ".saved-box{margin-bottom:20px;background:#111;border-radius:5px;border:1px solid #444;padding:4px 8px;}";
-    html += ".saved-item{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid #282828;font-size:0.9em;}";
-    html += ".saved-item:last-child{border-bottom:none;}";
-    html += ".del-btn{width:auto!important;margin:0!important;padding:2px 8px!important;background:#e74c3c!important;font-size:1em;line-height:1;border-radius:3px;}";
-    html += ".del-btn:hover{background:#c0392b!important;}";
-    html += ".nw{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #333;cursor:pointer;font-size:0.9em;}";
-    html += ".nw:hover{background:#00d1b2;color:#fff;} .rssi{color:#666;font-size:0.8em;}";
-    html += ".dash{background:#111;padding:10px;border-radius:5px;border-left:4px solid #00d1b2;text-align:left;font-size:0.85em;margin-top:20px;}";
-    html += ".dash div{display:flex;justify-content:space-between;margin:3px 0;}";
-    html += ".label{color:#888;} .val{color:#00d1b2;font-weight:bold;}";
-    html += "input{width:100%;padding:12px;margin:10px 0;border-radius:5px;border:1px solid #444;background:#333;color:#fff;box-sizing:border-box;}";
-    html += "button{width:100%;padding:12px;background:#00d1b2;border:none;color:#fff;font-weight:bold;border-radius:5px;cursor:pointer;margin-top:10px;}";
-    html += ".footer{margin-top:20px;font-size:0.8em;color:#555;}";
+    html += ":root { --bg: #f8fafc; --text: #0f172a; --card: #ffffff; --box: #f1f5f9; --border: #e2e8f0; --accent: #00d1b2; --accent-hover: #00b89c; --muted: #64748b; --danger: #ef4444; --warning: #f59e0b; --shadow: 0 4px 20px rgba(0,0,0,0.06); }";
+    html += "[data-theme='dark'] { --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --box: #0b1329; --border: #334155; --accent: #00d1b2; --accent-hover: #00b89c; --muted: #94a3b8; --danger: #ef4444; --warning: #f59e0b; --shadow: 0 6px 24px rgba(0,0,0,0.4); }";
+    html += "@media (prefers-color-scheme: dark) { :root[data-theme='auto'] { --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --box: #0b1329; --border: #334155; --accent: #00d1b2; --accent-hover: #00b89c; --muted: #94a3b8; --danger: #ef4444; --warning: #f59e0b; --shadow: 0 6px 24px rgba(0,0,0,0.4); } }";
+    html += "* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }";
+    html += "body { background: var(--bg); color: var(--text); padding: 18px 12px; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; transition: background 0.3s, color 0.3s; }";
+    html += ".container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px; }";
+    html += ".card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }";
+    html += ".header-card { display: flex; justify-content: space-between; align-items: center; }";
+    html += "h2 { color: var(--accent); font-size: 1.25em; font-weight: 700; }";
+    html += "h3 { font-size: 0.9em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 6px 0; text-align: left; }";
+    html += ".theme-toggle { background: var(--box); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.9em; }";
+    html += ".net-box, .saved-box { margin-bottom: 12px; max-height: 150px; overflow-y: auto; background: var(--box); border-radius: 8px; border: 1px solid var(--border); }";
+    html += ".saved-box { padding: 4px; }";
+    html += ".saved-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.9em; }";
+    html += ".saved-item:last-child { border-bottom: none; }";
+    html += ".del-btn { width: auto!important; margin: 0!important; padding: 2px 8px!important; background: var(--danger)!important; font-size: 1em; line-height: 1; border-radius: 4px; color: #fff; }";
+    html += ".del-btn:hover { opacity: 0.85; }";
+    html += ".nw { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.9em; transition: background 0.15s; }";
+    html += ".nw:hover { background: var(--accent); color: #fff; }";
+    html += ".rssi { color: var(--muted); font-size: 0.8em; font-family: monospace; }";
+    html += "input { width: 100%; padding: 10px 12px; margin: 6px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--box); color: var(--text); font-size: 0.95em; outline: none; }";
+    html += "input:focus { border-color: var(--accent); }";
+    html += "button { width: 100%; padding: 11px; background: var(--accent); border: none; color: #fff; font-weight: 600; font-size: 0.95em; border-radius: 8px; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }";
+    html += "button:hover { opacity: 0.9; }";
+    html += ".dash { background: var(--box); padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent); font-size: 0.85em; text-align: left; }";
+    html += ".dash div { display: flex; justify-content: space-between; margin: 4px 0; }";
+    html += ".dash .label { color: var(--muted); } .dash .val { color: var(--accent); font-weight: 700; font-family: monospace; }";
+    html += ".log-box { background: #050a14; color: #38bdf8; font-family: monospace; font-size: 0.78em; padding: 10px; border-radius: 8px; border: 1px solid #1e293b; max-height: 140px; overflow-y: auto; text-align: left; line-height: 1.4; }";
+    html += ".log-ctrl { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }";
+    html += ".log-btn { width: auto; padding: 3px 8px; font-size: 0.75em; background: var(--box); color: var(--muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; margin: 0; }";
+    html += ".footer { margin-top: 14px; font-size: 0.8em; color: var(--muted); text-align: center; }";
     html += "</style>";
-    html += "<script>function fillSSID(s){document.getElementsByName('s')[0].value=s;document.getElementsByName('p')[0].focus();}</script>";
-    html += "</head><body><div class='card'><h2>" + htmlEscape(String(_brandName)) + "</h2>";
+    html += "<script>";
+    html += "function fillSSID(s){document.getElementsByName('s')[0].value=s;document.getElementsByName('p')[0].focus();}";
+    html += "function toggleTheme(){let cur=document.documentElement.getAttribute('data-theme');let next=cur==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',next);localStorage.setItem('iskak_theme',next);}";
+    html += "window.addEventListener('DOMContentLoaded',()=>{let saved=localStorage.getItem('iskak_theme');if(saved)document.documentElement.setAttribute('data-theme',saved);});";
+    html += "let logPaused=false;";
+    html += "function pollLogs(){if(logPaused)return;fetch('/api/logs').then(r=>r.json()).then(logs=>{const el=document.getElementById('liveLogs');if(!el)return;el.innerHTML=logs.length===0?'<span style=\"color:#64748b\">Belum ada log...</span>':logs.map(l=>'<div>'+l+'</div>').join('');el.scrollTop=el.scrollHeight;}).catch(()=>{});}";
+    html += "setInterval(pollLogs,1500);";
+    html += "</script></head><body><div class='container'>";
+    html += "<div class='card header-card'><h2>" + htmlEscape(String(_brandName)) + "</h2><button type='button' class='theme-toggle' onclick='toggleTheme()'>🌓 Tema</button></div>";
 
-    html += "<h3>Saved WiFi Profiles</h3><div class='saved-box'>" + savedList + "</div>";
-
+    html += "<div class='card'><h3>Saved WiFi Profiles</h3><div class='saved-box'>" + savedList + "</div>";
     html += "<h3>Select Network</h3><div class='net-box'>" + wifiList + "</div>";
-
     html += "<form action='/save' method='POST'><h3>Add / Connect WiFi</h3>";
     html += "<input name='s' placeholder='SSID' required>";
     html += "<input name='p' type='password' placeholder='Password'>";
@@ -785,31 +810,66 @@ void IskakINO_WifiPortal::handleRoot() {
         }
     }
     html += "<button type='submit'>SAVE & CONNECT</button></form>";
-    if (_otaEnabled) html += "<br><a href='/update' style='color:#555;font-size:0.8em;'>Firmware Update</a>";
+    if (_otaEnabled) html += "<div style='text-align:center;margin-top:10px;'><a href='/update' style='color:var(--muted);font-size:0.8em;text-decoration:none;'>Firmware Update (OTA)</a></div>";
+    html += "</div>";
 
-    html += "<h3>Device Status</h3><div class='dash'>";
+    html += "<div class='card'><h3>Live System Console</h3><div class='log-box' id='liveLogs'>Memuat log sistem...</div>";
+    html += "<div class='log-ctrl'><span style='font-size:0.75em;color:var(--muted);'>Auto-refresh 1.5s</span><div><button type='button' class='log-btn' onclick='logPaused=!logPaused;this.innerText=logPaused?\"▶ Resume\":\"⏸ Pause\"'>⏸ Pause</button> <button type='button' class='log-btn' onclick='document.getElementById(\"liveLogs\").innerHTML=\"\"'>🗑 Clear</button></div></div></div>";
+
+    html += "<div class='card'><h3>Device Status</h3><div class='dash'>";
     html += "<div><span class='label'>IP Address:</span><span class='val'>" + ipAddr + "</span></div>";
     html += "<div><span class='label'>Uptime:</span><span class='val'>" + uptime + "</span></div>";
     html += "<div><span class='label'>Free RAM:</span><span class='val'>" + freeHeap + "</span></div></div>";
 
-    html += "<h3>Actions</h3><div style='display:flex; gap:10px;'>";
+    html += "<h3>Actions</h3><div style='display:flex; gap:10px; margin-top:8px;'>";
     if (pinRequired) {
-        html += "<button onclick=\"var pin=prompt('Masukkan PIN Admin:'); if(pin!=null && confirm('Restart device?')) location.href='/reboot?pin='+encodeURIComponent(pin)\" style='background:#f39c12;'>RESTART</button>";
-        html += "<button onclick=\"var pin=prompt('Masukkan PIN Admin:'); if(pin!=null && confirm('Clear all settings?')) location.href='/clear?pin='+encodeURIComponent(pin)\" style='background:#e74c3c;'>RESET INFO</button>";
+        html += "<button onclick=\"var pin=prompt('Masukkan PIN Admin:'); if(pin!=null && confirm('Restart device?')) location.href='/reboot?pin='+encodeURIComponent(pin)\" style='background:var(--warning);'>RESTART</button>";
+        html += "<button onclick=\"var pin=prompt('Masukkan PIN Admin:'); if(pin!=null && confirm('Clear all settings?')) location.href='/clear?pin='+encodeURIComponent(pin)\" style='background:var(--danger);'>RESET INFO</button>";
     } else {
-        html += "<button onclick=\"if(confirm('Restart device?')) location.href='/reboot'\" style='background:#f39c12;'>RESTART</button>";
-        html += "<button onclick=\"if(confirm('Clear all settings?')) location.href='/clear'\" style='background:#e74c3c;'>RESET INFO</button>";
+        html += "<button onclick=\"if(confirm('Restart device?')) location.href='/reboot'\" style='background:var(--warning);'>RESTART</button>";
+        html += "<button onclick=\"if(confirm('Clear all settings?')) location.href='/clear'\" style='background:var(--danger);'>RESET INFO</button>";
     }
-    html += "</div><div class='footer'>IskakINO_WifiPortal v1.2.0</div></div></body></html>";
+    html += "</div></div>";
+    html += "<div class='footer'>IskakINO_WifiPortal v1.1.0 &bull; Unified Framework</div>";
+    html += "</div></body></html>";
 
     if (_server) {
         _server->send(200, "text/html", html);
     }
 }
 
+void IskakINO_WifiPortal::appendLog(const String& msg) {
+    _logBuffer[_logHead] = msg;
+    _logHead = (_logHead + 1) % LOG_BUFFER_SIZE;
+    if (_logCount < LOG_BUFFER_SIZE) _logCount++;
+}
+
+String IskakINO_WifiPortal::getLogsJson() const {
+    String json = "[";
+    for (uint8_t i = 0; i < _logCount; i++) {
+        uint8_t idx = (_logCount < LOG_BUFFER_SIZE) ? i : (_logHead + i) % LOG_BUFFER_SIZE;
+        if (i > 0) json += ",";
+        String esc = _logBuffer[idx];
+        esc.replace("\\", "\\\\");
+        esc.replace("\"", "\\\"");
+        esc.replace("\n", "\\n");
+        esc.replace("\r", "");
+        json += "\"" + esc + "\"";
+    }
+    json += "]";
+    return json;
+}
+
+void IskakINO_WifiPortal::handleLogsApi() {
+    if (_server) {
+        _server->sendHeader("Access-Control-Allow-Origin", "*");
+        _server->send(200, "application/json", getLogsJson());
+    }
+}
+
 void IskakINO_WifiPortal::handleOTA() {
-    String html = "<html><body><form method='POST' action='/update' enctype='multipart/form-data'>";
-    html += "<h2>OTA Update</h2><input type='file' name='update'><button type='submit'>Update</button></form></body></html>";
+    String html = "<html><body style='background:#0f172a;color:#fff;padding:20px;font-family:sans-serif;'><form method='POST' action='/update' enctype='multipart/form-data'>";
+    html += "<h2>OTA Firmware Update</h2><input type='file' name='update' style='margin:10px 0;'><button type='submit' style='padding:10px 18px;background:#00d1b2;border:none;color:#fff;border-radius:6px;cursor:pointer;'>Upload & Flash</button></form></body></html>";
     _server->send(200, "text/html", html);
 }
 
@@ -828,3 +888,4 @@ void IskakINO_WifiPortal::resetSettings() {
 }
 
 #endif // defined(ISKAKINO_HAS_WIFI)
+

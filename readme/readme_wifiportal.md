@@ -8,10 +8,12 @@ Modul manajemen koneksi jaringan WiFi cerdas untuk **ESP32 & ESP8266**. Dilengka
 
 1. **Captive Portal Otomatis:** Jika perangkat gagal tersambung ke router, ESP otomatis menyalakan Access Point (AP) dan mengarahkan peramban (browser) pengguna langsung ke halaman konfigurasi.
 2. **Parameter Kustom Dinamis (`IskakParam`):** Menyediakan formulir input teks, angka, maupun pilihan dropdown di Web UI (misalnya untuk Token MQTT, Host Server, atau API Key).
-3. **Multi-WiFi Fallback:** Mampu menyimpan dan mencoba beberapa daftar kredensial SSID WiFi secara berurutan.
-4. **OTA Web Firmware Update:** Mengunggah dan memperbarui berkas binary `.bin` firmware langsung melalui halaman web browser.
-5. **Proteksi PIN Admin:** Mengunci halaman konfigurasi sensitif dengan kode PIN.
-6. **Eksekusi Non-Blocking (`beginAsync()` & `tick()`):** Tidak memblokir alur kerja pembacaan sensor saat mencoba menyambung ke router.
+3. **Multi-WiFi Fallback:** Mampu menyimpan dan mencoba beberapa daftar kredensial SSID WiFi secara berurutan dengan auto-failover sinyal RSSI terkuat.
+4. **Live Web Log Viewer (REST API `/api/logs`):** Terminal log sistem real-time terintegrasi di Web Portal dengan auto-refresh 1.5 detik, tombol pause/clear, dan auto-scroll tanpa perlu kabel USB Serial.
+5. **Tema Dark Mode Bawaan:** Desain antarmuka modern berbasis CSS Variables dengan dukungan otomatis preferensi OS (`prefers-color-scheme: dark`) dan tombol toggle manual 🌓 yang tersimpan di `localStorage`.
+6. **OTA Web Firmware Update:** Mengunggah dan memperbarui berkas binary `.bin` firmware langsung melalui halaman web browser.
+7. **Proteksi PIN Admin:** Mengunci halaman konfigurasi sensitif dengan kode PIN.
+8. **Eksekusi Non-Blocking (`beginAsync()` & `tick()`):** Tidak memblokir alur kerja pembacaan sensor saat mencoba menyambung ke router.
 
 ---
 

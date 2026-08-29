@@ -37,6 +37,10 @@ IskakINO_SmartVoice voice;
 IskakINO_WifiPortal portal;
 WiFiUDP             ntpUdp;
 IskakINO_FastNTP    ntp(ntpUdp, "pool.ntp.org");
+IskakINO_RTC        rtc;
+
+bool rtcAvailable = false;
+String timeSourceStr = "Inisialisasi...";
 
 // --- Profil Jadwal ---
 enum BellProfile : uint8_t {
@@ -147,6 +151,22 @@ void triggerBell(uint8_t trackNumber, const char* label) {
     lcd.printCenter(label ? label : "Manual", 1);
 }
 
+String exportScheduleJson() {
+    String json = "{\"activeProfile\":" + String(bellConfig.activeProfile) + ",\"volume\":" + String(bellConfig.volume) + ",\"schedules\":[";
+    for (uint8_t i = 0; i < bellConfig.count; i++) {
+        if (i > 0) json += ",";
+        json += "{\"id\":" + String(i + 1) + ",\"hour\":" + String(bellConfig.bells[i].hour) +
+                ",\"minute\":" + String(bellConfig.bells[i].minute) +
+                ",\"label\":\"" + String(bellConfig.bells[i].label) + "\"" +
+                ",\"profileMask\":" + String(bellConfig.bells[i].profileMask) +
+                ",\"days\":" + String(bellConfig.bells[i].days) +
+                ",\"track\":" + String(bellConfig.bells[i].track) +
+                ",\"enabled\":" + (bellConfig.bells[i].enabled ? "true" : "false") + "}";
+    }
+    json += "]}";
+    return json;
+}
+
 void setupCustomWebRoutes() {
     IskakWebServer* server = portal.server();
     if (!server) return;
@@ -175,6 +195,74 @@ void setupCustomWebRoutes() {
         triggerBell(track, "Web Trigger");
         server->sendHeader("Location", "/bell");
         server->send(303);
+    });
+
+    // API Endpoint: Ekspor Jadwal ke File JSON
+    server->on("/bell/export_json", HTTP_GET, [server]() {
+        server->sendHeader("Content-Disposition", "attachment; filename=jadwal_bel_sekolah.json");
+        server->send(200, "application/json", exportScheduleJson());
+    });
+
+    // API Endpoint: Baca Data Jadwal JSON Realtime
+    server->on("/bell/api/schedules", HTTP_GET, [server]() {
+        server->send(200, "application/json", exportScheduleJson());
+    });
+
+    // API Endpoint: Impor Jadwal Format JSON
+    server->on("/bell/import_json", HTTP_POST, [server]() {
+        if (server->hasArg("plain") || server->hasArg("data")) {
+            String jsonPayload = server->hasArg("plain") ? server->arg("plain") : server->arg("data");
+            // Sederhana dan efisien: parse array JSON schedules
+            int schedulesIdx = jsonPayload.indexOf("\"schedules\":[");
+            if (schedulesIdx >= 0) {
+                int curPos = schedulesIdx + 13;
+                uint8_t count = 0;
+                while (curPos < (int)jsonPayload.length() && count < MAX_BELLS) {
+                    int objStart = jsonPayload.indexOf('{', curPos);
+                    if (objStart < 0) break;
+                    int objEnd = jsonPayload.indexOf('}', objStart);
+                    if (objEnd < 0) break;
+
+                    String item = jsonPayload.substring(objStart, objEnd + 1);
+                    
+                    // Parse hour, minute, label, profileMask, days, track
+                    int hIdx = item.indexOf("\"hour\":");
+                    int mIdx = item.indexOf("\"minute\":");
+                    int lIdx = item.indexOf("\"label\":");
+                    int tIdx = item.indexOf("\"track\":");
+                    int dIdx = item.indexOf("\"days\":");
+                    int pmIdx = item.indexOf("\"profileMask\":");
+
+                    if (hIdx >= 0 && mIdx >= 0) {
+                        bellConfig.bells[count].hour = item.substring(hIdx + 7).toInt();
+                        bellConfig.bells[count].minute = item.substring(mIdx + 9).toInt();
+                        bellConfig.bells[count].track = (tIdx >= 0) ? item.substring(tIdx + 8).toInt() : 1;
+                        bellConfig.bells[count].days = (dIdx >= 0) ? item.substring(dIdx + 7).toInt() : DAYS_WEEKDAY;
+                        bellConfig.bells[count].profileMask = (pmIdx >= 0) ? item.substring(pmIdx + 14).toInt() : MASK_REGULER;
+                        bellConfig.bells[count].enabled = true;
+
+                        if (lIdx >= 0) {
+                            int q1 = item.indexOf('"', lIdx + 8);
+                            int q2 = item.indexOf('"', q1 + 1);
+                            if (q1 >= 0 && q2 > q1) {
+                                String lbl = item.substring(q1 + 1, q2);
+                                strncpy(bellConfig.bells[count].label, lbl.c_str(), sizeof(bellConfig.bells[count].label) - 1);
+                                bellConfig.bells[count].label[sizeof(bellConfig.bells[count].label) - 1] = '\0';
+                            }
+                        }
+                        count++;
+                    }
+                    curPos = objEnd + 1;
+                }
+                if (count > 0) {
+                    bellConfig.count = count;
+                    IskakStorage.save(configStorageAddr, bellConfig);
+                }
+            }
+            server->send(200, "application/json", "{\"status\":\"success\",\"count\":" + String(bellConfig.count) + "}");
+            return;
+        }
+        server->send(400, "text/plain", "Bad Request");
     });
 }
 
@@ -205,6 +293,12 @@ void setup() {
     lcd.printCenter("IskakINO Bell", 0);
     lcd.printCenter("Inisialisasi...", 1);
 
+    // Inisialisasi RTC DS3231 (Hardware Fallback saat Offline)
+    rtcAvailable = rtc.begin();
+    if (rtcAvailable) {
+        Serial.printf("[IskakINO] RTC Terdeteksi: %s\n", rtc.chipName());
+    }
+
     uint32_t savedEpoch;
     if (IskakStorage.load(epochStorageAddr, savedEpoch)) {
         ntp.setUtcEpoch(savedEpoch);
@@ -223,6 +317,11 @@ void setup() {
     ntp.onSync(onSyncSukses);
     ntp.setSyncInterval(3600000UL);
 
+    // Sinergi Hybrid NTP -> RTC (Otomatis sinkronkan RTC hardware dari NTP)
+    if (rtcAvailable) {
+        rtc.syncWithNTP(ntp, 3600000UL);
+    }
+
     setupCustomWebRoutes();
 
     lcd.clear();
@@ -232,6 +331,7 @@ void setup() {
 void loop() {
     portal.tick();
     ntp.update();
+    if (rtcAvailable) rtc.tick();
     lcd.update();
 
     // 1. State Machine Pengendali Relay & Audio (Non-Blocking)
@@ -266,14 +366,33 @@ void loop() {
             break;
     }
 
+    // Resolusi Waktu Hybrid (Prioritaskan NTP online, Fallback ke RTC hardware saat offline)
+    bool timeValid = false;
+    int currentHour = 0, currentMinute = 0, currentSecond = 0, currentDay = 0;
+    String formattedTime = "";
+
+    if (ntp.isTimeSet()) {
+        currentHour   = ntp.getHours();
+        currentMinute = ntp.getMinutes();
+        currentSecond = ntp.getSeconds();
+        currentDay    = ntp.getDayOfWeek();
+        formattedTime = ntp.getFormattedTime();
+        timeSourceStr = "NTP (Online)";
+        timeValid = true;
+    } else if (rtcAvailable && rtc.isRunning()) {
+        IskakDateTime dt = rtc.now();
+        currentHour   = dt.hour;
+        currentMinute = dt.minute;
+        currentSecond = dt.second;
+        currentDay    = dt.dayOfWeek - 1; // Konversi ke 0=Minggu, 1=Senin, ...
+        formattedTime = dt.getTimeString(true);
+        timeSourceStr = String(rtc.chipName()) + " (Offline)";
+        timeValid = true;
+    }
+
     // 2. Evaluasi Jadwal Bel Sesuai Profil Aktif
     if (fast.every(1000, TASK_CHECK_SCHEDULE)) {
-        if (ntp.isTimeSet()) {
-            int currentHour   = ntp.getHours();
-            int currentMinute = ntp.getMinutes();
-            int currentSecond = ntp.getSeconds();
-            int currentDay    = ntp.getDayOfWeek();
-
+        if (timeValid) {
             uint8_t effProfile = getEffectiveProfile(currentDay);
 
             if (effProfile != PROFILE_LIBUR && currentSecond == 0 && currentMinute != lastTriggeredMinute) {
@@ -304,24 +423,27 @@ void loop() {
 
     // 3. Refresh LCD Tampilan Jam & Info Jadwal Terdekat
     if (bellState == BELL_IDLE && fast.every(1000, TASK_REFRESH_LCD)) {
-        int curDay = ntp.getDayOfWeek();
+        int curDay = currentDay;
         uint8_t effProfile = getEffectiveProfile(curDay);
 
         lcd.setCursor(0, 0);
-        if (!portal.isConnected()) {
-            lcd.print(portal.state() == IskakPortalState::PORTAL ? F("Setup: 192.168.4.1") : F("Menyambung WiFi..."));
-        } else if (!ntp.isTimeSet()) {
-            lcd.print(F("Sync Waktu NTP.."));
+        if (!timeValid) {
+            if (!portal.isConnected()) {
+                lcd.print(portal.state() == IskakPortalState::PORTAL ? F("Setup: 192.168.4.1") : F("Menyambung WiFi..."));
+            } else {
+                lcd.print(F("Sync Waktu NTP.."));
+            }
         } else {
-            String header = String(profileNames[effProfile]).substring(0, 3) + " " + ntp.getFormattedTime();
+            String tag = (timeSourceStr.indexOf("NTP") >= 0) ? "N" : "R";
+            String header = String(profileNames[effProfile]).substring(0, 3) + " " + formattedTime + " [" + tag + "]";
             lcd.print(header);
-            lcd.print(F("       "));
+            lcd.print(F("    "));
         }
 
         lcd.setCursor(0, 1);
-        if (ntp.isTimeSet() && effProfile != PROFILE_LIBUR) {
-            int curH = ntp.getHours();
-            int curM = ntp.getMinutes();
+        if (timeValid && effProfile != PROFILE_LIBUR) {
+            int curH = currentHour;
+            int curM = currentMinute;
             int nextIdx = -1;
             int minDiff = 99999;
             uint8_t profMask = (1 << effProfile);

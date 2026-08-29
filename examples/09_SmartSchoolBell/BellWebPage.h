@@ -132,26 +132,31 @@ const char BELL_INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
     </div>
 
-    <!-- Panel Import / Export Excel -->
+    <!-- Panel Import / Export Excel & JSON -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <div>
-                <h3 style="font-size: 15px; font-weight: 600; color: #34d399;">📊 Integrasi Microsoft Excel (.xlsx)</h3>
-                <p style="font-size: 12px; color: var(--text-muted);">Upload jadwal langsung dari file Excel atau download template.</p>
+                <h3 style="font-size: 15px; font-weight: 600; color: #34d399;">📊 Backup, Ekspor & Impor Jadwal</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">Backup jadwal ke format JSON atau upload dari Microsoft Excel (.xlsx).</p>
             </div>
             <div class="btn-group">
-                <button class="btn btn-success btn-sm" onclick="downloadExcelTemplate()">📥 Download Template</button>
-                <button class="btn btn-secondary btn-sm" onclick="exportToExcel()">📤 Export Jadwal</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportJsonSchedule()">📤 Export JSON</button>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('json-file-input').click()">📥 Import JSON</button>
+                <button class="btn btn-success btn-sm" onclick="downloadExcelTemplate()">📑 Template Excel</button>
             </div>
         </div>
+        <input type="file" id="json-file-input" accept=".json" style="display: none;" onchange="handleJsonImport(event)">
         <div class="excel-box">
             <span style="font-size: 28px;">📑</span>
             <div>
-                <b style="font-size: 14px;">Pilih atau Tarik File Excel (.xlsx / .xls)</b>
-                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Data akan disimpan ke Flash Storage ESP32.</p>
+                <b style="font-size: 14px;">Pilih atau Tarik File Excel (.xlsx) / JSON (.json)</b>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Data akan diverifikasi dan disimpan permanen ke Flash Storage ESP32.</p>
             </div>
-            <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)">
-            <button class="btn btn-success btn-sm" onclick="document.getElementById('excel-file-input').click()">📂 Browse File Excel</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)">
+                <button class="btn btn-success btn-sm" onclick="document.getElementById('excel-file-input').click()">📂 Browse File Excel</button>
+                <button class="btn btn-primary btn-sm" onclick="document.getElementById('json-file-input').click()">📂 Browse File JSON</button>
+            </div>
         </div>
     </div>
 
@@ -257,6 +262,39 @@ const char BELL_INDEX_HTML[] PROGMEM = R"rawliteral(
             tbody.appendChild(tr);
         });
         document.getElementById('total-bell-count').innerText = `Menampilkan ${filtered.length} dari ${schedules.length} jadwal`;
+    }
+    function exportJsonSchedule() {
+        location.href = '/bell/export_json';
+        showToast("📤 Mengunduh backup JSON jadwal...");
+    }
+    function handleJsonImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const text = e.target.result;
+                const parsed = JSON.parse(text);
+                if (parsed && parsed.schedules) {
+                    fetch('/bell/import_json', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: text
+                    }).then(r => r.json()).then(res => {
+                        showToast(`✅ Berhasil import ${res.count || parsed.schedules.length} jadwal JSON!`);
+                        setTimeout(() => location.reload(), 1500);
+                    }).catch(err => {
+                        showToast("Gagal menyimpan ke ESP32: " + err.message);
+                    });
+                } else {
+                    alert("Format JSON tidak valid (harus memuat array 'schedules')");
+                }
+            } catch (err) {
+                alert("Gagal membaca file JSON: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
     }
     function downloadExcelTemplate() {
         const data = schedules.map(s => ({ "Jam": `${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}`, "Kegiatan": s.label, "Profil": s.profile, "Track_MP3": s.track, "Hari": s.days }));

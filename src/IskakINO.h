@@ -24,6 +24,8 @@
  *   - IskakINO_Relay           : driver relay pintar dengan auto-off pulse & blink cadence (semua platform)
  *   - IskakINO_Filter          : filter sinyal (Kalman 1D, Median, EMA, Linear Calibrator) (semua platform)
  *   - IskakINO_RTC             : driver hardware RTC (DS3231/DS1307/PCF8563) & Hybrid NTP Sync (semua platform, perlu Wire)
+ *   - IskakINO_Sensors         : pembacaan terpadu sensor DHT11/22, DS18B20, Ultrasonik HC-SR04, LDR (semua platform)
+ *   - IskakINO_JSON            : pembuat & pembaca JSON zero-dependency, ultra-hemat RAM & Flash (semua platform)
  *   - IskakINO_Cam             : driver modul kamera ESP32 (ESP32-CAM, OV2640, PSRAM, Flash LED) (HANYA ESP32)
  *   - IskakINO_MQTT            : client MQTT v3.1.1 zero-dependency (pub/sub, keepalive, auto-reconnect) (HANYA ESP32/ESP8266)
  *   - IskakINO_Telegram        : bot Telegram notifier & remote control via HTTPS REST (HANYA ESP32/ESP8266)
@@ -93,6 +95,7 @@
 #include "rtc/IskakINO_RTC.h"
 #include "rtc/IskakINO_RTCModule.h"
 #include "sensors/IskakINO_Sensors.h"
+#include "json/IskakINO_JSON.h"
 
 // --- Modul khusus AVR (Arduino Uno/Nano/Mega saja) ---
 #include "shield/IskakINO_BasicIOShield.h"

@@ -139,6 +139,11 @@ class IskakINO_WifiPortal {
     // dari kode.
     void setDebug(bool debugMode) { _logger.setDebug(debugMode); }
 
+    // --- Live Web Log Viewer ---
+    void appendLog(const String& msg);
+    void appendLog(const char* msg) { if (msg) appendLog(String(msg)); }
+    String getLogsJson() const;
+
   private:
     const char* _apName;
     const char* _apPass;
@@ -150,6 +155,12 @@ class IskakINO_WifiPortal {
     bool _portalActive = false;
     bool _otaEnabled = false;
     int  _timeout = 0; // detik, 0 = nonaktif
+
+    // --- Live Log Ring-Buffer ---
+    static const uint8_t LOG_BUFFER_SIZE = 15;
+    String  _logBuffer[LOG_BUFFER_SIZE];
+    uint8_t _logHead = 0;
+    uint8_t _logCount = 0;
 
     // BARU (pilot refactor): menggantikan _portalStartTime (id 0, once())
     // dan _lastWifiCheck (id 1, every()) dari v1.1.0 lama dengan satu
@@ -182,6 +193,7 @@ class IskakINO_WifiPortal {
     void handleSave();
     void handleDeleteWifi();
     void handleOTA();
+    void handleLogsApi();
 
     // --- State machine helpers ---
     void pumpStateMachine();

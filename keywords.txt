@@ -61,6 +61,10 @@ IskakINO_MedianFilter	KEYWORD1
 IskakINO_EMAFilter	KEYWORD1
 IskakINO_LinearCalibrator	KEYWORD1
 
+# --- json ---
+IskakJSONBuilder	KEYWORD1
+IskakJSONReader	KEYWORD1
+
 # --- wifi (ESP32/ESP8266 saja) ---
 IskakINO_WifiPortal	KEYWORD1
 IskakParam	KEYWORD1

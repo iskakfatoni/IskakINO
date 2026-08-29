@@ -63,12 +63,18 @@ Dokumentasi detail, referensi API lengkap, dan panduan teknis tiap modul tersedi
 | **Button** | `IskakINO_Button` | Universal (GPIO / Gestures) | [📖 `readme_button.md`](readme/readme_button.md) |
 | **Relay** | `IskakINO_Relay` | Universal (Actuator / Pulse) | [📖 `readme_relay.md`](readme/readme_relay.md) |
 | **Filter** | `IskakINO_Kalman1D`, `IskakINO_MedianFilter` | Universal (DSP & Calibration) | [📖 `readme_filter.md`](readme/readme_filter.md) |
+| **RTC** | `IskakINO_RTC` | Universal (DS3231 / DS1307 / PCF8563) | [📖 `readme_rtc.md`](readme/readme_rtc.md) |
+| **Sensors** | `IskakINO_DHT`, `IskakINO_DS18B20`, `IskakINO_Ultrasonic` | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_sensors.md`](readme/readme_sensors.md) |
+| **JSON** | `IskakJSONBuilder`, `IskakJSONReader` | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_json.md`](readme/readme_json.md) |
 | **SmartVoice** | `IskakINO_SmartVoice` | Universal (Stream / Serial) | [📖 `readme_smartvoice.md`](readme/readme_smartvoice.md) |
 | **Buzzer** | `IskakINO_Buzzer` | Universal (AVR / ESP32 / ESP8266) | [📖 `readme_buzzer.md`](readme/readme_buzzer.md) |
 | **BasicIOShield** | `IskakINO_BasicIOShield` (`BasicIOShield`) | **Khusus Arduino AVR** (Uno/Nano/Mega) | [📖 `readme_basicioshield.md`](readme/readme_basicioshield.md) |
 | **Cam** | `IskakINO_Cam` | **Khusus ESP32** (ESP32-CAM / OV2640) | [📖 `readme_cam.md`](readme/readme_cam.md) |
+| **BLE** | `IskakINO_BLE` | **Khusus ESP32** (Nordic UART Service) | [📖 `readme_ble.md`](readme/readme_ble.md) |
 | **WifiPortal** | `IskakINO_WifiPortal` | **ESP32 & ESP8266** | [📖 `readme_wifiportal.md`](readme/readme_wifiportal.md) |
 | **FastNTP** | `IskakINO_FastNTP` | **ESP32 & ESP8266** | [📖 `readme_fastntp.md`](readme/readme_fastntp.md) |
+| **MQTT** | `IskakINO_MQTT` | **ESP32 & ESP8266** (v3.1.1 Client) | [📖 `readme_mqtt.md`](readme/readme_mqtt.md) |
+| **Telegram** | `IskakINO_Telegram` | **ESP32 & ESP8266** (Bot / Alert) | [📖 `readme_telegram.md`](readme/readme_telegram.md) |
 
 > 💡 **Rencana Modul Baru & Roadmap:** Lihat berkas [ROADMAP.md](ROADMAP.md) untuk melihat daftar modul baru dan penyempurnaan fitur yang sedang direncanakan.
 
@@ -132,7 +138,7 @@ void loop() {
 | **02** | [`02_Storage_SaveLoad`](examples/02_Storage_SaveLoad/) | Storage | Universal | Simpan/muat struct, String dinamis, ring-buffer log, & enkripsi XOR. |
 | **03** | [`03_LCD_TypewriterScroll`](examples/03_LCD_TypewriterScroll/) | LCD I2C | Universal | Efek mesin ketik, teks berjalan horizontal, & grafik progress bar. |
 | **04** | [`04_SmartVoice_PlayTrack`](examples/04_SmartVoice_PlayTrack/) | SmartVoice | Universal | Pemutaran MP3 DFPlayer Mini, antrean suara, & feedback status. |
-| **05** | [`05_WifiPortal_CaptivePortal`](examples/05_WifiPortal_CaptivePortal/) | WifiPortal | ESP32 / ESP8266 | Portal konfigurasi WiFi captive portal dengan parameter web kustom. |
+| **05** | [`05_WifiPortal_CaptivePortal`](examples/05_WifiPortal_CaptivePortal/) | WifiPortal | ESP32 / ESP8266 | Portal konfigurasi WiFi captive portal dengan parameter web kustom & multi-SSID. |
 | **06** | [`06_FastNTP_ClockSync`](examples/06_FastNTP_ClockSync/) | FastNTP | ESP32 / ESP8266 | Sinkronisasi jam internet NTP, format waktu instan, & kalender ID/EN. |
 | **07** | [`07_Unified_SmartClock`](examples/07_Unified_SmartClock/) | Multi-Modul (Manual) | ESP32 / ESP8266 | Jam dinding pintar lengkap (WiFi + NTP + LCD + Storage + Voice). |
 | **08** | [`08_Framework_Kernel`](examples/08_Framework_Kernel/) | Multi-Modul (Kernel) | ESP32 / ESP8266 | Arsitektur kernel terpusat menggunakan `IskakINO_Kernel`. |
@@ -144,6 +150,15 @@ void loop() {
 | **14** | [`14_Relay_PulseBlink`](examples/14_Relay_PulseBlink/) | Relay, Core | Universal | Kontrol relay pintar dengan auto-off pulse timer, blink cadence, & menu Serial. |
 | **15** | [`15_Filter_SensorSmoothing`](examples/15_Filter_SensorSmoothing/) | Filter, Core | Universal | Komparasi filter sensor (Raw vs Moving Median vs 1D Kalman vs Linear Calibrator). |
 | **16** | [`16_ESP32Cam_SnapshotStream`](examples/16_ESP32Cam_SnapshotStream/) | Cam, Core | **Khusus ESP32** | Snapshot foto JPEG kamera OV2640, kontrol Flash LED, & penyesuaian sensor. |
+| **17** | [`17_MQTT_Telemetry`](examples/17_MQTT_Telemetry/) | MQTT, Core | ESP32 / ESP8266 | Telemetri sensor IoT pub/sub dan remote handler perintah via protokol MQTT v3.1.1. |
+| **18** | [`18_Telegram_AlertBot`](examples/18_Telegram_AlertBot/) | Telegram, Core | ESP32 / ESP8266 | Bot notifikasi alert darurat & remote control interaktif via HTTPS Telegram REST. |
+| **19** | [`19_RTC_ClockCalendar`](examples/19_RTC_ClockCalendar/) | RTC, Core | Universal | Driver hardware RTC I2C multi-chip (DS3231/DS1307/PCF8563) & kalender ID/EN. |
+| **20** | [`20_RTC_HybridNTP`](examples/20_RTC_HybridNTP/) | RTC, FastNTP | ESP32 / ESP8266 | Sinergi Hybrid Clock: auto-sinkronisasi jam RTC dari NTP saat online & fallback offline. |
+| **21** | [`21_Sensors_DHT_Environment`](examples/21_Sensors_DHT_Environment/) | Sensors, Core | Universal | Pembacaan suhu, kelembapan, dan perhitungan Heat Index sensor DHT11/DHT22. |
+| **22** | [`22_Sensors_DS18B20_1Wire`](examples/22_Sensors_DS18B20_1Wire/) | Sensors, Core | Universal | Pembacaan suhu presisi tinggi 12-bit sensor waterproof DS18B20 via protokol 1-Wire. |
+| **23** | [`23_Sensors_Ultrasonic_Filtered`](examples/23_Sensors_Ultrasonic_Filtered/) | Sensors, Filter | Universal | Pengukuran jarak akustik HC-SR04 dengan Moving Median Filter bawaan anti-noise spike. |
+| **24** | [`24_BLE_SerialTerminal`](examples/24_BLE_SerialTerminal/) | BLE, Core | **Khusus ESP32** | Komunikasi serial nirkabel dua arah Bluetooth Low Energy (NUS) & kendali aktuator. |
+| **25** | [`25_JSON_BuildAndParse`](examples/25_JSON_BuildAndParse/) | JSON, Core | Universal | Pembuatan payload JSON bersarang & parsing type-safe zero-dependency. |
 
 ---
 
@@ -161,12 +176,18 @@ IskakINO/
 │   ├── button/                                     # Modul driver tombol multi-gesture
 │   ├── relay/                                      # Modul driver relay & aktuator pintar
 │   ├── filter/                                     # Modul filter sinyal & kalibrasi sensor
+│   ├── rtc/                                        # Modul driver hardware RTC (DS3231/DS1307/PCF8563)
+│   ├── sensors/                                    # Modul driver sensor DHT, DS18B20, & Ultrasonic
+│   ├── json/                                       # Modul JSON Builder & Zero-Copy Tokenizer Parser
 │   ├── cam/                                        # Modul driver kamera ESP32 (ESP32-CAM)
+│   ├── ble/                                        # Modul Bluetooth Low Energy (NUS UART Bridge)
 │   ├── voice/                                      # Modul DFPlayer Mini MP3 Player
 │   ├── buzzer/                                     # Modul Driver Buzzer & RTTTL Melody Player
 │   ├── shield/                                     # Modul driver EMS Basic I/O Shield (AVR)
 │   ├── wifi/                                       # Modul Captive Portal & Web Server
-│   └── ntp/                                        # Modul Fast NTP Time Client
+│   ├── ntp/                                        # Modul Fast NTP Time Client
+│   ├── mqtt/                                       # Modul MQTT v3.1.1 Client
+│   └── telegram/                                   # Modul Bot Notifier Telegram HTTPS REST
 ├── readme/                                         # Dokumentasi teknis terpisah per-modul
 │   ├── readme_core.md                              # Dokumentasi Core, FastPin, & Kernel
 │   ├── readme_ardufast.md                          # Dokumentasi Modul ArduFast
@@ -176,13 +197,19 @@ IskakINO/
 │   ├── readme_button.md                            # Dokumentasi Modul Button
 │   ├── readme_relay.md                             # Dokumentasi Modul Relay
 │   ├── readme_filter.md                            # Dokumentasi Modul Filter
+│   ├── readme_rtc.md                               # Dokumentasi Modul RTC & Hybrid NTP
+│   ├── readme_sensors.md                           # Dokumentasi Modul Sensors Suite
+│   ├── readme_json.md                              # Dokumentasi Modul JSON Builder & Parser
 │   ├── readme_cam.md                               # Dokumentasi Modul Cam ESP32
+│   ├── readme_ble.md                               # Dokumentasi Modul BLE NUS UART
 │   ├── readme_smartvoice.md                        # Dokumentasi Modul SmartVoice
 │   ├── readme_buzzer.md                            # Dokumentasi Modul Buzzer & RTTTL
 │   ├── readme_basicioshield.md                     # Dokumentasi Modul Basic I/O Shield
 │   ├── readme_wifiportal.md                        # Dokumentasi Modul WifiPortal
-│   └── readme_fastntp.md                           # Dokumentasi Modul FastNTP
-├── examples/                                       # 16 contoh sketch lengkap dan siap pakai
+│   ├── readme_fastntp.md                           # Dokumentasi Modul FastNTP
+│   ├── readme_mqtt.md                              # Dokumentasi Modul MQTT v3.1.1
+│   └── readme_telegram.md                          # Dokumentasi Modul Telegram Bot
+├── examples/                                       # 25 contoh sketch lengkap dan siap pakai
 ├── .github/workflows/                              # CI/CD otomatis via Arduino CLI matrix
 ├── library.properties                              # Arduino Library Manager metadata
 ├── library.json                                    # PlatformIO Library Registry metadata

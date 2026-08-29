@@ -27,7 +27,7 @@
 //   MINOR : fitur/modul baru ditambahkan, tetap backward-compatible
 //   PATCH : bug fix saja, tidak ada perubahan API
 #define ISKAKINO_VERSION_MAJOR 1
-#define ISKAKINO_VERSION_MINOR 0
+#define ISKAKINO_VERSION_MINOR 1
 #define ISKAKINO_VERSION_PATCH 0
 #define ISKAKINO_VERSION ((ISKAKINO_VERSION_MAJOR * 10000UL) + \
                            (ISKAKINO_VERSION_MINOR * 100UL) + \
