@@ -27,8 +27,8 @@ class IskakJSONBuilder {
     void add(const char* key, long value);
     void add(const char* key, int value) { add(key, (long)value); }
     void add(const char* key, uint32_t value) { add(key, (long)value); }
-    void add(const char* key, float value, uint8_t decimals = 2);
-    void add(const char* key, double value, uint8_t decimals = 2) { add(key, (float)value, decimals); }
+    void add(const char* key, float value, unsigned int decimals = 2);
+    void add(const char* key, double value, unsigned int decimals = 2) { add(key, (float)value, decimals); }
     void add(const char* key, bool value);
     void addRaw(const char* key, const char* rawJson);
     void addRaw(const char* key, const String& rawJson) { addRaw(key, rawJson.c_str()); }
@@ -38,7 +38,7 @@ class IskakJSONBuilder {
     void addValue(const String& value);
     void addValue(long value);
     void addValue(int value) { addValue((long)value); }
-    void addValue(float value, uint8_t decimals = 2);
+    void addValue(float value, unsigned int decimals = 2);
     void addValue(bool value);
     void addRawValue(const char* rawJson);
 

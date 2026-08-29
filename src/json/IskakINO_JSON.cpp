@@ -72,7 +72,7 @@ void IskakJSONBuilder::add(const char* key, long value) {
     _needComma = true;
 }
 
-void IskakJSONBuilder::add(const char* key, float value, uint8_t decimals) {
+void IskakJSONBuilder::add(const char* key, float value, unsigned int decimals) {
     if (!key) return;
     appendCommaIfNeeded();
     _buffer += "\"";
@@ -120,7 +120,7 @@ void IskakJSONBuilder::addValue(long value) {
     _needComma = true;
 }
 
-void IskakJSONBuilder::addValue(float value, uint8_t decimals) {
+void IskakJSONBuilder::addValue(float value, unsigned int decimals) {
     appendCommaIfNeeded();
     _buffer += String(value, decimals);
     _needComma = true;
