@@ -1,0 +1,71 @@
+{
+  "name": "IskakINO",
+  "version": "1.1.0",
+  "description": "Unified IskakINO ecosystem: fast direct GPIO register I/O, hybrid storage, LCD/OLED drivers, WiFi captive portal, FastNTP, MQTT v3.1.1, Telegram Bot, RTC hardware, sensors suite (DHT/DS18B20/Ultrasonic), BLE NUS UART, and DFPlayer controller.",
+  "keywords": [
+    "gpio",
+    "fastpin",
+    "storage",
+    "eeprom",
+    "preferences",
+    "littlefs",
+    "lcd",
+    "oled",
+    "button",
+    "relay",
+    "filter",
+    "kalman",
+    "wifi",
+    "captive-portal",
+    "ntp",
+    "mqtt",
+    "telegram",
+    "websockets",
+    "prayertimes",
+    "hijri",
+    "qibla",
+    "rtc",
+    "ds3231",
+    "sensors",
+    "dht",
+    "ds18b20",
+    "ultrasonic",
+    "json",
+    "freertos",
+    "taskcore",
+    "dual-core",
+    "ble",
+    "bluetooth",
+    "cam",
+    "dfplayer",
+    "buzzer",
+    "rtttl",
+    "scheduler",
+    "esp32",
+    "esp8266",
+    "avr",
+    "arduino"
+  ],
+  "authors": [
+    {
+      "name": "Iskak Fatoni",
+      "maintainer": true
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iskakfatoni/IskakINO.git"
+  },
+  "homepage": "https://github.com/iskakfatoni/IskakINO",
+  "license": "MIT",
+  "frameworks": ["arduino"],
+  "platforms": [
+    "atmelavr",
+    "espressif8266",
+    "espressif32"
+  ],
+  "headers": [
+    "IskakINO.h"
+  ],
+  "examples": "examples/*/*.ino"
+}

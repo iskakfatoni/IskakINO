@@ -1,0 +1,424 @@
+#######################################
+# Syntax Coloring Map For IskakINO (gabungan)
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+# --- core ---
+IskakINO_Result	KEYWORD1
+IskakStorageResult	KEYWORD1
+IskakINO_Logger	KEYWORD1
+IskakINO_Scheduler	KEYWORD1
+IskakINO_Module	KEYWORD1
+IskakINO_Kernel	KEYWORD1
+IskakINO_ArduFastModule	KEYWORD1
+IskakINO_StorageModule	KEYWORD1
+IskakINO_LCDModule	KEYWORD1
+IskakINO_SmartVoiceModule	KEYWORD1
+IskakINO_WifiPortalModule	KEYWORD1
+IskakINO_FastNTPModule	KEYWORD1
+IskakINO_BuzzerModule	KEYWORD1
+IskakINO_OLEDModule	KEYWORD1
+IskakINO_ButtonModule	KEYWORD1
+IskakINO_RelayModule	KEYWORD1
+IskakINO_CamModule	KEYWORD1
+IskakINO_TaskCore	KEYWORD1
+IskakINO_Mutex	KEYWORD1
+IskakINO_LockGuard	KEYWORD1
+IskakINO_Queue	KEYWORD1
+
+# --- ardufast ---
+IskakINO_ArduFast	KEYWORD1
+FastPin	KEYWORD1
+
+# --- storage ---
+IskakINO_Storage	KEYWORD1
+IskakStorage	KEYWORD1
+
+# --- lcd ---
+LiquidCrystal_I2C	KEYWORD1
+
+# --- voice ---
+IskakINO_SmartVoice	KEYWORD1
+
+# --- buzzer ---
+IskakINO_Buzzer	KEYWORD1
+IskakBuzzerType	KEYWORD1
+
+# --- oled ---
+IskakINO_OLED	KEYWORD1
+IskakOLEDChip	KEYWORD1
+
+# --- button ---
+IskakINO_Button	KEYWORD1
+ButtonCallback	KEYWORD1
+
+# --- relay ---
+IskakINO_Relay	KEYWORD1
+IskakRelayMode	KEYWORD1
+
+# --- filter ---
+IskakINO_Kalman1D	KEYWORD1
+IskakINO_MedianFilter	KEYWORD1
+IskakINO_EMAFilter	KEYWORD1
+IskakINO_LinearCalibrator	KEYWORD1
+
+# --- json ---
+IskakJSONBuilder	KEYWORD1
+IskakJSONReader	KEYWORD1
+
+# --- wifi (ESP32/ESP8266 saja) ---
+IskakINO_WifiPortal	KEYWORD1
+IskakParam	KEYWORD1
+IskakWifiCred	KEYWORD1
+IskakPortalState	KEYWORD1
+
+# --- cam (ESP32 saja) ---
+IskakINO_Cam	KEYWORD1
+IskakCamModel	KEYWORD1
+
+# --- ntp (ESP32/ESP8266 saja) ---
+IskakINO_FastNTP	KEYWORD1
+NTP_Language	KEYWORD1
+NTP_State	KEYWORD1
+NTPSyncCallback	KEYWORD1
+NTPFailCallback	KEYWORD1
+
+# --- shield (AVR saja) ---
+IskakINO_BasicIOShield	KEYWORD1
+IskakINO_BasicIOShieldModule	KEYWORD1
+BasicIOShield	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+# --- core (dipakai lewat komposisi, mis. fast.every(), lcd.update()) ---
+setDebug	KEYWORD2
+lastError	KEYWORD2
+isDebug	KEYWORD2
+every	KEYWORD2
+once	KEYWORD2
+registerModule	KEYWORD2
+moduleCount	KEYWORD2
+moduleName	KEYWORD2
+
+# --- shield (AVR saja) ---
+ReadPotentiometer	KEYWORD2
+Button1State	KEYWORD2
+Button2State	KEYWORD2
+RedOn	KEYWORD2
+RedOff	KEYWORD2
+GreenOn	KEYWORD2
+GreenOff	KEYWORD2
+BlueOn	KEYWORD2
+BlueOff	KEYWORD2
+YellowOn	KEYWORD2
+YellowOff	KEYWORD2
+setDisplay	KEYWORD2
+clearDisplay	KEYWORD2
+setRefreshInterval	KEYWORD2
+PrintSevenSegment	KEYWORD2
+WriteDAC	KEYWORD2
+
+# --- ardufast ---
+begin	KEYWORD2
+reset	KEYWORD2
+cancel	KEYWORD2
+log	KEYWORD2
+readNorm	KEYWORD2
+readStable	KEYWORD2
+readEMA	KEYWORD2
+mapAnalog	KEYWORD2
+mode	KEYWORD2
+high	KEYWORD2
+low	KEYWORD2
+toggle	KEYWORD2
+read	KEYWORD2
+pinMode	KEYWORD2
+digitalWrite	KEYWORD2
+digitalRead	KEYWORD2
+logFloat	KEYWORD2
+logf	KEYWORD2
+
+# --- storage ---
+beginEncrypted	KEYWORD2
+save	KEYWORD2
+load	KEYWORD2
+clear	KEYWORD2
+reserve	KEYWORD2
+exists	KEYWORD2
+remove	KEYWORD2
+onCorrupt	KEYWORD2
+onVersionMismatch	KEYWORD2
+saveString	KEYWORD2
+loadString	KEYWORD2
+beginLog	KEYWORD2
+addLog	KEYWORD2
+readLog	KEYWORD2
+logCount	KEYWORD2
+clearLog	KEYWORD2
+
+# --- lcd ---
+home	KEYWORD2
+setCursor	KEYWORD2
+display	KEYWORD2
+noDisplay	KEYWORD2
+cursor	KEYWORD2
+noCursor	KEYWORD2
+blink	KEYWORD2
+noBlink	KEYWORD2
+backlight	KEYWORD2
+noBacklight	KEYWORD2
+setBacklightTimeout	KEYWORD2
+scrollDisplayLeft	KEYWORD2
+scrollDisplayRight	KEYWORD2
+leftToRight	KEYWORD2
+rightToLeft	KEYWORD2
+autoscroll	KEYWORD2
+noAutoscroll	KEYWORD2
+setAddress	KEYWORD2
+getAddress	KEYWORD2
+createChar	KEYWORD2
+write	KEYWORD2
+printCenter	KEYWORD2
+typewriter	KEYWORD2
+typewriterStart	KEYWORD2
+typewriterStop	KEYWORD2
+isTypewriterActive	KEYWORD2
+scrollTextStart	KEYWORD2
+scrollTextStop	KEYWORD2
+isScrollActive	KEYWORD2
+update	KEYWORD2
+drawProgressBar	KEYWORD2
+printFormatted	KEYWORD2
+isConnected	KEYWORD2
+useExternalWireBegin	KEYWORD2
+
+# --- voice ---
+setVolume	KEYWORD2
+playTrack	KEYWORD2
+playFromFolder	KEYWORD2
+pause	KEYWORD2
+resume	KEYWORD2
+stop	KEYWORD2
+announce	KEYWORD2
+isSDCardReady	KEYWORD2
+isPlaying	KEYWORD2
+
+# --- wifi ---
+beginAsync	KEYWORD2
+tick	KEYWORD2
+addParameter	KEYWORD2
+addWifi	KEYWORD2
+resetSettings	KEYWORD2
+setBrandName	KEYWORD2
+enableOTA	KEYWORD2
+setPortalTimeout	KEYWORD2
+setupPortal	KEYWORD2
+setAdminPin	KEYWORD2
+state	KEYWORD2
+
+# --- ntp ---
+forceUpdate	KEYWORD2
+isTimeSet	KEYWORD2
+isTimeReliable	KEYWORD2
+getEpoch	KEYWORD2
+getUtcEpoch	KEYWORD2
+getUptimeSeconds	KEYWORD2
+getMillisSinceLastSync	KEYWORD2
+getSeconds	KEYWORD2
+getMinutes	KEYWORD2
+getHours	KEYWORD2
+getDay	KEYWORD2
+getDayOfWeek	KEYWORD2
+getMonth	KEYWORD2
+getYear	KEYWORD2
+getDayName	KEYWORD2
+getMonthName	KEYWORD2
+getFormattedTime	KEYWORD2
+getFormattedDate	KEYWORD2
+isAlarmActive	KEYWORD2
+setEpoch	KEYWORD2
+setSyncInterval	KEYWORD2
+getCurrentServer	KEYWORD2
+getServerCount	KEYWORD2
+setFailThreshold	KEYWORD2
+setRequestTimeout	KEYWORD2
+getSyncSuccessCount	KEYWORD2
+getSyncFailCount	KEYWORD2
+getConsecutiveFails	KEYWORD2
+onSync	KEYWORD2
+onSyncFail	KEYWORD2
+
+# --- buzzer ---
+playSuccess	KEYWORD2
+playError	KEYWORD2
+playWarning	KEYWORD2
+playNotification	KEYWORD2
+playAlarm	KEYWORD2
+playSequence	KEYWORD2
+playRTTTL	KEYWORD2
+setMute	KEYWORD2
+isMuted	KEYWORD2
+
+# --- oled ---
+clearRow	KEYWORD2
+clearArea	KEYWORD2
+setTextSize	KEYWORD2
+invertDisplay	KEYWORD2
+setContrast	KEYWORD2
+displayOn	KEYWORD2
+displayOff	KEYWORD2
+setChipType	KEYWORD2
+drawHLine	KEYWORD2
+drawWifiIcon	KEYWORD2
+drawBatteryIcon	KEYWORD2
+drawIcon	KEYWORD2
+drawBitmap	KEYWORD2
+
+# --- button ---
+isClicked	KEYWORD2
+isDoubleClicked	KEYWORD2
+isLongPressed	KEYWORD2
+isHolding	KEYWORD2
+getHoldDuration	KEYWORD2
+getClickCount	KEYWORD2
+onClick	KEYWORD2
+onDoubleClick	KEYWORD2
+onLongPressStart	KEYWORD2
+onLongPressEnd	KEYWORD2
+
+# --- relay ---
+pulse	KEYWORD2
+blink	KEYWORD2
+setMinSwitchInterval	KEYWORD2
+isPulsing	KEYWORD2
+isBlinking	KEYWORD2
+
+# --- filter ---
+setParameters	KEYWORD2
+setAlpha	KEYWORD2
+addPoint	KEYWORD2
+calibrate	KEYWORD2
+getEstimate	KEYWORD2
+
+# --- cam ---
+capture	KEYWORD2
+release	KEYWORD2
+setFlashPin	KEYWORD2
+flashOn	KEYWORD2
+flashOff	KEYWORD2
+flashPulse	KEYWORD2
+setVFlip	KEYWORD2
+setHMirror	KEYWORD2
+setResolution	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+ISKAKINO_VERSION	LITERAL1
+ISKAKINO_PLATFORM_AVR	LITERAL1
+ISKAKINO_PLATFORM_ESP32	LITERAL1
+ISKAKINO_PLATFORM_ESP8266	LITERAL1
+ISKAKINO_HAS_WIFI	LITERAL1
+ISKAKINO_HAS_PREFS	LITERAL1
+ISKAKINO_HAS_LITTLEFS	LITERAL1
+ISKAKINO_HAS_EEPROM	LITERAL1
+ARDUFAST_VERSION	LITERAL1
+ISKAK_STORAGE_MAGIC	LITERAL1
+ISKAK_STORAGE_VERSION	LITERAL1
+LCD_ENABLE_SERIAL_DEBUG	LITERAL1
+LCD_BACKLIGHT	LITERAL1
+LCD_NOBACKLIGHT	LITERAL1
+LCD_PRINTF_BUFFER_SIZE	LITERAL1
+LCD_PROGRESSBAR_CHAR_LOC	LITERAL1
+LANG_EN	LITERAL1
+LANG_ID	LITERAL1
+ISKAKINO_FASTNTP_MAX_SERVERS	LITERAL1
+ISKAKINO_FASTNTP_MAX_SYNC_INTERVAL_MS	LITERAL1
+ISKAKINO_MAX_WIFI	LITERAL1
+POTENTIOMETER_PIN	LITERAL1
+GREEN_PIN	LITERAL1
+BLUE_PIN	LITERAL1
+YELLOW_PIN	LITERAL1
+RED_PIN	LITERAL1
+BUTTON_1_PIN	LITERAL1
+BUTTON_2_PIN	LITERAL1
+SEVEN_SEGMENT_1_PIN	LITERAL1
+SEVEN_SEGMENT_2_PIN	LITERAL1
+SEGMENT_A_PIN	LITERAL1
+SEGMENT_B_PIN	LITERAL1
+SEGMENT_C_PIN	LITERAL1
+SEGMENT_D_PIN	LITERAL1
+SEGMENT_E_PIN	LITERAL1
+SEGMENT_F_PIN	LITERAL1
+SEGMENT_G_PIN	LITERAL1
+SEGMENT_DP_PIN	LITERAL1
+AD5612Address	LITERAL1
+AD5612_I2C_ADDRESS	LITERAL1
+ISKAK_BUZZER_PASSIVE	LITERAL1
+ISKAK_BUZZER_ACTIVE	LITERAL1
+REST	LITERAL1
+OLED_CHIP_AUTO	LITERAL1
+OLED_CHIP_SSD1306	LITERAL1
+OLED_CHIP_SH1106	LITERAL1
+ISKAK_RELAY_ACTIVE_HIGH	LITERAL1
+ISKAK_RELAY_ACTIVE_LOW	LITERAL1
+CAM_MODEL_AI_THINKER	LITERAL1
+CAM_MODEL_M5STACK_PSRAM	LITERAL1
+CAM_MODEL_WROVER_KIT	LITERAL1
+CAM_MODEL_ESP_EYE	LITERAL1
+
+# --- WebSockets ---
+IskakINO_WebSockets	KEYWORD1
+IskakINO_WebSocketsServer	KEYWORD1
+IskakINO_WebSocketsClient	KEYWORD1
+IskakINO_WebSocketsModule	KEYWORD1
+IskakWSEvent	KEYWORD1
+IskakWSOpcode	KEYWORD1
+broadcastText	KEYWORD2
+broadcastBinary	KEYWORD2
+sendText	KEYWORD2
+sendBinary	KEYWORD2
+disconnectAll	KEYWORD2
+connectedClientsCount	KEYWORD2
+isClientConnected	KEYWORD2
+setReconnectInterval	KEYWORD2
+setAutoReconnect	KEYWORD2
+
+# --- PrayerTimes ---
+IskakINO_PrayerTimes	KEYWORD1
+IskakINO_Hijri	KEYWORD1
+IskakINO_PrayerTimesModule	KEYWORD1
+IskakPrayer	KEYWORD1
+IskakPrayerMethod	KEYWORD1
+IskakAsrJuristic	KEYWORD1
+IskakPrayerTime	KEYWORD1
+IskakHijriDate	KEYWORD1
+setLocation	KEYWORD2
+setElevation	KEYWORD2
+setCustomMethod	KEYWORD2
+setAsrJuristic	KEYWORD2
+setIkhtiyat	KEYWORD2
+setImsakMinutesBefore	KEYWORD2
+setDhuhaMinutesAfter	KEYWORD2
+setHijriAdjustment	KEYWORD2
+compute	KEYWORD2
+getTime	KEYWORD2
+getDecimalTime	KEYWORD2
+getFormattedTime	KEYWORD2
+getPrayerName	KEYWORD2
+getNextPrayer	KEYWORD2
+getTimeRemaining	KEYWORD2
+isPrayerTimeNow	KEYWORD2
+getCurrentPrayer	KEYWORD2
+getQiblaDirection	KEYWORD2
+getHijriDate	KEYWORD2
+toHijri	KEYWORD2
+calculateQibla	KEYWORD2
+
+
